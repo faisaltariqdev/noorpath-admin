@@ -20,8 +20,9 @@ export const metadata: Metadata = {
   title: "NoorPath Academy — Admin Panel",
   description: "NoorPath Academy — Admin, Tutor & Parent Portal. Manage students, classes, and progress.",
   icons: {
-    icon: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 

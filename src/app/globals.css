@@ -406,10 +406,126 @@ h1, h2, h3, h4, h5, h6 {
 
 .card-body { padding: 22px; }
 
+/* ── FILTERS & LISTS ── */
+.filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) repeat(auto-fit, minmax(150px, max-content));
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-field {
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.search-field input {
+  border: 0;
+  outline: 0;
+  width: 100%;
+  min-width: 0;
+  color: var(--charcoal);
+  font-size: 0.84rem;
+  font-family: var(--font-jakarta), sans-serif;
+  background: transparent;
+}
+
+.search-field input::placeholder { color: #94a3b8; }
+
+.filter-select {
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--charcoal);
+  padding: 0 34px 0 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-jakarta), sans-serif;
+  box-shadow: var(--shadow-sm);
+  outline: none;
+}
+
+.filter-select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(27,94,66,0.1);
+}
+
+.table-shell {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+}
+
+.list-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.list-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(120px, 0.5fr) minmax(160px, auto);
+  gap: 18px;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid #eef2f7;
+  transition: background 0.15s ease;
+}
+.list-row:last-child { border-bottom: 0; }
+.list-row:hover { background: #fbfcfd; }
+
+.list-title {
+  font-weight: 800;
+  color: var(--charcoal);
+  font-size: 0.9rem;
+  letter-spacing: -0.01em;
+}
+
+.list-meta {
+  color: var(--muted);
+  font-size: 0.76rem;
+  margin-top: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.metric-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fff5f5;
+  color: #dc2626;
+  font-weight: 900;
+  font-size: 0.88rem;
+  border: 1px solid #fecaca;
+}
+
+.action-muted {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
 /* ── TABLE ── */
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 760px;
 }
 
 .data-table th {
@@ -661,6 +777,15 @@ h1, h2, h3, h4, h5, h6 {
   .topbar { padding: 0 16px; }
   .stat-card { padding: 16px; }
   .stat-value { font-size: 1.5rem; }
+  .filter-toolbar { grid-template-columns: 1fr; }
+  .filter-select { width: 100%; }
+  .list-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 16px;
+  }
+  .metric-pill { width: fit-content; }
+  .action-muted { justify-content: flex-start; }
 }
 
 @media (max-width: 480px) {

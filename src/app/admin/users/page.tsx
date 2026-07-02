@@ -16,6 +16,8 @@ export default function UsersPage() {
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", whatsapp: "", country: "", timezone: "UTC", password: "", role: "tutor" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   async function load() {
     setLoading(true);
@@ -36,8 +38,18 @@ export default function UsersPage() {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFiltered(tutors.filter(t => t.full_name?.toLowerCase().includes(q) || t.email?.toLowerCase().includes(q)));
-  }, [search, tutors]);
+    setFiltered(tutors.filter(t => {
+      const matchesSearch = !q
+        || t.full_name?.toLowerCase().includes(q)
+        || t.email?.toLowerCase().includes(q)
+        || t.phone?.toLowerCase().includes(q);
+      const matchesRole = roleFilter === "all" || t.role === roleFilter;
+      const matchesStatus = statusFilter === "all"
+        || (statusFilter === "active" && t.is_active !== false)
+        || (statusFilter === "blocked" && t.is_active === false);
+      return matchesSearch && matchesRole && matchesStatus;
+    }));
+  }, [search, roleFilter, statusFilter, tutors]);
 
   async function createTutor(e: React.FormEvent) {
     e.preventDefault();
@@ -82,12 +94,22 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* Search */}
-        <div className="card" style={{ marginBottom: 16, overflow: "visible" }}>
-          <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="filter-toolbar">
+          <div className="search-field">
             <Search size={16} color="#94a3b8" />
-            <input className="form-input" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or email..." style={{ border: "none", boxShadow: "none", padding: "4px 0", flex: 1 }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, email or phone..." />
           </div>
+          <select className="filter-select" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+            <option value="all">All roles</option>
+            <option value="admin">Admins</option>
+            <option value="tutor">Tutors</option>
+            <option value="parent">Parents</option>
+          </select>
+          <select className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="all">All status</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+          </select>
         </div>
 
         {/* Table */}
@@ -104,6 +126,7 @@ export default function UsersPage() {
               <p>Add your first team or parent account to get started.</p>
             </div>
           ) : (
+              <div className="table-shell">
               <table className="data-table">
               <thead>
                 <tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
@@ -157,6 +180,7 @@ export default function UsersPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { formatCurrency, formatFeePeriod } from "@/lib/portal";
-import { DollarSign, Plus, X, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { DollarSign, Plus, X, AlertCircle, CheckCircle, Clock, Search } from "lucide-react";
 
 interface Fee {
   id: string;
@@ -12,6 +12,7 @@ interface Fee {
   parent_name?: string;
   parent_whatsapp?: string;
   parent_phone?: string;
+  country?: string;
   amount: number;
   currency: string;
   status: string;
@@ -32,6 +33,9 @@ export default function FeesPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [search, setSearch] = useState("");
+  const [filterCurrency, setFilterCurrency] = useState("all");
+  const [filterCountry, setFilterCountry] = useState("all");
   const [form, setForm] = useState({
     student_id: "",
     amount: "",
@@ -47,12 +51,13 @@ export default function FeesPage() {
   async function load() {
     setLoading(true);
     const [{ data: feesData }, { data: studs }] = await Promise.all([
-      supabase.from("fees").select("id, amount, currency, status, due_date, period_month, period_year, payment_method, notes, created_at, student:students(full_name), parent:profiles!fees_parent_id_fkey(full_name, whatsapp, phone)").order("created_at", { ascending: false }),
+      supabase.from("fees").select("id, amount, currency, status, due_date, period_month, period_year, payment_method, notes, created_at, student:students(full_name, country), parent:profiles!fees_parent_id_fkey(full_name, whatsapp, phone)").order("created_at", { ascending: false }),
       supabase.from("students").select("id, full_name").eq("is_active", true),
     ]);
     setFees((feesData || []).map((f: any) => ({
       ...f,
       student_name: f.student?.full_name || "—",
+      country: f.student?.country || "Unknown",
       parent_name: f.parent?.full_name || "",
       parent_whatsapp: f.parent?.whatsapp || "",
       parent_phone: f.parent?.phone || "",
@@ -63,10 +68,23 @@ export default function FeesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = filterStatus === "all" ? fees : fees.filter(f => f.status === filterStatus);
+  const filtered = fees.filter(f => {
+    const q = search.trim().toLowerCase();
+    const matchesSearch = !q
+      || f.student_name.toLowerCase().includes(q)
+      || f.parent_name?.toLowerCase().includes(q)
+      || f.notes?.toLowerCase().includes(q)
+      || f.country?.toLowerCase().includes(q);
+    const matchesStatus = filterStatus === "all" || f.status === filterStatus;
+    const matchesCurrency = filterCurrency === "all" || f.currency === filterCurrency;
+    const matchesCountry = filterCountry === "all" || (f.country || "Unknown") === filterCountry;
+    return matchesSearch && matchesStatus && matchesCurrency && matchesCountry;
+  });
   const totalPaid = fees.filter(f => f.status === "paid").reduce((s, f) => s + f.amount, 0);
   const totalPending = fees.filter(f => f.status === "pending").reduce((s, f) => s + f.amount, 0);
   const totalOverdue = fees.filter(f => f.status === "overdue").reduce((s, f) => s + f.amount, 0);
+  const currencies = Array.from(new Set(fees.map(f => f.currency || "USD"))).sort();
+  const countries = Array.from(new Set(fees.map(f => f.country || "Unknown"))).sort();
 
   async function addFee(e: React.FormEvent) {
     e.preventDefault();
@@ -121,23 +139,37 @@ export default function FeesPage() {
           ))}
         </div>
 
-        {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-          {["all", "paid", "pending", "overdue", "waived"].map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)} className={`btn btn-sm ${filterStatus === s ? "btn-primary" : "btn-ghost"}`} style={{ textTransform: "capitalize" }}>{s}</button>
-          ))}
+        <div className="filter-toolbar">
+          <div className="search-field">
+            <Search size={16} color="#94a3b8" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search invoice, student, parent, country..." />
+          </div>
+          <select className="filter-select" value={filterCountry} onChange={e => setFilterCountry(e.target.value)}>
+            <option value="all">All countries</option>
+            {countries.map(country => <option key={country} value={country}>{country}</option>)}
+          </select>
+          <select className="filter-select" value={filterCurrency} onChange={e => setFilterCurrency(e.target.value)}>
+            <option value="all">All currencies</option>
+            {currencies.map(currency => <option key={currency} value={currency}>{currency}</option>)}
+          </select>
+          <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="all">All status</option>
+            {["paid", "pending", "overdue", "waived"].map(status => <option key={status} value={status}>{status}</option>)}
+          </select>
         </div>
 
         <div className="card">
           {loading ? <div className="empty-state"><div style={{ width: 36, height: 36, border: "3px solid #e2e8f0", borderTopColor: "#1b5e42", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
             : filtered.length === 0 ? <div className="empty-state"><DollarSign size={40} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No fee records</h3><p>Add your first fee record.</p></div>
             : (
+              <div className="table-shell">
               <table className="data-table">
-                <thead><tr><th>Student</th><th>Invoice</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Student</th><th>Country</th><th>Invoice</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
                   {filtered.map(f => (
                     <tr key={f.id}>
                       <td><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div className="avatar" style={{ width: 28, height: 28, fontSize: "0.7rem" }}>{f.student_name.charAt(0)}</div><span style={{ fontWeight: 600 }}>{f.student_name}</span></div></td>
+                      <td style={{ color: "#64748b" }}>{f.country || "—"}</td>
                       <td>
                         <div style={{ fontWeight: 600, color: "#0f172a" }}>{formatFeePeriod(f.period_month, f.period_year)}</div>
                         <div style={{ color: "#64748b", fontSize: "0.72rem", marginTop: 2 }}>{f.notes || "Monthly tuition invoice"}</div>
@@ -169,6 +201,7 @@ export default function FeesPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
         </div>
 

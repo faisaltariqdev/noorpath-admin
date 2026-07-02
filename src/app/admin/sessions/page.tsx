@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { getSessionSubject } from "@/lib/portal";
-import { Calendar, Plus, X, Video } from "lucide-react";
+import { Calendar, Plus, X, Video, Search } from "lucide-react";
 
 interface Session { id: string; student_name: string; tutor_name: string; scheduled_at: string; duration: number; status: string; course?: string; meeting_link: string; notes?: string; }
 const STATUS_BADGE: Record<string, string> = { scheduled: "badge badge-blue", completed: "badge badge-green", cancelled: "badge badge-red", no_show: "badge badge-gray" };
@@ -16,6 +16,8 @@ export default function SessionsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [search, setSearch] = useState("");
+  const [filterTutor, setFilterTutor] = useState("all");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ student_id: "", tutor_id: "", scheduled_at: "", duration_minutes: "30", meeting_link: "", notes: "" });
 
@@ -44,7 +46,18 @@ export default function SessionsPage() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = filterStatus === "all" ? sessions : sessions.filter(s => s.status === filterStatus);
+  const filtered = sessions.filter(s => {
+    const q = search.trim().toLowerCase();
+    const matchesSearch = !q
+      || s.student_name.toLowerCase().includes(q)
+      || s.tutor_name.toLowerCase().includes(q)
+      || s.course?.toLowerCase().includes(q)
+      || s.notes?.toLowerCase().includes(q);
+    const matchesStatus = filterStatus === "all" || s.status === filterStatus;
+    const matchesTutor = filterTutor === "all" || s.tutor_name === filterTutor;
+    return matchesSearch && matchesStatus && matchesTutor;
+  });
+  const tutorNames = Array.from(new Set(sessions.map(s => s.tutor_name || "Unassigned"))).sort();
 
   async function addSession(e: React.FormEvent) {
     e.preventDefault();
@@ -79,15 +92,25 @@ export default function SessionsPage() {
         </div>
       </div>
       <div className="page-body">
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-          {["all", "scheduled", "completed", "cancelled", "no_show"].map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)} className={`btn btn-sm ${filterStatus === s ? "btn-primary" : "btn-ghost"}`} style={{ textTransform: "capitalize" }}>{s.replace("_", " ")}</button>
-          ))}
+        <div className="filter-toolbar">
+          <div className="search-field">
+            <Search size={16} color="#94a3b8" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search student, tutor, surah, class focus..." />
+          </div>
+          <select className="filter-select" value={filterTutor} onChange={e => setFilterTutor(e.target.value)}>
+            <option value="all">All tutors</option>
+            {tutorNames.map(tutor => <option key={tutor} value={tutor}>{tutor}</option>)}
+          </select>
+          <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="all">All status</option>
+            {["scheduled", "completed", "cancelled", "no_show"].map(status => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
+          </select>
         </div>
         <div className="card">
           {loading ? <div className="empty-state"><div style={{ width: 36, height: 36, border: "3px solid #e2e8f0", borderTopColor: "#1b5e42", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
             : filtered.length === 0 ? <div className="empty-state"><Calendar size={40} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No sessions found</h3><p>Schedule your first class.</p></div>
             : (
+              <div className="table-shell">
               <table className="data-table">
                 <thead><tr><th>Student</th><th>Tutor</th><th>Class Focus</th><th>Date & Time</th><th>Duration</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
@@ -110,6 +133,7 @@ export default function SessionsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
         </div>
 

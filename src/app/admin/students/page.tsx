@@ -33,6 +33,8 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
+  const [filterCountry, setFilterCountry] = useState("all");
+  const [filterLevel, setFilterLevel] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -73,10 +75,18 @@ export default function StudentsPage() {
     let list = students;
     if (filterActive === "active") list = list.filter(s => s.is_active);
     if (filterActive === "inactive") list = list.filter(s => !s.is_active);
+    if (filterCountry !== "all") list = list.filter(s => (s.country || "Unknown") === filterCountry);
+    if (filterLevel !== "all") list = list.filter(s => s.level === filterLevel);
     const q = search.toLowerCase();
-    if (q) list = list.filter(s => s.full_name?.toLowerCase().includes(q) || s.country?.toLowerCase().includes(q));
+    if (q) list = list.filter(s =>
+      s.full_name?.toLowerCase().includes(q)
+      || s.country?.toLowerCase().includes(q)
+      || s.course?.toLowerCase().includes(q)
+      || s.parent_name?.toLowerCase().includes(q)
+      || s.tutor_name?.toLowerCase().includes(q)
+    );
     setFiltered(list);
-  }, [search, filterActive, students]);
+  }, [search, filterActive, filterCountry, filterLevel, students]);
 
   async function addStudent(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +120,7 @@ export default function StudentsPage() {
   }
 
   const activeCount = students.filter(s => s.is_active).length;
+  const countries = Array.from(new Set(students.map(s => s.country || "Unknown"))).sort();
 
   return (
     <>
@@ -127,18 +138,24 @@ export default function StudentsPage() {
         {msg && <div style={{ background: msg.startsWith("Error") ? "#fef2f2" : "#f0fdf4", border: `1px solid ${msg.startsWith("Error") ? "#fecaca" : "#bbf7d0"}`, color: msg.startsWith("Error") ? "#b91c1c" : "#15803d", borderRadius: 10, padding: "11px 16px", marginBottom: 16, fontSize: "0.83rem" }}>{msg}</div>}
 
         {/* Filters */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <div className="card" style={{ flex: 1, overflow: "visible" }}>
-            <div style={{ padding: "11px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-              <Search size={15} color="#94a3b8" />
-              <input className="form-input" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search students..." style={{ border: "none", boxShadow: "none", padding: "2px 0", flex: 1 }} />
-            </div>
+        <div className="filter-toolbar">
+          <div className="search-field">
+            <Search size={16} color="#94a3b8" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search student, country, parent, tutor..." />
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {(["all", "active", "inactive"] as const).map(f => (
-              <button key={f} onClick={() => setFilterActive(f)} className={`btn btn-sm ${filterActive === f ? "btn-primary" : "btn-ghost"}`} style={{ textTransform: "capitalize" }}>{f}</button>
-            ))}
-          </div>
+          <select className="filter-select" value={filterCountry} onChange={e => setFilterCountry(e.target.value)}>
+            <option value="all">All countries</option>
+            {countries.map(country => <option key={country} value={country}>{country}</option>)}
+          </select>
+          <select className="filter-select" value={filterLevel} onChange={e => setFilterLevel(e.target.value)}>
+            <option value="all">All levels</option>
+            {LEVELS.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
+          </select>
+          <select className="filter-select" value={filterActive} onChange={e => setFilterActive(e.target.value as "all" | "active" | "inactive")}>
+            <option value="all">All status</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+          </select>
         </div>
 
         <div className="card">
@@ -147,6 +164,7 @@ export default function StudentsPage() {
           ) : filtered.length === 0 ? (
             <div className="empty-state"><GraduationCap size={40} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No students found</h3><p>Add your first student to get started.</p></div>
           ) : (
+            <div className="table-shell">
             <table className="data-table">
                   <thead><tr><th>Student</th><th>Age</th><th>Country</th><th>Level</th><th>Course</th><th>Parent</th><th>Tutor</th><th>Status</th><th>Enrolled</th></tr></thead>
               <tbody>
@@ -169,6 +187,7 @@ export default function StudentsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
-import { Bell, MessageCircle, Clock, DollarSign, CheckCircle, ChevronRight, AlertTriangle, Phone } from "lucide-react";
+import { Bell, MessageCircle, Clock, DollarSign, CheckCircle, AlertTriangle, Phone, Search, Filter } from "lucide-react";
 
 interface PendingFee {
   id: string;
@@ -36,6 +36,10 @@ export default function SettingsPage() {
   const [feeReminderEnabled, setFeeReminderEnabled] = useState(true);
   const [classReminderEnabled, setClassReminderEnabled] = useState(true);
   const [reminderDays, setReminderDays] = useState(3);
+  const [feeSearch, setFeeSearch] = useState("");
+  const [feeAmountFilter, setFeeAmountFilter] = useState("all");
+  const [feePhoneFilter, setFeePhoneFilter] = useState("all");
+  const [classSearch, setClassSearch] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("noorpath_settings");
@@ -153,6 +157,29 @@ export default function SettingsPage() {
     );
   }
 
+  const filteredFees = pendingFees.filter((fee) => {
+    const q = feeSearch.trim().toLowerCase();
+    const matchesSearch = !q
+      || fee.student_name.toLowerCase().includes(q)
+      || fee.parent_name?.toLowerCase().includes(q)
+      || `${MONTH_NAMES[fee.period_month || 0]} ${fee.period_year || ""}`.toLowerCase().includes(q);
+    const matchesAmount = feeAmountFilter === "all"
+      || (feeAmountFilter === "under50" && fee.amount < 50)
+      || (feeAmountFilter === "50to100" && fee.amount >= 50 && fee.amount <= 100)
+      || (feeAmountFilter === "over100" && fee.amount > 100);
+    const matchesPhone = feePhoneFilter === "all"
+      || (feePhoneFilter === "hasPhone" && Boolean(fee.parent_whatsapp))
+      || (feePhoneFilter === "missingPhone" && !fee.parent_whatsapp);
+    return matchesSearch && matchesAmount && matchesPhone;
+  });
+
+  const filteredClasses = upcomingClasses.filter((cls) => {
+    const q = classSearch.trim().toLowerCase();
+    return !q
+      || cls.student_name.toLowerCase().includes(q)
+      || cls.tutor_name?.toLowerCase().includes(q);
+  });
+
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       <TopBar title="Settings" subtitle="System configuration and automated reminders" />
@@ -170,9 +197,9 @@ export default function SettingsPage() {
             <Bell size={18} style={{ color: "var(--muted)" }} />
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <div style={{ display: "grid", gap: 14, padding: 18 }}>
             {/* Fee Reminders */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 0", borderBottom: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, padding: 18, border: "1px solid var(--border)", borderRadius: 14, background: "#fbfefc", flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
                 <div style={{ width: 40, height: 40, borderRadius: "var(--radius-sm)", background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <DollarSign size={18} style={{ color: "#1b5e42" }} />
@@ -200,7 +227,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Class Reminders */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, padding: 18, border: "1px solid var(--border)", borderRadius: 14, background: "#fffdf7", flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
                 <div style={{ width: 40, height: 40, borderRadius: "var(--radius-sm)", background: "#fffbeb", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Clock size={18} style={{ color: "#d97706" }} />
@@ -224,7 +251,7 @@ export default function SettingsPage() {
               <div>
                 <h3 className="card-title">Pending Fee Reminders</h3>
                 <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: 4 }}>
-                  {pendingFees.length} pending fee{pendingFees.length !== 1 ? "s" : ""} — click to send WhatsApp reminder
+                  {filteredFees.length} of {pendingFees.length} pending fee{pendingFees.length !== 1 ? "s" : ""} — click to send WhatsApp reminder
                 </p>
               </div>
               {pendingFees.length > 0 && (
@@ -234,29 +261,48 @@ export default function SettingsPage() {
               )}
             </div>
 
+            <div style={{ padding: "16px 22px 0" }}>
+              <div className="filter-toolbar">
+                <div className="search-field">
+                  <Search size={16} color="#94a3b8" />
+                  <input value={feeSearch} onChange={e => setFeeSearch(e.target.value)} placeholder="Search student, parent, or month..." />
+                </div>
+                <select className="filter-select" value={feeAmountFilter} onChange={e => setFeeAmountFilter(e.target.value)}>
+                  <option value="all">All amounts</option>
+                  <option value="under50">Under 50</option>
+                  <option value="50to100">50 to 100</option>
+                  <option value="over100">Over 100</option>
+                </select>
+                <select className="filter-select" value={feePhoneFilter} onChange={e => setFeePhoneFilter(e.target.value)}>
+                  <option value="all">All contacts</option>
+                  <option value="hasPhone">WhatsApp available</option>
+                  <option value="missingPhone">Missing number</option>
+                </select>
+              </div>
+            </div>
+
             {loading ? (
               <div style={{ textAlign: "center", padding: 32 }}><div className="spinner" /></div>
-            ) : pendingFees.length === 0 ? (
+            ) : filteredFees.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--muted)" }}>
                 <CheckCircle size={36} style={{ color: "#86efac", marginBottom: 12 }} />
-                <p>All fees are up to date! No reminders needed.</p>
+                <p>{pendingFees.length === 0 ? "All fees are up to date! No reminders needed." : "No fee reminders match the selected filters."}</p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                {pendingFees.map((fee, idx) => (
-                  <div key={fee.id} style={{
-                    display: "flex", alignItems: "center", gap: 16, padding: "14px 0",
-                    borderTop: idx > 0 ? "1px solid var(--border)" : "none",
-                    flexWrap: "wrap",
-                  }}>
-                    <div style={{ flex: 1, minWidth: 180 }}>
-                      <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--charcoal)" }}>{fee.student_name}</div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 2 }}>
-                        {fee.parent_name && <span>Parent: {fee.parent_name} · </span>}
-                        {fee.period_month ? `${MONTH_NAMES[fee.period_month]} ${fee.period_year}` : "Pending fee"}
+              <div className="list-stack">
+                {filteredFees.map((fee) => (
+                  <div key={fee.id} className="list-row">
+                    <div>
+                      <div className="list-title">{fee.student_name}</div>
+                      <div className="list-meta">
+                        {fee.parent_name && <span>Parent: {fee.parent_name}</span>}
+                        <span>{fee.period_month ? `${MONTH_NAMES[fee.period_month]} ${fee.period_year}` : "Pending fee"}</span>
+                        <span className={fee.parent_whatsapp ? "badge badge-green" : "badge badge-gray"}>
+                          {fee.parent_whatsapp ? "WhatsApp ready" : "No number"}
+                        </span>
                       </div>
                     </div>
-                    <div style={{ fontWeight: 800, color: "#dc2626", fontSize: "0.95rem" }}>${fee.amount}</div>
+                    <div className="metric-pill">${fee.amount}</div>
                     {fee.parent_whatsapp ? (
                       <button
                         onClick={() => sendFeeReminder(fee)}
@@ -273,7 +319,7 @@ export default function SettingsPage() {
                         {sentIds.has(fee.id) ? <><CheckCircle size={13} /> Sent</> : <><MessageCircle size={13} /> Send WhatsApp</>}
                       </button>
                     ) : (
-                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }}>
+                      <div className="action-muted">
                         <Phone size={12} /> No number
                       </div>
                     )}
@@ -296,37 +342,44 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            <div style={{ padding: "16px 22px 0" }}>
+              <div className="filter-toolbar" style={{ gridTemplateColumns: "1fr" }}>
+                <div className="search-field">
+                  <Search size={16} color="#94a3b8" />
+                  <input value={classSearch} onChange={e => setClassSearch(e.target.value)} placeholder="Search student or tutor..." />
+                </div>
+              </div>
+            </div>
+
             {loading ? (
               <div style={{ textAlign: "center", padding: 32 }}><div className="spinner" /></div>
-            ) : upcomingClasses.length === 0 ? (
+            ) : filteredClasses.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--muted)" }}>
                 <Clock size={36} style={{ opacity: 0.3, marginBottom: 12 }} />
-                <p>No classes scheduled in the next 48 hours.</p>
+                <p>{upcomingClasses.length === 0 ? "No classes scheduled in the next 48 hours." : "No classes match the search."}</p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                {upcomingClasses.map((cls, idx) => {
+              <div className="list-stack">
+                {filteredClasses.map((cls) => {
                   const timeUntil = Math.round((new Date(cls.scheduled_at).getTime() - Date.now()) / 60000);
                   const isUrgent = timeUntil <= 30;
                   return (
-                    <div key={cls.id} style={{
-                      display: "flex", alignItems: "center", gap: 16, padding: "14px 0",
-                      borderTop: idx > 0 ? "1px solid var(--border)" : "none",
-                      flexWrap: "wrap",
-                    }}>
-                      <div style={{
-                        width: 40, height: 40, borderRadius: "var(--radius-sm)",
-                        background: isUrgent ? "#fef9c3" : "#f8fafc",
-                        border: `1px solid ${isUrgent ? "#fde047" : "var(--border)"}`,
-                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      }}>
-                        {isUrgent ? <AlertTriangle size={16} style={{ color: "#d97706" }} /> : <Clock size={16} style={{ color: "#64748b" }} />}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 180 }}>
-                        <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--charcoal)" }}>{cls.student_name}</div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 2 }}>
+                    <div key={cls.id} className="list-row">
+                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                        <div style={{
+                          width: 42, height: 42, borderRadius: "var(--radius-sm)",
+                          background: isUrgent ? "#fef9c3" : "#f8fafc",
+                          border: `1px solid ${isUrgent ? "#fde047" : "var(--border)"}`,
+                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                        }}>
+                          {isUrgent ? <AlertTriangle size={16} style={{ color: "#d97706" }} /> : <Clock size={16} style={{ color: "#64748b" }} />}
+                        </div>
+                        <div>
+                          <div className="list-title">{cls.student_name}</div>
+                          <div className="list-meta">
                           {new Date(cls.scheduled_at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                           {cls.tutor_name && ` · ${cls.tutor_name}`}
+                          </div>
                         </div>
                       </div>
                       <div style={{ fontSize: "0.78rem", fontWeight: 700, color: isUrgent ? "#d97706" : "var(--muted)" }}>
@@ -347,9 +400,8 @@ export default function SettingsPage() {
                           {sentIds.has(cls.id) ? <><CheckCircle size={13} /> Sent</> : <><MessageCircle size={13} /> Send WhatsApp</>}
                         </button>
                       ) : (
-                        <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No number</div>
+                        <div className="action-muted">No number</div>
                       )}
-                      <ChevronRight size={14} style={{ color: "var(--border)" }} />
                     </div>
                   );
                 })}

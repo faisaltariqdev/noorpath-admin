@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
-import { FileText, CheckCircle, XCircle, Star, TrendingUp } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Star, TrendingUp, Search } from "lucide-react";
 
 interface Report {
   id: string;
@@ -32,6 +32,8 @@ export default function AdminReportsPage() {
   const [loading, setLoading]     = useState(true);
   const [selected, setSelected]   = useState<Report | null>(null);
   const [filterRating, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [filterTutor, setFilterTutor] = useState("all");
 
   useEffect(() => {
     async function load() {
@@ -44,8 +46,20 @@ export default function AdminReportsPage() {
     load();
   }, []);
 
-  const filtered = filterRating === "all" ? reports : reports.filter(r => r.overall_rating === filterRating);
+  const filtered = reports.filter(r => {
+    const q = search.trim().toLowerCase();
+    const matchesSearch = !q
+      || r.student_name.toLowerCase().includes(q)
+      || r.tutor_name.toLowerCase().includes(q)
+      || r.surah_covered?.toLowerCase().includes(q)
+      || r.pages_covered?.toLowerCase().includes(q)
+      || r.tutor_notes?.toLowerCase().includes(q);
+    const matchesRating = filterRating === "all" || r.overall_rating === filterRating;
+    const matchesTutor = filterTutor === "all" || r.tutor_name === filterTutor;
+    return matchesSearch && matchesRating && matchesTutor;
+  });
   const avgScore = reports.length ? (reports.reduce((s, r) => s + (r.tajweed_stars || 0), 0) / reports.length).toFixed(1) : "0";
+  const tutorNames = Array.from(new Set(reports.map(r => r.tutor_name || "Unassigned"))).sort();
 
   return (
     <>
@@ -70,10 +84,19 @@ export default function AdminReportsPage() {
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
-          {["all", "excellent", "good", "average", "needs_improvement"].map(r => (
-            <button key={r} onClick={() => setFilter(r)} className={`btn btn-sm ${filterRating === r ? "btn-primary" : "btn-ghost"}`} style={{ textTransform: "capitalize" }}>{r.replace("_", " ")}</button>
-          ))}
+        <div className="filter-toolbar">
+          <div className="search-field">
+            <Search size={16} color="#94a3b8" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search student, tutor, surah, notes..." />
+          </div>
+          <select className="filter-select" value={filterTutor} onChange={e => setFilterTutor(e.target.value)}>
+            <option value="all">All tutors</option>
+            {tutorNames.map(tutor => <option key={tutor} value={tutor}>{tutor}</option>)}
+          </select>
+          <select className="filter-select" value={filterRating} onChange={e => setFilter(e.target.value)}>
+            <option value="all">All ratings</option>
+            {["excellent", "good", "average", "needs_improvement"].map(rating => <option key={rating} value={rating}>{rating.replace("_", " ")}</option>)}
+          </select>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: selected ? "1fr 380px" : "1fr", gap: 20 }}>
@@ -81,6 +104,7 @@ export default function AdminReportsPage() {
             {loading ? <div className="empty-state"><div style={{ width: 36, height: 36, border: "3px solid #e2e8f0", borderTopColor: "#1b5e42", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
               : filtered.length === 0 ? <div className="empty-state"><FileText size={40} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No reports found</h3></div>
               : (
+                <div className="table-shell">
                 <table className="data-table">
                   <thead><tr><th>Student</th><th>Tutor</th><th>Coverage</th><th>Tajweed</th><th>Rating</th><th>HW</th><th>Date</th></tr></thead>
                   <tbody>
@@ -105,6 +129,7 @@ export default function AdminReportsPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
               )}
           </div>
           {selected && (
