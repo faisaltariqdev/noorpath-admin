@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { getSessionSubject } from "@/lib/portal";
+import { formatTimePair } from "@/lib/timezones";
 import { Calendar, Plus, X, Video, Search } from "lucide-react";
 
-interface Session { id: string; student_name: string; tutor_name: string; scheduled_at: string; duration: number; status: string; course?: string; meeting_link: string; notes?: string; }
+interface Session { id: string; student_name: string; tutor_name: string; scheduled_at: string; duration: number; status: string; course?: string; meeting_link: string; notes?: string; student_timezone?: string; tutor_timezone?: string; }
 const STATUS_BADGE: Record<string, string> = { scheduled: "badge badge-blue", completed: "badge badge-green", cancelled: "badge badge-red", no_show: "badge badge-gray" };
 
 export default function SessionsPage() {
@@ -24,7 +25,7 @@ export default function SessionsPage() {
   async function load() {
     setLoading(true);
     const [{ data: sess }, { data: studs }, { data: profs }] = await Promise.all([
-      supabase.from("class_sessions").select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course), tutor:profiles(full_name)").order("scheduled_at", { ascending: false }).limit(100),
+      supabase.from("class_sessions").select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course, timezone), tutor:profiles(full_name, timezone)").order("scheduled_at", { ascending: false }).limit(100),
       supabase.from("students").select("id, full_name").eq("is_active", true),
       supabase.from("profiles").select("id, full_name").eq("role", "tutor"),
     ]);
@@ -36,6 +37,8 @@ export default function SessionsPage() {
       duration: s.duration_minutes || 30,
       status: s.status,
       course: s.student?.course || "",
+      student_timezone: s.student?.timezone || "",
+      tutor_timezone: s.tutor?.timezone || "",
       meeting_link: s.meeting_link || "",
       notes: s.notes || "",
     })));
@@ -112,14 +115,21 @@ export default function SessionsPage() {
             : (
               <div className="table-shell">
               <table className="data-table">
-                <thead><tr><th>Student</th><th>Tutor</th><th>Class Focus</th><th>Date & Time</th><th>Duration</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Student</th><th>Tutor</th><th>Class Focus</th><th>Local / PKT Time</th><th>Duration</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
-                  {filtered.map(s => (
+                  {filtered.map(s => {
+                    const studentTime = formatTimePair(s.scheduled_at, s.student_timezone);
+                    const tutorTime = formatTimePair(s.scheduled_at, s.tutor_timezone);
+                    return (
                     <tr key={s.id}>
                       <td><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div className="avatar" style={{ width: 28, height: 28, fontSize: "0.7rem" }}>{s.student_name.charAt(0)}</div><span style={{ fontWeight: 600 }}>{s.student_name}</span></div></td>
                       <td style={{ color: "#64748b" }}>{s.tutor_name}</td>
                       <td><span className="badge badge-purple">{getSessionSubject(s.course, s.notes)}</span></td>
-                      <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(s.scheduled_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
+                      <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>
+                        <div style={{ fontWeight: 700, color: "#0f172a" }}>Student: {studentTime.local}</div>
+                        <div style={{ fontSize: "0.72rem", marginTop: 2 }}>Tutor: {tutorTime.local}</div>
+                        <div style={{ fontSize: "0.72rem", color: "#1b5e42", marginTop: 2 }}>PKT: {studentTime.pkt}</div>
+                      </td>
                       <td style={{ color: "#64748b" }}>{s.duration} min</td>
                       <td><span className={STATUS_BADGE[s.status] || "badge badge-gray"}>{s.status}</span></td>
                       <td>
@@ -130,7 +140,7 @@ export default function SessionsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
               </div>

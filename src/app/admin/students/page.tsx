@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { formatStudentLevel } from "@/lib/portal";
+import { TIMEZONE_OPTIONS, timezoneForCountry } from "@/lib/timezones";
 import { GraduationCap, Plus, Search, X, CheckCircle, XCircle } from "lucide-react";
 
 interface Student {
@@ -30,6 +31,7 @@ export default function StudentsPage() {
   const [filtered, setFiltered] = useState<Student[]>([]);
   const [tutors, setTutors] = useState<{ id: string; full_name: string }[]>([]);
   const [parents, setParents] = useState<{ id: string; full_name: string }[]>([]);
+  const [courses, setCourses] = useState<{ id: string; title: string; level: string; category: string; is_active: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
@@ -52,10 +54,11 @@ export default function StudentsPage() {
 
   async function load() {
     setLoading(true);
-    const [{ data: studs }, { data: tutorProfiles }, { data: parentProfiles }] = await Promise.all([
+    const [{ data: studs }, { data: tutorProfiles }, { data: parentProfiles }, { data: courseRows }] = await Promise.all([
       supabase.from("students").select("id, full_name, age, level, course, is_active, created_at, country, tutor:profiles!students_tutor_id_fkey(full_name), parent:profiles!students_parent_id_fkey(full_name)").order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name").eq("role", "tutor"),
       supabase.from("profiles").select("id, full_name").eq("role", "parent"),
+      supabase.from("courses").select("id, title, level, category, is_active").eq("is_active", true).order("sort_order"),
     ]);
     const mapped = (studs || []).map((s: any) => ({
       ...s,
@@ -66,6 +69,7 @@ export default function StudentsPage() {
     setFiltered(mapped);
     setTutors(tutorProfiles || []);
     setParents(parentProfiles || []);
+    setCourses(courseRows || []);
     setLoading(false);
   }
 
@@ -117,6 +121,10 @@ export default function StudentsPage() {
   async function toggleActive(id: string, current: boolean) {
     await supabase.from("students").update({ is_active: !current }).eq("id", id);
     setStudents(p => p.map(s => s.id === id ? { ...s, is_active: !current } : s));
+  }
+
+  function handleCountryChange(country: string) {
+    setForm(p => ({ ...p, country, timezone: timezoneForCountry(country) || p.timezone }));
   }
 
   const activeCount = students.filter(s => s.is_active).length;
@@ -211,9 +219,12 @@ export default function StudentsPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Country</label>
-                    <input className="form-input" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} placeholder="UK, USA, Pakistan..." />
+                    <input className="form-input" list="student-country-suggestions" value={form.country} onChange={e => handleCountryChange(e.target.value)} placeholder="UK, USA, Pakistan..." />
                   </div>
                 </div>
+                <datalist id="student-country-suggestions">
+                  {TIMEZONE_OPTIONS.map(option => <option key={option.country} value={option.country}>{option.label}</option>)}
+                </datalist>
                 <div className="form-group">
                   <label className="form-label">Learning Level</label>
                   <select className="form-input form-select" value={form.level} onChange={e => setForm(p => ({ ...p, level: e.target.value }))}>
@@ -222,7 +233,14 @@ export default function StudentsPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Course</label>
-                  <input className="form-input" value={form.course} onChange={e => setForm(p => ({ ...p, course: e.target.value }))} placeholder="Quran Recitation, Tajweed, Hifz..." />
+                  <select className="form-input form-select" value={form.course} onChange={e => setForm(p => ({ ...p, course: e.target.value }))}>
+                    <option value="">Select course</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.title}>
+                        {course.title} · {course.level}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Link Parent</label>
@@ -246,7 +264,10 @@ export default function StudentsPage() {
                 </div>
                 <div className="form-group" style={{ marginBottom: 24 }}>
                   <label className="form-label">Timezone</label>
-                  <input className="form-input" value={form.timezone} onChange={e => setForm(p => ({ ...p, timezone: e.target.value }))} placeholder="e.g. Europe/London, America/New_York" />
+                  <input className="form-input" list="student-timezone-suggestions" value={form.timezone} onChange={e => setForm(p => ({ ...p, timezone: e.target.value }))} placeholder="e.g. Europe/London, America/New_York" />
+                  <datalist id="student-timezone-suggestions">
+                    {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+                  </datalist>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
                   <button type="button" className="btn btn-ghost" onClick={() => setShowForm(false)} style={{ flex: 1 }}>Cancel</button>

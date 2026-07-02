@@ -5,6 +5,7 @@ export type FeeStatus = "pending" | "paid" | "overdue" | "waived";
 export type TrialStatus = "booked" | "attended" | "converted" | "lost";
 export type OverallRating = "excellent" | "good" | "average" | "needs_improvement";
 export type EarningStatus = "pending" | "paid";
+export type CourseLevel = "beginner" | "intermediate" | "advanced";
 
 export interface Profile {
   id: string;
@@ -38,6 +39,21 @@ export interface Student {
   enrolled_at: string;
   notes?: string;
   created_at: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  level: CourseLevel;
+  duration_weeks?: number;
+  price_amount?: number;
+  currency: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ClassSession {
@@ -185,6 +201,7 @@ export interface Database {
   public: {
     Tables: {
       profiles: { Row: Profile; Insert: Partial<Profile>; Update: Partial<Profile> };
+      courses: { Row: Course; Insert: Partial<Course>; Update: Partial<Course> };
       students: { Row: Student; Insert: Partial<Student>; Update: Partial<Student> };
       class_sessions: { Row: ClassSession; Insert: Partial<ClassSession>; Update: Partial<ClassSession> };
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };

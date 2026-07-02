@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { getSessionSubject } from "@/lib/portal";
+import { formatTimePair } from "@/lib/timezones";
 import { Calendar, Video, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Session {
@@ -16,6 +17,8 @@ interface Session {
   status: string;
   meeting_link: string;
   notes: string;
+  student_timezone?: string;
+  tutor_timezone?: string;
 }
 const STATUS_BADGE: Record<string, string> = { scheduled: "badge badge-blue", completed: "badge badge-green", cancelled: "badge badge-red", no_show: "badge badge-gray" };
 
@@ -41,7 +44,7 @@ export default function TutorClassesPage() {
       const endDate = new Date(view === "day" ? baseDate : startOfWeek);
       endDate.setDate(endDate.getDate() + (view === "day" ? 1 : 7));
       const { data } = await supabase.from("class_sessions")
-        .select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course)")
+        .select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course, timezone), tutor:profiles!class_sessions_tutor_id_fkey(timezone)")
         .eq("tutor_id", user.id)
         .gte("scheduled_at", start)
         .lt("scheduled_at", endDate.toISOString().split("T")[0])
@@ -55,6 +58,8 @@ export default function TutorClassesPage() {
         status: s.status,
         meeting_link: s.meeting_link || "",
         notes: s.notes || "",
+        student_timezone: s.student?.timezone || "",
+        tutor_timezone: s.tutor?.timezone || "",
       })));
       setLoading(false);
     }
@@ -111,17 +116,21 @@ export default function TutorClassesPage() {
                     <div style={{ width: 32, height: 32, borderRadius: "50%", background: isToday(d) ? "#1b5e42" : "transparent", color: isToday(d) ? "#fff" : "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", margin: "4px auto 0", fontWeight: 700, fontSize: "0.9rem", fontFamily: "var(--font-playfair), Georgia, serif" }}>{d.getDate()}</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 80 }}>
-                    {daySess.length === 0 ? <div style={{ border: "1px dashed #e2e8f0", borderRadius: 8, height: 60 }} /> : daySess.map(s => (
+                    {daySess.length === 0 ? <div style={{ border: "1px dashed #e2e8f0", borderRadius: 8, height: 60 }} /> : daySess.map(s => {
+                      const times = formatTimePair(s.scheduled_at, s.student_timezone || s.tutor_timezone);
+                      return (
                       <div key={s.id} style={{ background: s.status === "completed" ? "#f0fdf4" : s.status === "cancelled" ? "#f1f5f9" : "#eff6ff", border: `1px solid ${s.status === "completed" ? "#bbf7d0" : s.status === "cancelled" ? "#e2e8f0" : "#bfdbfe"}`, borderRadius: 8, padding: "8px 10px" }}>
                         <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.student_name}</div>
-                        <div style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 2 }}>{new Date(s.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} · {s.duration}m · {getSessionSubject(s.course, s.notes)}</div>
+                        <div style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 2 }}>Local: {times.local}</div>
+                        <div style={{ fontSize: "0.62rem", color: "#1b5e42", marginTop: 1 }}>PKT: {times.pkt}</div>
+                        <div style={{ fontSize: "0.62rem", color: "#64748b", marginTop: 1 }}>{s.duration}m · {getSessionSubject(s.course, s.notes)}</div>
                         <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
                           {s.meeting_link && <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" style={{ background: "#1b5e42", color: "#fff", fontSize: "0.6rem", padding: "2px 6px", borderRadius: 4, textDecoration: "none", fontWeight: 700 }}>Join</a>}
                           {s.status === "scheduled" && <button onClick={() => updateStatus(s.id, "completed")} style={{ background: "#dcfce7", color: "#16a34a", fontSize: "0.6rem", padding: "2px 5px", borderRadius: 4, border: "none", cursor: "pointer", fontWeight: 700 }}>✓</button>}
                           {s.status === "completed" && <Link href={`/tutor/reports/new?session=${s.id}`} style={{ background: "#eff6ff", color: "#2563eb", fontSize: "0.6rem", padding: "2px 6px", borderRadius: 4, textDecoration: "none", fontWeight: 700 }}>Report</Link>}
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </div>
               );
@@ -133,7 +142,9 @@ export default function TutorClassesPage() {
             {sessions.length === 0 ? <div className="empty-state"><Calendar size={40} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No classes today</h3><p>Enjoy your day off! ☀️</p></div>
               : (
                 <div>
-                  {sessions.map(s => (
+                  {sessions.map(s => {
+                    const times = formatTimePair(s.scheduled_at, s.student_timezone || s.tutor_timezone);
+                    return (
                     <div key={s.id} style={{ padding: "18px 22px", borderBottom: "1px solid #f1f5f9", display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
                       <div style={{ width: 52, height: 52, borderRadius: 14, background: "#f0fdf4", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1b5e42" }}>{new Date(s.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</div>
@@ -144,6 +155,10 @@ export default function TutorClassesPage() {
                         <div style={{ fontSize: "0.78rem", color: "#64748b", margin: "2px 0 8px", display: "flex", gap: 10 }}>
                           <span>{getSessionSubject(s.course, s.notes)}</span>
                           <span className={STATUS_BADGE[s.status] || "badge badge-gray"}>{s.status}</span>
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                          <span className="badge badge-blue">Local: {times.local}</span>
+                          <span className="badge badge-green">PKT: {times.pkt}</span>
                         </div>
                         {s.notes && <div style={{ fontSize: "0.78rem", color: "#475569", background: "#f8fafc", borderRadius: 8, padding: "8px 12px" }}>{s.notes}</div>}
                       </div>
@@ -156,7 +171,7 @@ export default function TutorClassesPage() {
                         {s.status === "completed" && <Link href={`/tutor/reports/new?session=${s.id}`} className="btn btn-outline btn-sm"><Clock size={13} /> Report</Link>}
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
           </div>

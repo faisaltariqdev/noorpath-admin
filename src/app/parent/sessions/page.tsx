@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import ParentStudentSwitcher from "@/components/ParentStudentSwitcher";
 import { formatStudentLevel, getSessionSubject } from "@/lib/portal";
+import { formatTimePair } from "@/lib/timezones";
 import { Calendar, Video, Clock, CheckCircle, XCircle } from "lucide-react";
 
 interface StudentInfo {
@@ -12,6 +13,7 @@ interface StudentInfo {
   full_name: string;
   level?: string | null;
   course?: string | null;
+  timezone?: string | null;
 }
 
 interface Session {
@@ -38,7 +40,7 @@ export default function ParentSessionsPage() {
       if (!user) return;
       const { data } = await supabase
         .from("students")
-        .select("id, full_name, level, course")
+        .select("id, full_name, level, course, timezone")
         .eq("parent_id", user.id)
         .eq("is_active", true)
         .order("full_name");
@@ -131,6 +133,7 @@ export default function ParentSessionsPage() {
             {display.map(s => {
               const dt = new Date(s.scheduled_at);
               const isToday = dt.toDateString() === new Date().toDateString();
+              const times = formatTimePair(s.scheduled_at, selectedStudent?.timezone);
               return (
                 <div key={s.id} className="card" style={{ overflow: "visible" }}>
                   <div style={{ padding: "16px 22px", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
@@ -147,7 +150,8 @@ export default function ParentSessionsPage() {
                         <span className={STATUS_BADGE[s.status] || "badge badge-gray"}>{s.status}</span>
                       </div>
                       <div style={{ display: "flex", gap: 16, fontSize: "0.78rem", color: "#64748b", flexWrap: "wrap" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={13} />{dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={13} />Local: {times.local}</span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#1b5e42" }}>PKT: {times.pkt}</span>
                         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Calendar size={13} />{s.duration} minutes</span>
                         <span>Tutor: {s.tutor_name}</span>
                       </div>

@@ -23,6 +23,7 @@ const ADMIN_LINKS: NavSection[] = [
   { section: "Management", items: [
     { href: "/admin/users",         label: "Users & Tutors",    icon: Users },
     { href: "/admin/students",      label: "Students",          icon: GraduationCap },
+    { href: "/admin/courses",       label: "Course Management", icon: BookOpen },
     { href: "/admin/sessions",      label: "All Sessions",      icon: Calendar },
     { href: "/admin/fees",          label: "Fee Management",    icon: DollarSign },
     { href: "/admin/earnings",      label: "Tutor Earnings",    icon: Star },
@@ -150,7 +151,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <div className="sidebar-logo-mark">
-              <Image src="/favicon.png" alt="NoorPath" width={44} height={44} style={{ objectFit: "cover" }} />
+              <Image src="/favicon.svg" alt="NoorPath" width={44} height={44} style={{ objectFit: "cover" }} />
             </div>
             <div>
               <div className="sidebar-brand-name">

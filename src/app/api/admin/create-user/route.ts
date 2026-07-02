@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       whatsapp,
       country,
       timezone,
+      availability,
     } = body ?? {};
 
     if (!full_name || !email || !password || !role) {
@@ -70,6 +71,28 @@ export async function POST(request: Request) {
 
       if (profileError) {
         return NextResponse.json({ error: profileError.message }, { status: 400 });
+      }
+
+      if (role === "tutor" && Array.isArray(availability) && availability.length > 0) {
+        const rows = availability
+          .filter(slot => slot.start_time && slot.end_time)
+          .map(slot => ({
+            tutor_id: data.user!.id,
+            day_of_week: Number(slot.day_of_week),
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            timezone: slot.timezone || timezone || "Asia/Karachi",
+          }));
+
+        if (rows.length > 0) {
+          const { error: availabilityError } = await admin
+            .from("tutor_availability")
+            .insert(rows);
+
+          if (availabilityError) {
+            return NextResponse.json({ error: availabilityError.message }, { status: 400 });
+          }
+        }
       }
     }
 
