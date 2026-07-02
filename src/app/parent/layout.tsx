@@ -2,9 +2,9 @@ import Sidebar from "@/components/Sidebar";
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="admin-layout">
       <Sidebar role="parent" userName="Parent" />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="page-wrapper">{children}</div>
     </div>
   );
 }

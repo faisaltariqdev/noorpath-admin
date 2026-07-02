@@ -4,6 +4,7 @@ export type SessionStatus = "scheduled" | "completed" | "cancelled" | "reschedul
 export type FeeStatus = "pending" | "paid" | "overdue" | "waived";
 export type TrialStatus = "booked" | "attended" | "converted" | "lost";
 export type OverallRating = "excellent" | "good" | "average" | "needs_improvement";
+export type EarningStatus = "pending" | "paid";
 
 export interface Profile {
   id: string;
@@ -55,16 +56,19 @@ export interface ClassSession {
 
 export interface Attendance {
   id: string;
-  session_id: string;
+  session_id?: string;
   student_id: string;
   status: AttendanceStatus;
-  late_minutes: number;
-  marked_at: string;
+  late_minutes?: number;
+  marked_at?: string;
+  tutor_id?: string;
+  notes?: string;
+  session_date?: string;
 }
 
 export interface ProgressReport {
   id: string;
-  session_id: string;
+  session_id?: string;
   student_id: string;
   tutor_id?: string;
   pages_covered?: string;
@@ -82,12 +86,28 @@ export interface ProgressReport {
 
 export interface HomeworkLog {
   id: string;
-  report_id: string;
+  report_id?: string;
   student_id: string;
+  tutor_id?: string;
   homework_text: string;
+  title?: string;
+  subject?: string;
+  due_date?: string;
+  status?: string;
   is_completed: boolean;
   completed_at?: string;
   parent_notes?: string;
+  created_at: string;
+}
+
+export interface HomeworkTemplate {
+  id: string;
+  tutor_id: string;
+  title: string;
+  content?: string;
+  subject?: string;
+  level?: string;
+  description?: string;
   created_at: string;
 }
 
@@ -103,6 +123,7 @@ export interface Fee {
   paid_date?: string;
   status: FeeStatus;
   payment_method?: string;
+  stripe_payment_id?: string;
   notes?: string;
   created_at: string;
   student?: Student;
@@ -110,18 +131,22 @@ export interface Fee {
 
 export interface Notification {
   id: string;
-  recipient_id: string;
+  recipient_id?: string;
   type: string;
   title: string;
   message: string;
+  body?: string;
+  sender_id?: string;
+  target_role?: string;
+  sent_via?: string[];
   is_read: boolean;
   created_at: string;
 }
 
-export interface Message {
+export interface LegacyMessage {
   id: string;
   sender_id: string;
-  recipient_id: string;
+  recipient_id?: string;
   student_id?: string;
   message: string;
   attachment_url?: string;
@@ -129,6 +154,30 @@ export interface Message {
   flagged: boolean;
   created_at: string;
   sender?: Profile;
+}
+
+export interface ChatMessage {
+  id: string;
+  sender_id?: string;
+  body: string;
+  created_at: string;
+  sender?: Profile;
+}
+
+export interface TutorEarning {
+  id: string;
+  tutor_id: string;
+  month: number;
+  year: number;
+  total_classes: number;
+  total_hours: number;
+  rate_per_hour: number;
+  total_amount: number;
+  currency: string;
+  status: EarningStatus;
+  paid_date?: string;
+  invoice_generated?: boolean;
+  created_at: string;
 }
 
 // Supabase Database type wrapper
@@ -141,9 +190,12 @@ export interface Database {
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };
       progress_reports: { Row: ProgressReport; Insert: Partial<ProgressReport>; Update: Partial<ProgressReport> };
       homework_logs: { Row: HomeworkLog; Insert: Partial<HomeworkLog>; Update: Partial<HomeworkLog> };
+      homework_templates: { Row: HomeworkTemplate; Insert: Partial<HomeworkTemplate>; Update: Partial<HomeworkTemplate> };
       fees: { Row: Fee; Insert: Partial<Fee>; Update: Partial<Fee> };
       notifications: { Row: Notification; Insert: Partial<Notification>; Update: Partial<Notification> };
-      messages: { Row: Message; Insert: Partial<Message>; Update: Partial<Message> };
+      messages: { Row: LegacyMessage; Insert: Partial<LegacyMessage>; Update: Partial<LegacyMessage> };
+      chat_messages: { Row: ChatMessage; Insert: Partial<ChatMessage>; Update: Partial<ChatMessage> };
+      tutor_earnings: { Row: TutorEarning; Insert: Partial<TutorEarning>; Update: Partial<TutorEarning> };
     };
   };
 }

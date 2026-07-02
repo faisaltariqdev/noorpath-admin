@@ -2,189 +2,185 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Calendar, Users, Star, Clock, CheckCircle, BookOpen, Mic, Send } from "lucide-react";
+import TopBar from "@/components/TopBar";
+import { getSessionSubject } from "@/lib/portal";
+import { Calendar, Clock, BookOpen, Users, Video, CheckCircle, ArrowUpRight, Star, FileText } from "lucide-react";
 import Link from "next/link";
-import type { ClassSession } from "@/types/database";
 
-interface TodayClass extends ClassSession {
-  student_name: string;
-  report_submitted: boolean;
+interface ClassSession {
+  id: string;
+  student: string;
+  course?: string;
+  scheduled_at: string;
+  duration: number;
+  status: string;
+  meeting_link: string;
+  notes?: string;
 }
+interface TutorStats { todayCount: number; completedCount: number; studentsCount: number; pendingReports: number; }
 
 const STATUS_BADGE: Record<string, string> = {
-  scheduled: "badge badge-blue",
-  completed: "badge badge-green",
-  cancelled: "badge badge-red",
-  no_show: "badge badge-gray",
+  scheduled: "badge badge-blue", completed: "badge badge-green",
+  cancelled: "badge badge-red", no_show: "badge badge-gray",
 };
 
 export default function TutorDashboard() {
-  const [classes, setClasses] = useState<TodayClass[]>([]);
-  const [studentCount, setStudentCount] = useState(0);
+  const [sessions, setSessions] = useState<ClassSession[]>([]);
+  const [stats, setStats] = useState<TutorStats>({ todayCount: 0, completedCount: 0, studentsCount: 0, pendingReports: 0 });
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) return;
-      setUserId(session.user.id);
-
-      const today = new Date().toISOString().split("T")[0];
-
-      const [{ data: sessions }, { count }] = await Promise.all([
-        supabase.from("class_sessions")
-          .select("*, student:students(full_name, course, level)")
-          .eq("tutor_id", session.user.id)
-          .gte("scheduled_at", today)
-          .lt("scheduled_at", today + "T23:59:59")
-          .order("scheduled_at"),
-        supabase.from("students").select("*", { count: "exact", head: true })
-          .eq("tutor_id", session.user.id).eq("is_active", true),
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const todayStr = new Date().toISOString().split("T")[0];
+      const [{ data: todaySessions }, { count: studentsCount }, { data: completedSessions }, { data: reports }] = await Promise.all([
+        supabase.from("class_sessions").select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course)").eq("tutor_id", user.id).gte("scheduled_at", todayStr).lt("scheduled_at", todayStr + "T23:59:59").order("scheduled_at"),
+        supabase.from("students").select("*", { count: "exact", head: true }).eq("tutor_id", user.id).eq("is_active", true),
+        supabase.from("class_sessions").select("id").eq("tutor_id", user.id).eq("status", "completed"),
+        supabase.from("progress_reports").select("session_id").eq("tutor_id", user.id).not("session_id", "is", null),
       ]);
-
-      setClasses(
-        (sessions || []).map((s: any) => ({
-          ...s,
-          student_name: s.student?.full_name || "—",
-          report_submitted: false,
-        }))
-      );
-      setStudentCount(count || 0);
+      const reportedSessionIds = new Set((reports || []).map((report: any) => report.session_id));
+      const pendingReports = (completedSessions || []).filter((session: any) => !reportedSessionIds.has(session.id)).length;
+      const mapped = (todaySessions || []).map((s: any) => ({
+        id: s.id,
+        student: s.student?.full_name || "—",
+        course: s.student?.course || "",
+        scheduled_at: s.scheduled_at,
+        duration: s.duration_minutes || 30,
+        status: s.status,
+        meeting_link: s.meeting_link || "",
+        notes: s.notes || "",
+      }));
+      const completed = mapped.filter(s => s.status === "completed").length;
+      setSessions(mapped);
+      setStats({ todayCount: mapped.length, completedCount: completed, studentsCount: studentsCount || 0, pendingReports });
       setLoading(false);
-    });
+    }
+    load();
   }, []);
 
-  async function markComplete(sessionId: string) {
-    await supabase.from("class_sessions").update({ status: "completed" }).eq("id", sessionId);
-    setClasses((prev) => prev.map((c) => c.id === sessionId ? { ...c, status: "completed" } : c));
+  async function markDone(id: string) {
+    await supabase.from("class_sessions").update({ status: "completed" }).eq("id", id);
+    setSessions(p => p.map(s => s.id === id ? { ...s, status: "completed" } : s));
+    setStats(p => ({ ...p, completedCount: p.completedCount + 1 }));
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+  const statCards = [
+    { label: "Today's Classes", value: stats.todayCount, icon: Calendar, color: "#1b5e42", bg: "#f0fdf4" },
+    { label: "Completed", value: stats.completedCount, icon: CheckCircle, color: "#16a34a", bg: "#dcfce7" },
+    { label: "My Students", value: stats.studentsCount, icon: Users, color: "#2563eb", bg: "#eff6ff" },
+    { label: "Reports Pending", value: stats.pendingReports, icon: FileText, color: "#d97706", bg: "#fffbeb" },
+  ];
+
+  if (loading) return (
+    <>
+      <TopBar title="Tutor Dashboard" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", flexDirection: "column", gap: 12 }}>
+        <div style={{ width: 40, height: 40, border: "3px solid #1b5e42", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
-    );
-  }
+    </>
+  );
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: "#1a1a2e" }}>Tutor Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          {new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: "Today's Classes", value: classes.length, icon: Calendar, color: "#1b5e42" },
-          { label: "Completed", value: classes.filter(c => c.status === "completed").length, icon: CheckCircle, color: "#16a34a" },
-          { label: "My Students", value: studentCount, icon: Users, color: "#2563eb" },
-          { label: "Pending Reports", value: classes.filter(c => c.status === "completed" && !c.report_submitted).length, icon: BookOpen, color: "#d97706" },
-        ].map((s) => (
-          <div key={s.label} className="stat-card">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: s.color + "15" }}>
-              <s.icon size={20} color={s.color} />
-            </div>
-            <div className="text-2xl font-bold">{s.value}</div>
-            <div className="text-sm text-gray-500 mt-1">{s.label}</div>
+    <>
+      <TopBar title="Tutor Dashboard" subtitle={today} />
+      <div className="page-header" style={{ paddingTop: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800, color: "#0f172a" }}>Tutor Dashboard 📚</h1>
+            <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.8rem" }}>{today}</p>
           </div>
-        ))}
+          <Link href="/tutor/reports/new" className="btn btn-primary btn-sm">
+            <FileText size={14} /> Submit Report
+          </Link>
+        </div>
       </div>
-
-      {/* Today's Classes */}
-      <div className="card overflow-hidden mb-6">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-            <Calendar size={16} color="#1b5e42" /> Today&apos;s Classes
-          </h2>
-          <Link href="/tutor/classes" className="text-xs text-emerald-700 font-medium">Full schedule →</Link>
+      <div className="page-body">
+        <div className="stats-grid">
+          {statCards.map(c => (
+            <div key={c.label} className="stat-card">
+              <div className="stat-card-icon" style={{ background: c.bg, marginBottom: 12 }}>
+                <c.icon size={20} color={c.color} />
+              </div>
+              <div className="stat-card-value">{c.value}</div>
+              <div className="stat-card-label">{c.label}</div>
+            </div>
+          ))}
         </div>
 
-        {classes.length === 0 ? (
-          <div className="py-12 text-center text-gray-400">
-            <Calendar size={36} className="mx-auto mb-3 opacity-30" />
-            <p>No classes scheduled for today</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {classes.map((cls) => (
-              <div key={cls.id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
-                      style={{ background: "#1b5e42" }}>
-                      {cls.student_name.charAt(0)}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" }}>
+          {/* Sessions */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title"><Calendar size={15} color="#1b5e42" /> Today&apos;s Schedule</h3>
+              <Link href="/tutor/classes" className="card-link">Full Calendar →</Link>
+            </div>
+            {sessions.length === 0 ? (
+              <div className="empty-state">
+                <Calendar size={40} /><h3>No classes today</h3><p>You have no scheduled classes for today. Enjoy your time off!</p>
+              </div>
+            ) : (
+              <div style={{ padding: "8px 0" }}>
+                {sessions.map(s => (
+                  <div key={s.id} style={{ padding: "14px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <BookOpen size={20} color="#1b5e42" />
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-800">{cls.student_name}</div>
-                      <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
-                        <Clock size={11} />
-                        {new Date(cls.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-                        <span>·</span>
-                        {cls.duration_minutes} min
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#0f172a" }}>{s.student}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#64748b", display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                        <Clock size={12} />
+                        {new Date(s.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} · {s.duration} min · {getSessionSubject(s.course, s.notes)}
                       </div>
                     </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span className={STATUS_BADGE[s.status] || "badge badge-gray"}>{s.status}</span>
+                      {s.status !== "completed" && (
+                        <>
+                          {s.meeting_link && (
+                            <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-xs">
+                              <Video size={12} /> Join
+                            </a>
+                          )}
+                          <button onClick={() => markDone(s.id)} className="btn btn-ghost btn-xs">
+                            <CheckCircle size={12} /> Done
+                          </button>
+                        </>
+                      )}
+                      {s.status === "completed" && (
+                        <Link href={`/tutor/reports/new?student_name=${encodeURIComponent(s.student)}&session=${s.id}`} className="btn btn-outline btn-xs">
+                          <FileText size={12} /> Report
+                        </Link>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <span className={STATUS_BADGE[cls.status] || "badge badge-gray"}>{cls.status}</span>
-
-                    {cls.meeting_link && (
-                      <a href={cls.meeting_link} target="_blank" rel="noreferrer"
-                        className="badge badge-green cursor-pointer hover:opacity-80">
-                        Join Class →
-                      </a>
-                    )}
-
-                    {cls.status === "scheduled" && (
-                      <button onClick={() => markComplete(cls.id)}
-                        className="btn-primary text-xs py-1 px-3 flex items-center gap-1">
-                        <CheckCircle size={12} /> Mark Done
-                      </button>
-                    )}
-
-                    {cls.status === "completed" && (
-                      <Link href={`/tutor/reports/new?session=${cls.id}`}
-                        className="btn-outline text-xs py-1 px-3 flex items-center gap-1">
-                        <Send size={12} /> Submit Report
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                {/* Pre-class notes box */}
-                {cls.notes && (
-                  <div className="mt-3 p-3 rounded-lg text-xs text-gray-600" style={{ background: "#f0fdf4" }}>
-                    <strong>Prep note:</strong> {cls.notes}
-                  </div>
-                )}
+                ))}
               </div>
+            )}
+          </div>
+
+          {/* Quick links */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              { label: "My Students", href: "/tutor/students", icon: Users, color: "#2563eb", bg: "#eff6ff" },
+              { label: "Submit Report", href: "/tutor/reports/new", icon: Star, color: "#d97706", bg: "#fffbeb" },
+              { label: "Homework Templates", href: "/tutor/homework", icon: BookOpen, color: "#7c3aed", bg: "#f5f3ff" },
+              { label: "My Earnings", href: "/tutor/earnings", icon: ArrowUpRight, color: "#1b5e42", bg: "#f0fdf4" },
+            ].map(a => (
+              <Link key={a.label} href={a.href} className="action-card">
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: a.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <a.icon size={16} color={a.color} />
+                </div>
+                <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>{a.label}</span>
+                <ArrowUpRight size={14} style={{ color: "#94a3b8", marginLeft: "auto" }} />
+              </Link>
             ))}
           </div>
-        )}
+        </div>
       </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: "Submit Progress Report", href: "/tutor/reports/new", icon: BookOpen, desc: "After every class" },
-          { label: "Homework Templates", href: "/tutor/homework", icon: CheckCircle, desc: "Reusable templates" },
-          { label: "My Earnings", href: "/tutor/earnings", icon: Star, desc: "Monthly summary" },
-        ].map((action) => (
-          <Link key={action.label} href={action.href}
-            className="card p-5 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-              style={{ background: "#1b5e4215" }}>
-              <action.icon size={20} color="#1b5e42" />
-            </div>
-            <div className="font-semibold text-gray-800 text-sm">{action.label}</div>
-            <div className="text-xs text-gray-500 mt-1">{action.desc}</div>
-          </Link>
-        ))}
-      </div>
-    </div>
+    </>
   );
 }

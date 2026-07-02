@@ -2,9 +2,9 @@ import Sidebar from "@/components/Sidebar";
 
 export default function TutorLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="admin-layout">
       <Sidebar role="tutor" userName="Tutor" />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="page-wrapper">{children}</div>
     </div>
   );
 }
