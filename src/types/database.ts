@@ -116,6 +116,42 @@ export interface HomeworkLog {
   created_at: string;
 }
 
+export type CourseRoadmapStatus = "pending" | "in_progress" | "completed" | "skipped";
+export type LessonType = "lesson" | "revision" | "test" | "milestone" | "holiday";
+
+export interface CourseRoadmap {
+  id: string;
+  student_id: string;
+  tutor_id?: string;
+  title: string;
+  description?: string;
+  surah?: string;
+  lesson_type: LessonType;
+  planned_date?: string;
+  completed_date?: string;
+  order_index: number;
+  status: CourseRoadmapStatus;
+  duration_minutes: number;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type DailyWorkNoteStatus = "pending" | "completed";
+
+export interface DailyWorkNote {
+  id: string;
+  student_id: string;
+  tutor_id?: string;
+  work_date: string;
+  work_text: string;
+  status: DailyWorkNoteStatus;
+  completed_at?: string;
+  created_at: string;
+  student?: Student;
+  tutor?: Profile;
+}
+
 export interface HomeworkTemplate {
   id: string;
   tutor_id: string;
@@ -206,6 +242,8 @@ export interface Database {
       class_sessions: { Row: ClassSession; Insert: Partial<ClassSession>; Update: Partial<ClassSession> };
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };
       progress_reports: { Row: ProgressReport; Insert: Partial<ProgressReport>; Update: Partial<ProgressReport> };
+      course_roadmaps: { Row: CourseRoadmap; Insert: Partial<CourseRoadmap>; Update: Partial<CourseRoadmap> };
+      daily_work_notes: { Row: DailyWorkNote; Insert: Partial<DailyWorkNote>; Update: Partial<DailyWorkNote> };
       homework_logs: { Row: HomeworkLog; Insert: Partial<HomeworkLog>; Update: Partial<HomeworkLog> };
       homework_templates: { Row: HomeworkTemplate; Insert: Partial<HomeworkTemplate>; Update: Partial<HomeworkTemplate> };
       fees: { Row: Fee; Insert: Partial<Fee>; Update: Partial<Fee> };

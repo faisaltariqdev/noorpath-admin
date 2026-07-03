@@ -147,7 +147,7 @@ export default function TutorClassesPage() {
                     return (
                     <div key={s.id} style={{ padding: "18px 22px", borderBottom: "1px solid #f1f5f9", display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
                       <div style={{ width: 52, height: 52, borderRadius: 14, background: "#f0fdf4", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1b5e42" }}>{new Date(s.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</div>
+                        <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1b5e42" }}>{new Date(s.scheduled_at).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true })}</div>
                         <div style={{ fontSize: "0.62rem", color: "#64748b" }}>{s.duration}m</div>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>

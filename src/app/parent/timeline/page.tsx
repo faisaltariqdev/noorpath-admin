@@ -255,7 +255,7 @@ export default function TimelinePage() {
                           flexShrink: 0,
                           marginTop: 2,
                         }}>
-                          {new Date(item.date).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(item.date).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true })}
                         </div>
                       </div>
 

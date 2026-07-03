@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import {
   TIMEZONE_OPTIONS,
+  TIME_OPTIONS,
   WEEK_DAYS,
   formatClock,
   formatTimeInZone,
@@ -202,7 +203,7 @@ export default function UsersPage() {
 
   function AvailabilityEditor({ kind, slots }: { kind: "create" | "edit"; slots: AvailabilitySlot[] }) {
     return (
-      <div style={{ background: "#f8fafc", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 18 }}>
+      <div className="availability-editor">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: slots.length ? 12 : 0 }}>
           <div>
             <div style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: 7 }}>
@@ -213,14 +214,33 @@ export default function UsersPage() {
           <button type="button" className="btn btn-xs btn-primary" onClick={() => addAvailabilitySlot(kind)}>+ Slot</button>
         </div>
         {slots.map((slot, index) => (
-          <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 100px 100px 1.2fr auto", gap: 8, alignItems: "center", marginTop: 10 }}>
-            <select className="form-input form-select" value={slot.day_of_week} onChange={e => updateAvailabilitySlot(kind, index, { day_of_week: Number(e.target.value) })}>
-              {WEEK_DAYS.map(day => <option key={day.value} value={day.value}>{day.label}</option>)}
-            </select>
-            <input type="time" className="form-input" value={slot.start_time} onChange={e => updateAvailabilitySlot(kind, index, { start_time: e.target.value })} />
-            <input type="time" className="form-input" value={slot.end_time} onChange={e => updateAvailabilitySlot(kind, index, { end_time: e.target.value })} />
-            <input className="form-input" list={`${kind}-availability-timezones`} value={slot.timezone} onChange={e => updateAvailabilitySlot(kind, index, { timezone: e.target.value })} />
-            <button type="button" className="btn btn-xs btn-danger" onClick={() => removeAvailabilitySlot(kind, index)}>Remove</button>
+          <div key={index} className="availability-slot-row">
+            <div className="availability-field">
+              <label>Day</label>
+              <select className="form-input form-select" value={slot.day_of_week} onChange={e => updateAvailabilitySlot(kind, index, { day_of_week: Number(e.target.value) })}>
+                {WEEK_DAYS.map(day => <option key={day.value} value={day.value}>{day.label}</option>)}
+              </select>
+            </div>
+            <div className="availability-field">
+              <label>Start Time</label>
+              <select className="form-input form-select" value={slot.start_time.slice(0, 5)} onChange={e => updateAvailabilitySlot(kind, index, { start_time: e.target.value })}>
+                {TIME_OPTIONS.map(time => <option key={time.value} value={time.value}>{time.label}</option>)}
+              </select>
+            </div>
+            <div className="availability-field">
+              <label>End Time</label>
+              <select className="form-input form-select" value={slot.end_time.slice(0, 5)} onChange={e => updateAvailabilitySlot(kind, index, { end_time: e.target.value })}>
+                {TIME_OPTIONS.map(time => <option key={time.value} value={time.value}>{time.label}</option>)}
+              </select>
+            </div>
+            <div className="availability-field">
+              <label>Timezone</label>
+              <input className="form-input" list={`${kind}-availability-timezones`} value={slot.timezone} onChange={e => updateAvailabilitySlot(kind, index, { timezone: e.target.value })} placeholder="Asia/Karachi" />
+            </div>
+            <div className="availability-summary">
+              <span>{formatClock(slot.start_time)} - {formatClock(slot.end_time)}</span>
+              <button type="button" className="btn btn-xs btn-danger" onClick={() => removeAvailabilitySlot(kind, index)}>Remove</button>
+            </div>
           </div>
         ))}
         <datalist id={`${kind}-availability-timezones`}>

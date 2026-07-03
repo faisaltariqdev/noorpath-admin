@@ -1,11 +1,12 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { formatStudentLevel } from "@/lib/portal";
 import { TIMEZONE_OPTIONS, timezoneForCountry } from "@/lib/timezones";
-import { GraduationCap, Plus, Search, X, CheckCircle, XCircle } from "lucide-react";
+import { GraduationCap, Plus, Search, X, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 
 interface Student {
   id: string;
@@ -27,6 +28,7 @@ const LEVELS = [
 ];
 
 export default function StudentsPage() {
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [filtered, setFiltered] = useState<Student[]>([]);
   const [tutors, setTutors] = useState<{ id: string; full_name: string }[]>([]);
@@ -172,12 +174,12 @@ export default function StudentsPage() {
           ) : filtered.length === 0 ? (
             <div className="empty-state"><GraduationCap size={40} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No students found</h3><p>Add your first student to get started.</p></div>
           ) : (
-            <div className="table-shell">
+              <div className="table-shell">
             <table className="data-table">
-                  <thead><tr><th>Student</th><th>Age</th><th>Country</th><th>Level</th><th>Course</th><th>Parent</th><th>Tutor</th><th>Status</th><th>Enrolled</th></tr></thead>
+                  <thead><tr><th>Student</th><th>Age</th><th>Country</th><th>Level</th><th>Course</th><th>Parent</th><th>Tutor</th><th>Status</th><th>Enrolled</th><th>Progress</th></tr></thead>
               <tbody>
                 {filtered.map(s => (
-                  <tr key={s.id}>
+                  <tr key={s.id} onClick={() => router.push(`/admin/students/${s.id}`)} style={{ cursor: "pointer" }}>
                     <td><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div className="avatar">{s.full_name.charAt(0)}</div><span style={{ fontWeight: 600 }}>{s.full_name}</span></div></td>
                     <td style={{ color: "#64748b" }}>{s.age || "—"}</td>
                     <td style={{ color: "#64748b" }}>{s.country || "—"}</td>
@@ -186,11 +188,16 @@ export default function StudentsPage() {
                         <td style={{ color: "#64748b" }}>{s.parent_name}</td>
                     <td style={{ color: "#64748b" }}>{s.tutor_name}</td>
                     <td>
-                      <button onClick={() => toggleActive(s.id, s.is_active)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                      <button onClick={(e) => { e.stopPropagation(); toggleActive(s.id, s.is_active); }} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                         {s.is_active ? <><CheckCircle size={15} color="#16a34a" /><span className="badge badge-green">Active</span></> : <><XCircle size={15} color="#94a3b8" /><span className="badge badge-gray">Inactive</span></>}
                       </button>
                     </td>
                     <td style={{ color: "#94a3b8" }}>{new Date(s.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    <td>
+                      <button onClick={(e) => { e.stopPropagation(); router.push(`/admin/students/${s.id}`); }} className="btn btn-xs btn-ghost">
+                        <ClipboardList size={12} /> View
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

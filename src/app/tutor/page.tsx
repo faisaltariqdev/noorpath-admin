@@ -133,7 +133,7 @@ export default function TutorDashboard() {
                       <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#0f172a" }}>{s.student}</div>
                       <div style={{ fontSize: "0.75rem", color: "#64748b", display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
                         <Clock size={12} />
-                        {new Date(s.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} · {s.duration} min · {getSessionSubject(s.course, s.notes)}
+                        {new Date(s.scheduled_at).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true })} · {s.duration} min · {getSessionSubject(s.course, s.notes)}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

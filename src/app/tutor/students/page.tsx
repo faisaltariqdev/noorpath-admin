@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { formatStudentLevel } from "@/lib/portal";
-import { GraduationCap, Star, Clock, FileText } from "lucide-react";
+import { GraduationCap, Star, Clock, FileText, ClipboardList } from "lucide-react";
 import Link from "next/link";
 
 interface Student { id: string; full_name: string; age: number; country: string; level: string; course?: string; is_active: boolean; total_sessions: number; last_session?: string; }
@@ -76,9 +76,14 @@ export default function TutorStudentsPage() {
                       </div>
                     )}
                   </div>
-                  <Link href={`/tutor/reports/new?student=${s.id}`} className="btn btn-outline btn-sm" style={{ width: "100%", justifyContent: "center" }}>
-                    <FileText size={13} /> Submit Report
-                  </Link>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <Link href={`/tutor/students/${s.id}`} className="btn btn-primary btn-sm" style={{ flex: 1, justifyContent: "center" }}>
+                      <ClipboardList size={13} /> Daily Work
+                    </Link>
+                    <Link href={`/tutor/reports/new?student=${s.id}`} className="btn btn-outline btn-sm" style={{ flex: 1, justifyContent: "center" }}>
+                      <FileText size={13} /> Report
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

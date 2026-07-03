@@ -191,39 +191,35 @@ export default function CoursesPage() {
               <p>Add a course or adjust your filters.</p>
             </div>
           ) : (
-            <div className="table-shell">
-              <table className="data-table">
-                <thead>
-                  <tr><th>Course</th><th>Category</th><th>Level</th><th>Duration</th><th>Price</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                  {filtered.map(course => (
-                    <tr key={course.id}>
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div className="avatar" style={{ width: 34, height: 34, fontSize: "0.75rem" }}>{course.title.charAt(0)}</div>
-                          <div>
-                            <div style={{ fontWeight: 800, color: "#0f172a" }}>{course.title}</div>
-                            <div style={{ color: "#64748b", fontSize: "0.73rem", marginTop: 2, maxWidth: 420, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {course.description || "No description added"}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td><span className="badge badge-purple">{titleCase(course.category)}</span></td>
-                      <td><span className="badge badge-blue">{titleCase(course.level)}</span></td>
-                      <td style={{ color: "#64748b" }}>{course.duration_weeks ? <><Clock size={12} style={{ display: "inline", marginRight: 4 }} />{course.duration_weeks} weeks</> : "—"}</td>
-                      <td style={{ fontWeight: 800 }}>{course.price_amount ? `${course.currency} ${course.price_amount}` : "—"}</td>
-                      <td><span className={`badge ${course.is_active ? "badge-green" : "badge-gray"}`}>{course.is_active ? "Active" : "Inactive"}</span></td>
-                      <td>
-                        <button className="btn btn-xs btn-ghost" onClick={() => toggleCourse(course.id, course.is_active)}>
-                          {course.is_active ? <><ToggleRight size={13} /> Disable</> : <><ToggleLeft size={13} /> Enable</>}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="course-catalog-list">
+              {filtered.map(course => (
+                <div key={course.id} className="course-catalog-row">
+                  <div className="course-main">
+                    <div className="avatar" style={{ width: 36, height: 36, fontSize: "0.75rem" }}>{course.title.charAt(0)}</div>
+                    <div>
+                      <div className="course-title">{course.title}</div>
+                      <div className="course-description">{course.description || "No description added"}</div>
+                    </div>
+                  </div>
+
+                  <div className="course-meta">
+                    <span className="badge badge-purple">{titleCase(course.category)}</span>
+                    <span className="badge badge-blue">{titleCase(course.level)}</span>
+                  </div>
+
+                  <div className="course-facts">
+                    <span><Clock size={12} /> {course.duration_weeks ? `${course.duration_weeks} weeks` : "No duration"}</span>
+                    <strong>{course.price_amount ? `${course.currency} ${course.price_amount}` : "No price"}</strong>
+                  </div>
+
+                  <div className="course-actions">
+                    <span className={`badge ${course.is_active ? "badge-green" : "badge-gray"}`}>{course.is_active ? "Active" : "Inactive"}</span>
+                    <button className="btn btn-xs btn-ghost" onClick={() => toggleCourse(course.id, course.is_active)}>
+                      {course.is_active ? <><ToggleRight size={13} /> Disable</> : <><ToggleLeft size={13} /> Enable</>}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

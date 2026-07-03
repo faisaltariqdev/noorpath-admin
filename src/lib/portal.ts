@@ -45,3 +45,39 @@ export function getSessionSubject(course?: string | null, notes?: string | null)
   if (notes) return notes.split(" - ")[0];
   return "Quran Class";
 }
+
+export type ProgressPeriod = "today" | "week" | "month" | "all";
+
+export const PROGRESS_PERIODS: { value: ProgressPeriod; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "week", label: "This Week" },
+  { value: "month", label: "This Month" },
+  { value: "all", label: "All Time" },
+];
+
+export function getPeriodRange(period: ProgressPeriod) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  if (period === "week") {
+    const day = start.getDay();
+    const diffFromMonday = (day + 6) % 7;
+    start.setDate(start.getDate() - diffFromMonday);
+  } else if (period === "month") {
+    start.setDate(1);
+  } else if (period === "all") {
+    start.setFullYear(2000);
+  }
+
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
+export function isWithinPeriod(value: string | Date | null | undefined, period: ProgressPeriod) {
+  if (!value) return false;
+  const { start, end } = getPeriodRange(period);
+  const date = value instanceof Date ? value : new Date(value);
+  return date >= start && date <= end;
+}

@@ -40,7 +40,7 @@ export function formatTimeInZone(value: string | Date, timezone = PAKISTAN_TIMEZ
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     }).format(date);
   } catch {
     return new Intl.DateTimeFormat("en-GB", {
@@ -49,7 +49,7 @@ export function formatTimeInZone(value: string | Date, timezone = PAKISTAN_TIMEZ
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     }).format(date);
   }
 }
@@ -80,8 +80,18 @@ export function minutesFromTime(time: string) {
 
 export function formatClock(value: string) {
   const [hours, minutes] = value.split(":");
-  return `${hours?.padStart(2, "0")}:${minutes?.padStart(2, "0")}`;
+  const hourNumber = Number(hours || 0);
+  const displayHour = hourNumber % 12 || 12;
+  const suffix = hourNumber >= 12 ? "PM" : "AM";
+  return `${displayHour}:${minutes?.padStart(2, "0")} ${suffix}`;
 }
+
+export const TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
+  const hours = Math.floor(index / 2);
+  const minutes = index % 2 === 0 ? "00" : "30";
+  const value = `${String(hours).padStart(2, "0")}:${minutes}`;
+  return { value, label: formatClock(value) };
+});
 
 export function getNextDateForDay(dayOfWeek: number) {
   const date = new Date();
