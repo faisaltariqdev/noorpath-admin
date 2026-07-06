@@ -3,8 +3,10 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
-import { Sparkles, Plus, X, Search, Edit2, Power, Users, BookOpen, Star, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Plus, X, Search, Edit2, Power, Users, BookOpen, Star, ChevronDown, ChevronUp, Grid, Eye } from "lucide-react";
 import LESSONS, { TOTAL_LESSONS } from "@/data/kidsStudio";
+
+type Tab = "assignments" | "lessons";
 
 interface Assignment {
   id: string;
@@ -38,6 +40,7 @@ function StatCard({ value, label, icon, color }: { value: string | number; label
 }
 
 export default function KidsStudioAdminPage() {
+  const [tab,         setTab]         = useState<Tab>("assignments");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [filtered,    setFiltered]    = useState<Assignment[]>([]);
   const [students,    setStudents]    = useState<Student[]>([]);
@@ -49,6 +52,7 @@ export default function KidsStudioAdminPage() {
   const [msg,         setMsg]         = useState("");
   const [search,      setSearch]      = useState("");
   const [expandedId,  setExpandedId]  = useState<string | null>(null);
+  const [previewLesson, setPreviewLesson] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     student_id: "", tutor_id: "",
@@ -209,6 +213,37 @@ export default function KidsStudioAdminPage() {
       </div>
 
       <div className="page-body">
+
+        {/* ── Tab Switcher ── */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 20, borderBottom: "2px solid #e2e8f0", paddingBottom: 0 }}>
+          {([
+            { key: "assignments", label: "Assignments", icon: <Users size={14} /> },
+            { key: "lessons",     label: "All 18 Lessons",  icon: <Grid size={14} /> },
+          ] as const).map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "10px 18px", borderRadius: "10px 10px 0 0",
+                border: "none", cursor: "pointer", fontSize: "0.85rem", fontWeight: 700,
+                background: tab === t.key ? "#fff" : "transparent",
+                color: tab === t.key ? "#7c3aed" : "#64748b",
+                borderBottom: tab === t.key ? "2px solid #7c3aed" : "2px solid transparent",
+                marginBottom: "-2px",
+                transition: "all 0.15s",
+              }}
+            >
+              {t.icon} {t.label}
+              {t.key === "lessons" && (
+                <span style={{ background: "#7c3aed20", color: "#7c3aed", borderRadius: 8, padding: "1px 7px", fontSize: "0.72rem" }}>
+                  {TOTAL_LESSONS}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
         {msg && (
           <div style={{
             background: msg.startsWith("Error") ? "#fef2f2" : "#f0fdf4",
@@ -217,6 +252,9 @@ export default function KidsStudioAdminPage() {
             borderRadius: 10, padding: "11px 16px", marginBottom: 16, fontSize: "0.83rem",
           }}>{msg}</div>
         )}
+
+        {/* ══ TAB: ASSIGNMENTS ══════════════════════════════════════ */}
+        {tab === "assignments" && (<>
 
         {/* ── Stats ── */}
         <div className="stats-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", marginBottom: 20 }}>
@@ -423,6 +461,103 @@ export default function KidsStudioAdminPage() {
             </div>
           )}
         </div>
+
+        </>) /* end tab: assignments */}
+
+        {/* ══ TAB: ALL LESSONS ══════════════════════════════════════ */}
+        {tab === "lessons" && (
+          <div>
+            <div style={{
+              background: "linear-gradient(135deg, #1e0a3d 0%, #2d1b69 100%)",
+              borderRadius: 14, padding: "18px 22px", marginBottom: 20,
+              display: "flex", alignItems: "center", gap: 14,
+            }}>
+              <div style={{ fontSize: "2rem" }}>📖</div>
+              <div>
+                <div style={{ color: "#fff", fontWeight: 700, fontSize: "0.92rem" }}>Complete Noorani Qaida — 18 Lessons</div>
+                <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.78rem", marginTop: 2 }}>
+                  Click any lesson card to preview all letters &amp; words inside it
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+              {LESSONS.map(lesson => (
+                <div
+                  key={lesson.id}
+                  onClick={() => setPreviewLesson(previewLesson === lesson.id ? null : lesson.id)}
+                  style={{
+                    borderRadius: 14, border: `1px solid ${lesson.color}30`,
+                    background: previewLesson === lesson.id ? lesson.color + "10" : "#fff",
+                    cursor: "pointer", overflow: "hidden",
+                    boxShadow: previewLesson === lesson.id ? `0 0 0 2px ${lesson.color}` : "var(--shadow-sm)",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                      background: lesson.color + "20",
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem",
+                    }}>
+                      {lesson.emoji}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#0f172a" }}>
+                        L{lesson.id}: {lesson.title}
+                      </div>
+                      <div style={{ color: "#94a3b8", fontSize: "0.7rem", direction: "rtl", marginTop: 2 }}>
+                        {lesson.titleUrdu}
+                      </div>
+                    </div>
+                    {previewLesson === lesson.id
+                      ? <ChevronUp size={14} color={lesson.color} />
+                      : <Eye size={14} color="#94a3b8" />
+                    }
+                  </div>
+
+                  {previewLesson !== lesson.id && (
+                    <div style={{ padding: "0 16px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "0.72rem", color: "#64748b" }}>{lesson.description}</span>
+                      <span style={{
+                        background: lesson.color + "20", color: lesson.color,
+                        borderRadius: 8, padding: "2px 8px", fontSize: "0.7rem", fontWeight: 700,
+                      }}>
+                        {lesson.items.length} items
+                      </span>
+                    </div>
+                  )}
+
+                  {previewLesson === lesson.id && (
+                    <div style={{ padding: "4px 14px 14px", borderTop: `1px solid ${lesson.color}20` }}>
+                      <div style={{ fontSize: "0.72rem", color: "#64748b", margin: "8px 0 10px" }}>
+                        {lesson.description} · {lesson.items.length} items
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {lesson.items.map((item, i) => (
+                          <div key={i} style={{
+                            background: item.color + "12", border: `1px solid ${item.color}35`,
+                            borderRadius: 8, padding: "6px 10px", textAlign: "center", minWidth: 52,
+                          }}>
+                            <div style={{
+                              fontFamily: "var(--font-amiri, 'Amiri', serif)",
+                              fontSize: "1.5rem", color: item.color,
+                              direction: "rtl", lineHeight: 1.3,
+                            }}>
+                              {item.arabic}
+                            </div>
+                            <div style={{ fontSize: "0.6rem", color: "#64748b", marginTop: 2 }}>{item.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ── Modal Form ── */}
