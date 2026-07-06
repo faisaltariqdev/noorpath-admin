@@ -29,6 +29,9 @@ const ADMIN_LINKS: NavSection[] = [
     { href: "/admin/earnings",      label: "Tutor Earnings",    icon: Star },
     { href: "/admin/reports",       label: "Progress Reports",  icon: FileText },
   ]},
+  { section: "Kids Studio", items: [
+    { href: "/admin/kids-studio",   label: "Kids Studio 🎮",    icon: Sparkles },
+  ]},
   { section: "Analytics", items: [
     { href: "/admin/analytics",     label: "Analytics & Graphs",icon: BarChart2 },
   ]},
@@ -77,6 +80,9 @@ const PARENT_LINKS: NavSection[] = [
     { href: "/parent/sessions",     label: "Classes & Schedule",  icon: Calendar },
     { href: "/parent/attendance",   label: "Attendance",          icon: Clock },
     { href: "/parent/homework",     label: "Homework",            icon: BookOpen },
+  ]},
+  { section: "🎮 Kids Studio", items: [
+    { href: "/parent/kids-studio",  label: "Kids Studio",         icon: Sparkles },
   ]},
   { section: "Learning Journey", items: [
     { href: "/parent/journey",      label: "Learning Journey",    icon: Sparkles },
