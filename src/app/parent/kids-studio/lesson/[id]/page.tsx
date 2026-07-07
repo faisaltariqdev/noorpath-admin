@@ -58,6 +58,32 @@ function ConfettiBurst({ active }: { active: boolean }) {
   );
 }
 
+// ── Floating background particles ──────────────────────────────────────────
+function FloatingParticles() {
+  const dots = Array.from({ length: 20 });
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+      {dots.map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0.1, 0.6, 0.1], y: [0, -22, 0], scale: [0.7, 1.3, 0.7] }}
+          transition={{ duration: 2.5 + Math.random() * 3, repeat: Infinity, delay: Math.random() * 3 }}
+          style={{
+            position: "absolute",
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${Math.random() * 6 + 2}px`,
+            height: `${Math.random() * 6 + 2}px`,
+            borderRadius: "50%",
+            background: `hsl(${Math.random() * 60 + 40}, 100%, 78%)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ── Star Burst (inline) ────────────────────────────────────────────────────
 function StarBurst({ count }: { count: number }) {
   return (
@@ -157,7 +183,7 @@ export default function LessonGamePage() {
   }, [lesson]);
 
   // ── Speak a word via Web Speech API ──────────────────────────────────────
-  function speak(text: string) {
+  const speak = useCallback((text: string) => {
     if (!synthRef.current) return;
     synthRef.current.cancel();
     const utt = new SpeechSynthesisUtterance(text);
@@ -165,7 +191,15 @@ export default function LessonGamePage() {
     utt.rate = 0.75;
     utt.pitch = 1.1;
     synthRef.current.speak(utt);
-  }
+  }, []);
+
+  // Auto-play sound whenever a new letter appears in Learn phase
+  useEffect(() => {
+    if (phase !== "learn" || !lesson) return;
+    const it = lesson.items[learnIndex];
+    if (it) speak(it.label);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [learnIndex, phase]);
 
   // ── Answer a quiz question ────────────────────────────────────────────────
   function handleAnswer(arabic: string) {
@@ -248,6 +282,7 @@ export default function LessonGamePage() {
       position: "relative", overflowX: "hidden",
     }}>
       <ConfettiBurst active={showConfetti} />
+      <FloatingParticles />
 
       {/* ── Top Bar ── */}
       <div style={{
@@ -281,7 +316,7 @@ export default function LessonGamePage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 20px 80px" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 20px 80px", position: "relative", zIndex: 1 }}>
 
         {/* ══════════════════════════════════════════════════════
             PHASE: LEARN
@@ -325,17 +360,28 @@ export default function LessonGamePage() {
                 (e.currentTarget as HTMLDivElement).style.transform = "";
               }}
             >
-              {/* Arabic letter */}
+              {/* Arabic letter — pops in, then keeps floating & glowing */}
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                animate={{
+                  scale: 1, opacity: 1, y: [0, -14, 0],
+                  textShadow: [
+                    `0 0 30px ${currentItem.color}80, 0 0 60px ${currentItem.color}30`,
+                    `0 0 55px ${currentItem.color}, 0 0 100px ${currentItem.color}60`,
+                    `0 0 30px ${currentItem.color}80, 0 0 60px ${currentItem.color}30`,
+                  ],
+                }}
+                transition={{
+                  scale: { type: "spring", stiffness: 200, damping: 15 },
+                  opacity: { duration: 0.3 },
+                  y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+                  textShadow: { repeat: Infinity, duration: 2.4, ease: "easeInOut" },
+                }}
                 style={{
                   fontFamily: "var(--font-amiri, 'Amiri', serif)",
                   fontSize: "clamp(100px, 20vw, 160px)",
                   lineHeight: 1.1,
                   color: currentItem.color,
-                  textShadow: `0 0 40px ${currentItem.color}80, 0 0 80px ${currentItem.color}40`,
                   direction: "rtl",
                   marginBottom: 16,
                   display: "block",

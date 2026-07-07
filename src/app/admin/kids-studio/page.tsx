@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
-import { Sparkles, Plus, X, Search, Edit2, Power, Users, BookOpen, Star, ChevronDown, ChevronUp, Grid, Eye } from "lucide-react";
+import { Sparkles, Plus, X, Search, Edit2, Power, Users, BookOpen, Star, ChevronDown, ChevronUp, Grid, Play } from "lucide-react";
 import LESSONS, { TOTAL_LESSONS } from "@/data/kidsStudio";
+import LessonPreviewModal from "@/components/LessonPreviewModal";
 
 type Tab = "assignments" | "lessons";
 
@@ -472,86 +473,85 @@ export default function KidsStudioAdminPage() {
               borderRadius: 14, padding: "18px 22px", marginBottom: 20,
               display: "flex", alignItems: "center", gap: 14,
             }}>
-              <div style={{ fontSize: "2rem" }}>📖</div>
+              <div style={{ fontSize: "2rem" }}>🎬</div>
               <div>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: "0.92rem" }}>Complete Noorani Qaida — 18 Lessons</div>
+                <div style={{ color: "#fff", fontWeight: 700, fontSize: "0.92rem" }}>Complete Noorani Qaida — 18 Animated Lessons</div>
                 <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.78rem", marginTop: 2 }}>
-                  Click any lesson card to preview all letters &amp; words inside it
+                  Click any lesson to launch the <b style={{ color: "#c4b5fd" }}>live animated preview</b> — exactly what your students see 🎮
                 </div>
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 14 }}>
               {LESSONS.map(lesson => (
                 <div
                   key={lesson.id}
-                  onClick={() => setPreviewLesson(previewLesson === lesson.id ? null : lesson.id)}
+                  onClick={() => setPreviewLesson(lesson.id)}
+                  className="ks-lesson-card"
                   style={{
-                    borderRadius: 14, border: `1px solid ${lesson.color}30`,
-                    background: previewLesson === lesson.id ? lesson.color + "10" : "#fff",
-                    cursor: "pointer", overflow: "hidden",
-                    boxShadow: previewLesson === lesson.id ? `0 0 0 2px ${lesson.color}` : "var(--shadow-sm)",
-                    transition: "all 0.2s",
+                    borderRadius: 16, overflow: "hidden", cursor: "pointer",
+                    background: lesson.bgGradient,
+                    boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    position: "relative",
                   }}
                 >
-                  <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                  {/* Header */}
+                  <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{
-                      width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                      background: lesson.color + "20",
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem",
+                      width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                      background: "rgba(255,255,255,0.15)",
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem",
                     }}>
                       {lesson.emoji}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#0f172a" }}>
+                      <div style={{ fontWeight: 800, fontSize: "0.85rem", color: "#fff" }}>
                         L{lesson.id}: {lesson.title}
                       </div>
-                      <div style={{ color: "#94a3b8", fontSize: "0.7rem", direction: "rtl", marginTop: 2 }}>
+                      <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.7rem", direction: "rtl", marginTop: 1 }}>
                         {lesson.titleUrdu}
                       </div>
                     </div>
-                    {previewLesson === lesson.id
-                      ? <ChevronUp size={14} color={lesson.color} />
-                      : <Eye size={14} color="#94a3b8" />
-                    }
                   </div>
 
-                  {previewLesson !== lesson.id && (
-                    <div style={{ padding: "0 16px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: "0.72rem", color: "#64748b" }}>{lesson.description}</span>
-                      <span style={{
-                        background: lesson.color + "20", color: lesson.color,
-                        borderRadius: 8, padding: "2px 8px", fontSize: "0.7rem", fontWeight: 700,
+                  {/* Letter strip — big & clear */}
+                  <div style={{ display: "flex", gap: 6, padding: "4px 16px 12px", overflow: "hidden" }}>
+                    {lesson.items.slice(0, 5).map((item, i) => (
+                      <div key={i} style={{
+                        flex: 1, textAlign: "center",
+                        background: "rgba(255,255,255,0.1)",
+                        border: `1px solid ${item.color}55`,
+                        borderRadius: 10, padding: "8px 2px",
                       }}>
-                        {lesson.items.length} items
-                      </span>
-                    </div>
-                  )}
+                        <div style={{
+                          fontFamily: "var(--font-amiri, 'Amiri', serif)",
+                          fontSize: "1.7rem", lineHeight: 1, color: "#fff",
+                          direction: "rtl",
+                          textShadow: `0 0 12px ${item.color}`,
+                        }}>
+                          {item.arabic}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-                  {previewLesson === lesson.id && (
-                    <div style={{ padding: "4px 14px 14px", borderTop: `1px solid ${lesson.color}20` }}>
-                      <div style={{ fontSize: "0.72rem", color: "#64748b", margin: "8px 0 10px" }}>
-                        {lesson.description} · {lesson.items.length} items
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {lesson.items.map((item, i) => (
-                          <div key={i} style={{
-                            background: item.color + "12", border: `1px solid ${item.color}35`,
-                            borderRadius: 8, padding: "6px 10px", textAlign: "center", minWidth: 52,
-                          }}>
-                            <div style={{
-                              fontFamily: "var(--font-amiri, 'Amiri', serif)",
-                              fontSize: "1.5rem", color: item.color,
-                              direction: "rtl", lineHeight: 1.3,
-                            }}>
-                              {item.arabic}
-                            </div>
-                            <div style={{ fontSize: "0.6rem", color: "#64748b", marginTop: 2 }}>{item.label}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Footer: play button */}
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "10px 16px", background: "rgba(0,0,0,0.2)",
+                  }}>
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.72rem", fontWeight: 600 }}>
+                      {lesson.items.length} letters
+                    </span>
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      background: "rgba(255,255,255,0.9)", color: "#1e0a3d",
+                      borderRadius: 20, padding: "5px 14px", fontSize: "0.76rem", fontWeight: 800,
+                    }}>
+                      <Play size={12} style={{ fill: "#1e0a3d" }} /> Play Preview
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -559,6 +559,12 @@ export default function KidsStudioAdminPage() {
         )}
 
       </div>
+
+      {/* ── Animated Lesson Preview Modal ── */}
+      <LessonPreviewModal
+        lesson={previewLesson ? LESSONS.find(l => l.id === previewLesson) ?? null : null}
+        onClose={() => setPreviewLesson(null)}
+      />
 
       {/* ── Modal Form ── */}
       {showForm && (

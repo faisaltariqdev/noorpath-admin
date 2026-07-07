@@ -1079,3 +1079,15 @@ h1, h2, h3, h4, h5, h6 {
   .stat-value { font-size: 1.3rem; }
   .stat-icon { width: 36px; height: 36px; }
 }
+
+/* ── Kids Studio lesson cards ── */
+.ks-lesson-card {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+.ks-lesson-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32) !important;
+}
+.ks-lesson-card:active {
+  transform: translateY(-2px) scale(0.99);
+}
