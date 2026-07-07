@@ -1,11 +1,12 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import LESSONS, { getLessonById } from "@/data/kidsStudio";
 import type { QaidaItem, Lesson } from "@/data/kidsStudio";
+import { speakArabic, playPop, playChime, preloadArabic } from "@/lib/kidsAudio";
 import { ArrowLeft, Star, Volume2, RotateCcw, Trophy, ChevronRight } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -119,7 +120,6 @@ export default function LessonGamePage() {
   const [showConfetti,setShowConfetti]= useState(false);
   const [saving,      setSaving]      = useState(false);
   const [prevStars,   setPrevStars]   = useState(0);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
 
   // Check lesson access & get student
   useEffect(() => {
@@ -162,7 +162,6 @@ export default function LessonGamePage() {
       setPrevStars(prog?.stars_earned || 0);
     }
     init();
-    synthRef.current = window.speechSynthesis;
   }, [lessonId, router]);
 
   // Build quiz questions from lesson items
@@ -182,24 +181,23 @@ export default function LessonGamePage() {
     setIsCorrect(null);
   }, [lesson]);
 
-  // ── Speak a word via Web Speech API ──────────────────────────────────────
-  const speak = useCallback((text: string) => {
-    if (!synthRef.current) return;
-    synthRef.current.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = "ar-SA";
-    utt.rate = 0.75;
-    utt.pitch = 1.1;
-    synthRef.current.speak(utt);
+  // ── Accurate Arabic audio (Google TTS + curated names + fallback) ────────
+  const speak = useCallback((arabic: string, withPop = false) => {
+    if (withPop) playPop();
+    speakArabic(arabic);
   }, []);
+
+  // Warm the audio cache when a lesson loads
+  useEffect(() => {
+    if (lesson) preloadArabic(lesson.items.map(i => i.arabic));
+  }, [lesson]);
 
   // Auto-play sound whenever a new letter appears in Learn phase
   useEffect(() => {
     if (phase !== "learn" || !lesson) return;
     const it = lesson.items[learnIndex];
-    if (it) speak(it.label);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [learnIndex, phase]);
+    if (it) speakArabic(it.arabic);
+  }, [learnIndex, phase, lesson]);
 
   // ── Answer a quiz question ────────────────────────────────────────────────
   function handleAnswer(arabic: string) {
@@ -211,7 +209,10 @@ export default function LessonGamePage() {
     if (right) {
       setScore(s => s + 1);
       setShowConfetti(true);
+      playChime();
       setTimeout(() => setShowConfetti(false), 2000);
+    } else {
+      playPop();
     }
     // Auto advance
     setTimeout(() => {
@@ -339,64 +340,62 @@ export default function LessonGamePage() {
               ))}
             </div>
 
-            {/* Letter Card */}
-            <div
-              onClick={() => speak(currentItem.label)}
-              style={{
-                textAlign: "center",
-                background: `linear-gradient(145deg, ${currentItem.color}25, rgba(255,255,255,0.08))`,
-                border: `2px solid ${currentItem.color}60`,
-                borderRadius: 28,
-                padding: "48px 32px",
-                cursor: "pointer",
-                boxShadow: `0 0 40px ${currentItem.color}30, 0 20px 60px rgba(0,0,0,0.4)`,
-                transition: "transform 0.15s ease, box-shadow 0.15s ease",
-                marginBottom: 20,
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLDivElement).style.transform = "scale(1.03)";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLDivElement).style.transform = "";
-              }}
+            {/* Bouncing mascot */}
+            <motion.div
+              animate={{ y: [0, -12, 0], rotate: [-4, 4, -4] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              style={{ fontSize: "3rem", textAlign: "center", marginBottom: 6 }}
             >
-              {/* Arabic letter — pops in, then keeps floating & glowing */}
+              {lesson.emoji}
+            </motion.div>
+
+            {/* Cartoon sticker letter card */}
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
               <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
+                onClick={() => speak(currentItem.arabic, true)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.88, rotate: -5 }}
                 animate={{
-                  scale: 1, opacity: 1, y: [0, -14, 0],
-                  textShadow: [
-                    `0 0 30px ${currentItem.color}80, 0 0 60px ${currentItem.color}30`,
-                    `0 0 55px ${currentItem.color}, 0 0 100px ${currentItem.color}60`,
-                    `0 0 30px ${currentItem.color}80, 0 0 60px ${currentItem.color}30`,
+                  y: [0, -14, 0],
+                  boxShadow: [
+                    `0 12px 0 ${currentItem.color}, 0 22px 45px ${currentItem.color}40`,
+                    `0 16px 0 ${currentItem.color}, 0 28px 60px ${currentItem.color}60`,
+                    `0 12px 0 ${currentItem.color}, 0 22px 45px ${currentItem.color}40`,
                   ],
                 }}
                 transition={{
-                  scale: { type: "spring", stiffness: 200, damping: 15 },
-                  opacity: { duration: 0.3 },
-                  y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
-                  textShadow: { repeat: Infinity, duration: 2.4, ease: "easeInOut" },
+                  y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+                  boxShadow: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
                 }}
                 style={{
-                  fontFamily: "var(--font-amiri, 'Amiri', serif)",
-                  fontSize: "clamp(100px, 20vw, 160px)",
-                  lineHeight: 1.1,
-                  color: currentItem.color,
-                  direction: "rtl",
-                  marginBottom: 16,
-                  display: "block",
+                  width: "min(280px, 72vw)", height: "min(280px, 72vw)",
+                  margin: "0 auto 22px",
+                  borderRadius: "42% 58% 55% 45% / 55% 45% 55% 45%",
+                  background: "#ffffff",
+                  border: `10px solid ${currentItem.color}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer",
                 }}
               >
-                {currentItem.arabic}
+                <span style={{
+                  fontFamily: "var(--font-amiri, 'Amiri', serif)",
+                  fontSize: "clamp(110px, 26vw, 170px)",
+                  lineHeight: 1,
+                  color: currentItem.color,
+                  direction: "rtl",
+                  fontWeight: 700,
+                }}>
+                  {currentItem.arabic}
+                </span>
               </motion.div>
 
               {/* Label */}
-              <div style={{ color: "#fff", fontSize: "1.5rem", fontWeight: 800, letterSpacing: "0.02em", marginBottom: 6 }}>
+              <div style={{ color: "#fff", fontSize: "1.7rem", fontWeight: 800, letterSpacing: "0.02em", marginBottom: 4 }}>
                 {currentItem.label}
               </div>
               {currentItem.urdu && (
                 <div style={{
-                  color: "rgba(255,255,255,0.5)", fontSize: "1.1rem",
+                  color: "rgba(255,255,255,0.6)", fontSize: "1.2rem",
                   fontFamily: "var(--font-amiri, serif)", direction: "rtl",
                 }}>
                   {currentItem.urdu}
@@ -407,9 +406,9 @@ export default function LessonGamePage() {
               <motion.div
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                style={{ marginTop: 20, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                style={{ marginTop: 16, color: "rgba(255,255,255,0.6)", fontSize: "0.82rem", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
               >
-                <Volume2 size={14} /> Tap to hear
+                <Volume2 size={14} /> Tap the letter to hear
               </motion.div>
             </div>
 
@@ -436,7 +435,7 @@ export default function LessonGamePage() {
               {learnIndex < lesson.items.length - 1 ? (
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => { setLearnIndex(i => i + 1); speak(lesson.items[learnIndex + 1].label); }}
+                  onClick={() => { setLearnIndex(i => i + 1); }}
                   style={{
                     flex: 2, padding: "14px", borderRadius: 14,
                     background: `linear-gradient(135deg, ${currentItem.color}, ${currentItem.color}cc)`,
@@ -528,7 +527,7 @@ export default function LessonGamePage() {
               >
                 <Volume2 size={12} />
                 <button
-                  onClick={() => speak(currentQ.correct.label)}
+                  onClick={() => speak(currentQ.correct.arabic, true)}
                   style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "0.75rem" }}
                 >
                   Hear sound

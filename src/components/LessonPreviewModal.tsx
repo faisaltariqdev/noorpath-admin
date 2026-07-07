@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Volume2, Play, Pause, ChevronLeft, ChevronRight, Repeat } from "lucide-react";
 import type { Lesson } from "@/data/kidsStudio";
+import { speakArabic, playPop, preloadArabic } from "@/lib/kidsAudio";
 
 interface Props {
   lesson: Lesson | null;
@@ -43,24 +44,19 @@ export default function LessonPreviewModal({ lesson, onClose }: Props) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [direction, setDirection] = useState(1);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const speak = useCallback((text: string) => {
-    if (!synthRef.current) return;
-    synthRef.current.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ar-SA"; u.rate = 0.72; u.pitch = 1.15;
-    synthRef.current.speak(u);
+  const say = useCallback((arabic: string, withPop = false) => {
+    if (withPop) playPop();
+    speakArabic(arabic);
   }, []);
 
+  // Reset + warm audio cache on lesson change
   useEffect(() => {
-    synthRef.current = typeof window !== "undefined" ? window.speechSynthesis : null;
-  }, []);
-
-  // Reset on lesson change
-  useEffect(() => {
-    if (lesson) { setIndex(0); setPlaying(true); setDirection(1); }
+    if (lesson) {
+      setIndex(0); setPlaying(true); setDirection(1);
+      preloadArabic(lesson.items.map(i => i.arabic));
+    }
   }, [lesson]);
 
   const goNext = useCallback((auto = false) => {
@@ -86,8 +82,8 @@ export default function LessonPreviewModal({ lesson, onClose }: Props) {
   useEffect(() => {
     if (!lesson) return;
     const item = lesson.items[index];
-    if (item) speak(item.label);
-  }, [index, lesson, speak]);
+    if (item) say(item.arabic);
+  }, [index, lesson, say]);
 
   // Autoplay
   useEffect(() => {
@@ -200,33 +196,34 @@ export default function LessonPreviewModal({ lesson, onClose }: Props) {
                 transition={{ type: "spring", stiffness: 180, damping: 18 }}
                 style={{ textAlign: "center", width: "100%" }}
               >
-                {/* Glow ring behind letter */}
+                {/* Cartoon sticker letter — tap to hear */}
                 <motion.div
-                  onClick={() => speak(item.label)}
+                  onClick={() => say(item.arabic, true)}
+                  whileTap={{ scale: 0.86, rotate: -4 }}
                   animate={{
+                    y: [0, -12, 0],
                     boxShadow: [
-                      `0 0 30px ${item.color}55, inset 0 0 20px ${item.color}22`,
-                      `0 0 60px ${item.color}99, inset 0 0 30px ${item.color}44`,
-                      `0 0 30px ${item.color}55, inset 0 0 20px ${item.color}22`,
+                      `0 10px 0 ${item.color}aa, 0 0 40px ${item.color}66`,
+                      `0 14px 0 ${item.color}aa, 0 0 70px ${item.color}99`,
+                      `0 10px 0 ${item.color}aa, 0 0 40px ${item.color}66`,
                     ],
-                    y: [0, -10, 0],
                   }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{ y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" }, boxShadow: { duration: 2.4, repeat: Infinity, ease: "easeInOut" } }}
                   style={{
-                    width: 220, height: 220, borderRadius: "50%",
-                    margin: "0 auto 18px",
+                    width: 220, height: 220, borderRadius: "42% 58% 55% 45% / 55% 45% 55% 45%",
+                    margin: "0 auto 24px",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: `radial-gradient(circle, ${item.color}30 0%, transparent 70%)`,
-                    border: `2px solid ${item.color}55`,
+                    background: "#ffffff",
+                    border: `8px solid ${item.color}`,
                     cursor: "pointer",
                   }}
                 >
                   <span style={{
                     fontFamily: "var(--font-amiri, 'Amiri', serif)",
                     fontSize: "clamp(90px, 22vw, 140px)",
-                    color: "#fff",
+                    color: item.color,
                     direction: "rtl", lineHeight: 1,
-                    textShadow: `0 0 30px ${item.color}, 0 0 60px ${item.color}88`,
+                    fontWeight: 700,
                   }}>
                     {item.arabic}
                   </span>
@@ -257,7 +254,7 @@ export default function LessonPreviewModal({ lesson, onClose }: Props) {
 
                 {/* Tap to hear */}
                 <motion.button
-                  onClick={() => speak(item.label)}
+                  onClick={() => say(item.arabic, true)}
                   whileTap={{ scale: 0.92 }}
                   animate={{ opacity: [0.6, 1, 0.6] }}
                   transition={{ opacity: { duration: 2, repeat: Infinity } }}
