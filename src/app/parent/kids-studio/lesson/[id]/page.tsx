@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import LESSONS, { getLessonById } from "@/data/kidsStudio";
 import type { QaidaItem, Lesson } from "@/data/kidsStudio";
 import { speakArabic, playPop, playChime, preloadArabic } from "@/lib/kidsAudio";
+import Mascot from "@/components/Mascot";
 import { ArrowLeft, Star, Volume2, RotateCcw, Trophy, ChevronRight } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -276,6 +277,18 @@ export default function LessonGamePage() {
   const starsEarned    = finalScore >= questions.length * 0.85 ? 3 : finalScore >= questions.length * 0.6 ? 2 : 1;
   const nextLesson     = getLessonById(lessonId + 1);
 
+  // ── Mascot (Noori) contextual reactions ──────────────────────────────────
+  const LEARN_TIPS = ["Tap me to hear! 👂", "Say it out loud! 🗣️", "You're a star! ⭐", "Masha'Allah! 💫", "Great job! Keep going! 🚀"];
+  let mascotMood: "happy" | "celebrate" = "happy";
+  let mascotMsg = "";
+  if (phase === "learn") {
+    mascotMsg = LEARN_TIPS[learnIndex % LEARN_TIPS.length];
+  } else if (phase === "quiz") {
+    if (selected && isCorrect) { mascotMood = "celebrate"; mascotMsg = "Masha'Allah! 🎉"; }
+    else if (selected && !isCorrect) { mascotMsg = "Almost! Try next! 💪"; }
+    else { mascotMsg = "Which one is it? 🤔"; }
+  }
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -284,6 +297,11 @@ export default function LessonGamePage() {
     }}>
       <ConfettiBurst active={showConfetti} />
       <FloatingParticles />
+
+      {/* ── Noori mascot guide (learn & quiz) ── */}
+      {(phase === "learn" || phase === "quiz") && (
+        <Mascot mood={mascotMood} message={mascotMsg} size={104} position="bottom-left" bubbleSide="top" />
+      )}
 
       {/* ── Top Bar ── */}
       <div style={{
@@ -609,11 +627,14 @@ export default function LessonGamePage() {
             transition={{ type: "spring", stiffness: 120, damping: 15 }}
             style={{ textAlign: "center" }}
           >
-            {/* Trophy / result emoji */}
+            {/* Celebrating Noori */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+              <Mascot mood="celebrate" size={150} position="inline" />
+            </div>
             <motion.div
               animate={{ rotate: [0, -5, 5, -5, 0], y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 3 }}
-              style={{ fontSize: "5rem", marginBottom: 16 }}
+              style={{ fontSize: "3rem", marginBottom: 8 }}
             >
               {starsEarned === 3 ? "🏆" : starsEarned === 2 ? "🎉" : "💪"}
             </motion.div>

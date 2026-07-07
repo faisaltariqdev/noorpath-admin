@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Volume2, Play, Pause, ChevronLeft, ChevronRight, Repeat } from "lucide-react";
 import type { Lesson } from "@/data/kidsStudio";
 import { speakArabic, playPop, preloadArabic } from "@/lib/kidsAudio";
+import Mascot from "@/components/Mascot";
 
 interface Props {
   lesson: Lesson | null;
@@ -318,6 +319,11 @@ export default function LessonPreviewModal({ lesson, onClose }: Props) {
                 }}
               />
             ))}
+          </div>
+
+          {/* Noori peeking in the corner */}
+          <div style={{ position: "absolute", left: 8, bottom: 6, zIndex: 3 }}>
+            <Mascot mood="happy" size={70} position="inline" />
           </div>
         </motion.div>
       </motion.div>
