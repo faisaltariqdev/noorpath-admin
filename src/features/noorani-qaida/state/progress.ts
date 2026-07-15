@@ -1,7 +1,8 @@
 import type { Badge, QaidaAction, QaidaProgress } from "../types";
+import { getCurrentCurriculumScreen, isCurriculumScreenUnlocked, isModuleComplete } from "./curriculumProgress";
 
-export const PROGRESS_STORAGE_KEY = "noorpath-qaida-v4";
-export const LEGACY_PROGRESS_KEYS = ["noorpath-qaida-v3", "noorpath-qaida-v2", "noorpath-qaida-progress"];
+export const PROGRESS_STORAGE_KEY = "noorpath-qaida-v5";
+export const LEGACY_PROGRESS_KEYS = ["noorpath-qaida-v4", "noorpath-qaida-v3", "noorpath-qaida-v2", "noorpath-qaida-progress"];
 
 const XP_PER_LEVEL = 300;
 
@@ -22,11 +23,15 @@ const ALL_BADGES: Badge[] = [
   { id: "level-5", label: "Qaida Star", icon: "🌟", description: "Reached Level 5", earned: false },
   { id: "coins-100", label: "Rich Learner", icon: "🪙", description: "Earned 100 coins", earned: false },
   { id: "perfect-game", label: "Perfectionist", icon: "💎", description: "Got 3 stars in a game", earned: false },
+  { id: "vowel-explorer", label: "Vowel Explorer", icon: "🎵", description: "Completed the Harakaat module", earned: false },
+  { id: "word-reader", label: "Word Reader", icon: "📖", description: "Completed progressive word reading", earned: false },
+  { id: "quran-ready", label: "Quran Ready", icon: "🌙", description: "Completed Quranic practice", earned: false },
+  { id: "qaida-graduate", label: "Qaida Graduate", icon: "🏅", description: "Passed the final review", earned: false },
 ];
 
 export const DEFAULT_PROGRESS: QaidaProgress = {
   hydrated: false,
-  version: 4,
+  version: 5,
   xp: 0,
   coins: 0,
   stars: 0,
@@ -39,6 +44,9 @@ export const DEFAULT_PROGRESS: QaidaProgress = {
   badges: ALL_BADGES.map((b) => ({ ...b })),
   gamesCompleted: 0,
   totalPracticeSeconds: 0,
+  currentScreenId: "letter-1",
+  assessmentAttempts: [],
+  reviewSummaries: [],
   settings: {
     previewMode: "child",
     theme: "light",
@@ -61,6 +69,10 @@ function awardBadgesForState(progress: QaidaProgress): QaidaProgress {
     "level-2": progress.level >= 2,
     "level-5": progress.level >= 5,
     "coins-100": progress.coins >= 100,
+    "vowel-explorer": isModuleComplete(progress, "harakaat"),
+    "word-reader": isModuleComplete(progress, "word-reading"),
+    "quran-ready": isModuleComplete(progress, "quranic-practice"),
+    "qaida-graduate": progress.assessmentAttempts.some((attempt) => attempt.screenId === "final-assessment" && attempt.passed),
   };
 
   const now = new Date().toISOString();
@@ -90,6 +102,11 @@ export function progressReducer(state: QaidaProgress, action: QaidaAction): Qaid
         completed: Array.isArray(action.value.completed) ? action.value.completed : [],
         ratings: action.value.ratings && typeof action.value.ratings === "object" ? action.value.ratings : {},
         badges,
+        currentScreenId: typeof action.value.currentScreenId === "string"
+          ? action.value.currentScreenId
+          : getCurrentCurriculumScreen({ ...DEFAULT_PROGRESS, ...action.value, badges } as QaidaProgress),
+        assessmentAttempts: Array.isArray(action.value.assessmentAttempts) ? action.value.assessmentAttempts : [],
+        reviewSummaries: Array.isArray(action.value.reviewSummaries) ? action.value.reviewSummaries : [],
         settings: {
           ...DEFAULT_PROGRESS.settings,
           ...(action.value.settings ?? {}),
@@ -128,6 +145,27 @@ export function progressReducer(state: QaidaProgress, action: QaidaAction): Qaid
       return awardBadgesForState({ ...state, gamesCompleted });
     }
 
+    case "set_current_screen":
+      return { ...state, currentScreenId: action.id };
+
+    case "record_assessment":
+      return awardBadgesForState({
+        ...state,
+        assessmentAttempts: [...state.assessmentAttempts, action.attempt],
+      });
+
+    case "record_review":
+      return {
+        ...state,
+        reviewSummaries: [...state.reviewSummaries, action.summary],
+      };
+
+    case "add_practice_time":
+      return {
+        ...state,
+        totalPracticeSeconds: state.totalPracticeSeconds + Math.max(0, action.seconds),
+      };
+
     case "update_streak": {
       const today = new Date().toDateString();
       const yesterday = new Date(Date.now() - 86400000).toDateString();
@@ -161,18 +199,14 @@ export function parseProgress(raw: string | null): Partial<QaidaProgress> {
 }
 
 export function isScreenUnlocked(progress: QaidaProgress, id: string): boolean {
-  if (id === "cover" || id === "toc") return true;
-  if (progress.completed.length === 0 && id === "letter-1") return true;
-  if (id.startsWith("letter-")) {
-    const num = parseInt(id.replace("letter-", ""), 10);
-    return num === 1 || progress.completed.includes(`letter-${num - 1}`);
-  }
-  return progress.completed.length > 0;
+  return isCurriculumScreenUnlocked(progress, id);
 }
 
 export function getCurrentLesson(progress: QaidaProgress): string {
   for (let i = 1; i <= 28; i++) {
     if (!progress.completed.includes(`letter-${i}`)) return `letter-${i}`;
   }
-  return "certificate";
+  return "letter-28";
 }
+
+export { getCurrentCurriculumScreen };

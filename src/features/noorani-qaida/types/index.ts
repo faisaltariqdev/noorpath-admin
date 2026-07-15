@@ -7,9 +7,94 @@ export interface Letter {
   example: string;
   meaning: string;
   makharij: string;
+  mouthPosition: string;
+  childExplanation: string;
+  teacherNote: string;
+  parentNote: string;
+  writingHint: string;
+  audioKey: string;
+  reviewStatus: ReviewStatus;
 }
 
 export type ScreenId = string;
+export type ReviewStatus = "pending-qari-review" | "qari-reviewed";
+export type ModuleId =
+  | "alphabet"
+  | "harakaat"
+  | "double-harakaat"
+  | "sukoon"
+  | "shaddah"
+  | "madd"
+  | "joining"
+  | "word-reading"
+  | "quranic-practice"
+  | "revision"
+  | "final-review";
+
+export type LessonKind =
+  | "letter"
+  | "mark"
+  | "madd"
+  | "joining"
+  | "reading"
+  | "quranic"
+  | "revision"
+  | "assessment";
+
+export interface InteractiveExample {
+  id: string;
+  arabic: string;
+  transliteration: string;
+  meaning?: string;
+  audioKey: string;
+  segments?: string[];
+}
+
+export interface TopicLesson {
+  id: ScreenId;
+  moduleId: ModuleId;
+  kind: LessonKind;
+  title: string;
+  arabicTitle: string;
+  summary: string;
+  childExplanation: string;
+  teacherTip: string;
+  parentTip: string;
+  mouthPosition?: string;
+  writingHint?: string;
+  traceValue?: string;
+  audioKey: string;
+  examples: InteractiveExample[];
+  reviewStatus: ReviewStatus;
+}
+
+export interface QaidaModule {
+  id: ModuleId;
+  order: number;
+  title: string;
+  arabicTitle: string;
+  description: string;
+  icon: string;
+  accent: string;
+  prerequisite?: ModuleId;
+  screenIds: ScreenId[];
+  reviewStatus: ReviewStatus;
+}
+
+export interface AssessmentAttempt {
+  screenId: ScreenId;
+  score: number;
+  total: number;
+  passed: boolean;
+  completedAt: string;
+}
+
+export interface ReviewSummary {
+  screenId: ScreenId;
+  correct: number;
+  total: number;
+  completedAt: string;
+}
 
 export interface CurriculumItem {
   id: ScreenId;
@@ -50,6 +135,9 @@ export interface QaidaProgress {
   badges: Badge[];
   gamesCompleted: number;
   totalPracticeSeconds: number;
+  currentScreenId: ScreenId;
+  assessmentAttempts: AssessmentAttempt[];
+  reviewSummaries: ReviewSummary[];
   settings: QaidaSettings;
 }
 
@@ -60,6 +148,10 @@ export type QaidaAction =
   | { type: "earn_coins"; amount: number }
   | { type: "rate_screen"; id: ScreenId; stars: 1 | 2 | 3 }
   | { type: "game_completed" }
+  | { type: "set_current_screen"; id: ScreenId }
+  | { type: "record_assessment"; attempt: AssessmentAttempt }
+  | { type: "record_review"; summary: ReviewSummary }
+  | { type: "add_practice_time"; seconds: number }
   | { type: "update_streak" }
   | { type: "update_settings"; settings: Partial<QaidaSettings> }
   | { type: "reset" };

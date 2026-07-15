@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { QaidaProgress } from "../types";
 import { LETTERS } from "../data/curriculum";
@@ -9,14 +10,17 @@ import FloatingParticles from "../animations/FloatingParticles";
 import SparkleBurst from "../animations/SparkleBurst";
 import ZaydMascot, { type ZaydAction } from "../characters/ZaydMascot";
 import FullscreenButton from "../ui/FullscreenButton";
-import QaidaEbook from "./QaidaEbook";
+
+const CurriculumBook = dynamic(() => import("./CurriculumBook"), {
+  ssr: false,
+});
 
 type BookMode = "book" | "cards";
 
 interface NooraniBookProps {
   progress: QaidaProgress;
-  currentLetterId: string;
-  onSelectLetter: (letterId: string) => void;
+  currentScreenId: string;
+  onSelectScreen: (screenId: string) => void;
   reducedMotion: boolean;
   particleCount: number;
   audioEnabled?: boolean;
@@ -58,8 +62,8 @@ function BookRing({ pct, reduced }: { pct: number; reduced: boolean }) {
 
 export default function NooraniBook({
   progress,
-  currentLetterId,
-  onSelectLetter,
+  currentScreenId,
+  onSelectScreen,
   reducedMotion,
   particleCount,
   audioEnabled = true,
@@ -93,12 +97,12 @@ export default function NooraniBook({
       window.setTimeout(
         () => {
           setTappedId(null);
-          onSelectLetter(`letter-${id}`);
+          onSelectScreen(`letter-${id}`);
         },
         reducedMotion ? 150 : 620,
       );
     },
-    [audioEnabled, onSelectLetter, reducedMotion],
+    [audioEnabled, onSelectScreen, reducedMotion],
   );
 
   return (
@@ -179,10 +183,10 @@ export default function NooraniBook({
       </div>
 
       {mode === "book" ? (
-        <QaidaEbook
+        <CurriculumBook
           progress={progress}
-          currentLetterId={currentLetterId}
-          onSelectLetter={onSelectLetter}
+          currentScreenId={currentScreenId}
+          onOpenScreen={onSelectScreen}
           reducedMotion={reducedMotion}
           audioEnabled={audioEnabled}
         />
@@ -204,7 +208,7 @@ export default function NooraniBook({
               if (!letter) return null;
               const id = `letter-${lid}`;
               const isCompleted = progress.completed.includes(id);
-              const isCurrent = id === currentLetterId;
+              const isCurrent = id === currentScreenId;
               const prevCompleted = lid === 1 || progress.completed.includes(`letter-${lid - 1}`);
               const isUnlocked = lid === 1 || prevCompleted || isCompleted;
               const stars = progress.ratings[id] ?? (isCompleted ? 3 : 0);

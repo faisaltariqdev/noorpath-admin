@@ -1,20 +1,22 @@
 "use client";
 import { motion } from "framer-motion";
 import type { QaidaProgress } from "../types";
-import { LETTERS } from "../data/curriculum";
 import FloatingParticles from "../animations/FloatingParticles";
+import { CURRICULUM_MODULES } from "../data/modules";
+import { getModuleProgress, getOverallCurriculumProgress } from "../state/curriculumProgress";
 
 interface ProgressScreenProps {
   progress: QaidaProgress;
 }
 
 export default function ProgressScreen({ progress }: ProgressScreenProps) {
-  const lettersDone = LETTERS.filter((l) => progress.completed.includes(`letter-${l.id}`)).length;
-  const pct = Math.round((lettersDone / 28) * 100);
+  const overall = getOverallCurriculumProgress(progress);
+  const moduleProgress = CURRICULUM_MODULES.map((module) => ({ module, state: getModuleProgress(progress, module.id) }));
+  const modulesDone = moduleProgress.filter(({ state }) => state.complete).length;
   const earnedBadges = progress.badges.filter((b) => b.earned);
 
   const stats = [
-    { icon: "📖", label: "Letters", value: `${lettersDone}/28`, sub: "completed" },
+    { icon: "📖", label: "Curriculum", value: `${modulesDone}/11`, sub: "modules completed" },
     { icon: "⚡", label: "XP", value: progress.xp, sub: `Level ${progress.level}` },
     { icon: "🪙", label: "Coins", value: progress.coins, sub: "earned total" },
     { icon: "⭐", label: "Stars", value: progress.stars, sub: "star ratings" },
@@ -43,8 +45,8 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm text-emerald-200">Overall completion</div>
-            <div className="text-5xl font-black">{pct}%</div>
-            <div className="text-emerald-200">{lettersDone} of 28 letters</div>
+            <div className="text-5xl font-black">{overall.percent}%</div>
+            <div className="text-emerald-200">{overall.completed} of {overall.total} curriculum lessons</div>
           </div>
           <div className="text-7xl opacity-30">📖</div>
         </div>
@@ -52,11 +54,25 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
           <motion.div
             className="h-full rounded-full bg-white shadow-md"
             initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
+            animate={{ width: `${overall.percent}%` }}
             transition={{ duration: 1.5, ease: "easeOut" }}
           />
         </div>
       </motion.div>
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {moduleProgress.map(({ module, state }) => (
+          <div key={module.id} className={`rounded-2xl border p-4 ${state.unlocked ? "border-emerald-100 bg-white" : "border-slate-200 bg-slate-50 opacity-60"}`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-black text-slate-800">{module.order}. {module.title}</span>
+              <span className="text-xs font-black text-emerald-700">{state.unlocked ? `${state.percent}%` : "Locked"}</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500" style={{ width: `${state.percent}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Stats grid */}
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">

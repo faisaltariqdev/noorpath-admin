@@ -10,9 +10,11 @@ import CoinRain from "../animations/CoinRain";
 import { useQaidaState } from "../state/useQaidaState";
 import { LETTERS } from "../data/curriculum";
 import { letterWindow } from "../data/games";
+import { ALL_CURRICULUM_SCREEN_IDS, TOPIC_LESSON_BY_ID } from "../data/modules";
 import { useMotionBudget } from "../motion/useMotionBudget";
 import { pageVariants } from "../motion/config";
 import QaidaLoader from "../ui/QaidaLoader";
+import { getOverallCurriculumProgress } from "../state/curriculumProgress";
 
 const LessonScreen = dynamic(() => import("../screens/LessonScreen"), {
   ssr: false,
@@ -35,6 +37,18 @@ const NooraniBook = dynamic(() => import("../screens/NooraniBook"), {
   loading: () => <QaidaLoader />,
 });
 const PracticeHub = dynamic(() => import("../screens/PracticeHub"), {
+  ssr: false,
+  loading: () => <QaidaLoader />,
+});
+const TopicLessonScreen = dynamic(() => import("../screens/TopicLessonScreen"), {
+  ssr: false,
+  loading: () => <QaidaLoader />,
+});
+const ReviewAssessmentScreen = dynamic(() => import("../screens/ReviewAssessmentScreen"), {
+  ssr: false,
+  loading: () => <QaidaLoader />,
+});
+const CertificateScreen = dynamic(() => import("../screens/CertificateScreen"), {
   ssr: false,
   loading: () => <QaidaLoader />,
 });
@@ -118,7 +132,8 @@ function WelcomeDashboard({
   reducedMotion: boolean;
 }) {
   const completedCount = LETTERS.filter((l) => progress.completed.includes(`letter-${l.id}`)).length;
-  const pct = Math.round((completedCount / 28) * 100);
+  const curriculumProgress = getOverallCurriculumProgress(progress);
+  const pct = curriculumProgress.percent;
   const earnedBadges = progress.badges.filter((b) => b.earned).length;
   const nextLetter = LETTERS.find((l) => !progress.completed.includes(`letter-${l.id}`)) ?? null;
   const isNew = completedCount === 0;
@@ -191,7 +206,7 @@ function WelcomeDashboard({
             <div className="pr-1">
               <p className="text-xs font-bold uppercase tracking-wide text-emerald-100/80">Progress</p>
               <p className="text-2xl font-black leading-tight">{completedCount}<span className="text-emerald-100/70">/28</span></p>
-              <p className="text-xs text-emerald-100/80">letters complete</p>
+              <p className="text-xs text-emerald-100/80">alphabet letters</p>
             </div>
           </div>
         </div>
@@ -244,7 +259,7 @@ function WelcomeDashboard({
             />
           </div>
           <p className="mt-2 text-sm text-slate-500">
-            {isNew ? "Start your first letter to begin the journey." : `${completedCount} of 28 Arabic letters completed.`}
+            {isNew ? "Start your first letter to begin the journey." : `${curriculumProgress.completed} of ${curriculumProgress.total} curriculum lessons completed.`}
           </p>
         </motion.section>
 
@@ -312,21 +327,31 @@ export default function QaidaShell() {
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [activeGame, setActiveGame] = useState<ActiveGame>(null);
-  const [activeLetterId, setActiveLetterId] = useState<string | null>(null);
+  const [activeScreenId, setActiveScreenId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showCoinRain, setShowCoinRain] = useState(false);
   const [gameCompletionCount, setGameCompletionCount] = useState(0);
 
-  const currentLetter = activeLetterId
-    ? LETTERS.find((l) => `letter-${l.id}` === activeLetterId) ?? LETTERS[0]
+  const currentLetter = activeScreenId?.startsWith("letter-")
+    ? LETTERS.find((l) => `letter-${l.id}` === activeScreenId) ?? LETTERS[0]
     : LETTERS.find((l) => `letter-${l.id}` === state.currentLesson) ?? LETTERS[0];
+  const currentScreenId = activeScreenId ?? state.currentCurriculumScreen;
   const focusWindow = letterWindow(currentLetter.id);
 
   useEffect(() => {
     contentRef.current?.focus({ preventScroll: true });
   }, [activeGame, activeView]);
+
+  useEffect(() => {
+    if (activeView !== "lessons" && activeView !== "practice" && !activeGame) return;
+    const startedAt = Date.now();
+    return () => {
+      const seconds = Math.floor((Date.now() - startedAt) / 1000);
+      if (seconds > 0) state.dispatch({ type: "add_practice_time", seconds });
+    };
+  }, [activeGame, activeView, currentScreenId, state.dispatch]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -370,24 +395,27 @@ export default function QaidaShell() {
     setActiveView(view);
     setActiveGame(null);
     setMobileMenuOpen(false);
-    if ((view === "lessons" || view === "practice") && !activeLetterId) {
-      setActiveLetterId(state.currentLesson);
+    if (view === "lessons" && !activeScreenId) {
+      setActiveScreenId(state.currentCurriculumScreen);
+    } else if (view === "practice" && !activeScreenId?.startsWith("letter-")) {
+      setActiveScreenId(state.currentLesson);
     }
-  }, [activeLetterId, state.currentLesson]);
+  }, [activeScreenId, state.currentCurriculumScreen, state.currentLesson]);
 
-  const handleLetterSelect = useCallback((id: string) => {
-    setActiveLetterId(id);
+  const handleScreenSelect = useCallback((id: string) => {
+    if (!state.navigate(id)) return;
+    setActiveScreenId(id);
     setActiveView("lessons");
     setActiveGame(null);
-  }, []);
+  }, [state]);
 
   const handleGameSelect = useCallback((gameId: string) => {
     setActiveGame(gameId as ActiveGame);
   }, []);
 
   const handleLessonComplete = useCallback(() => {
-    if (activeLetterId) {
-      state.completeScreen(activeLetterId);
+    if (activeScreenId?.startsWith("letter-")) {
+      state.completeScreen(activeScreenId);
       state.dispatch({ type: "earn_coins", amount: 15 });
     }
     setShowConfetti(true);
@@ -396,15 +424,33 @@ export default function QaidaShell() {
       setShowConfetti(false);
       setShowCoinRain(false);
       // Auto-advance to next letter
-      const currentId = activeLetterId ?? state.currentLesson;
+      const currentId = activeScreenId ?? state.currentLesson;
       const num = parseInt(currentId.replace("letter-", ""), 10);
       if (num < 28) {
-        setActiveLetterId(`letter-${num + 1}`);
+        setActiveScreenId(`letter-${num + 1}`);
       } else {
         setActiveView("journey");
       }
     }, 3500);
-  }, [activeLetterId, state]);
+  }, [activeScreenId, state]);
+
+  const handleTopicComplete = useCallback((id: string) => {
+    state.completeScreen(id);
+    setShowConfetti(true);
+    setShowCoinRain(true);
+    window.setTimeout(() => {
+      setShowConfetti(false);
+      setShowCoinRain(false);
+      const index = ALL_CURRICULUM_SCREEN_IDS.indexOf(id);
+      const next = ALL_CURRICULUM_SCREEN_IDS[index + 1];
+      if (next) {
+        setActiveScreenId(next);
+        state.dispatch({ type: "set_current_screen", id: next });
+      } else {
+        setActiveView("qaida");
+      }
+    }, motionBudget.reduced ? 500 : 1800);
+  }, [motionBudget.reduced, state]);
 
   const handleGameComplete = useCallback((stars: 1 | 2 | 3) => {
     state.dispatch({ type: "game_completed" });
@@ -440,7 +486,10 @@ export default function QaidaShell() {
     if (activeGame === "puzzle") return "Letter Puzzle 🧩";
     if (activeGame === "sound-match") return "Sound Match 🎵";
     if (activeView === "qaida") return "Noorani Qaida Book";
-    if (activeView === "lessons") return `${currentLetter.id}. ${currentLetter.name}`;
+    if (activeView === "lessons") {
+      if (currentScreenId === "certificate") return "Certificate";
+      return TOPIC_LESSON_BY_ID[currentScreenId]?.title ?? `${currentLetter.id}. ${currentLetter.name}`;
+    }
     if (activeView === "practice") return `Practice ${currentLetter.name}`;
     if (activeView === "journey") return "Letter Journey";
     if (activeView === "games") return "Games";
@@ -645,7 +694,7 @@ export default function QaidaShell() {
               >
                 <JourneyMap
                   progress={state.progress}
-                  onSelectLetter={handleLetterSelect}
+                  onSelectLetter={handleScreenSelect}
                 />
               </motion.div>
             ) : activeView === "qaida" ? (
@@ -659,8 +708,8 @@ export default function QaidaShell() {
               >
                 <NooraniBook
                   progress={state.progress}
-                  currentLetterId={activeLetterId ?? state.currentLesson}
-                  onSelectLetter={handleLetterSelect}
+                  currentScreenId={currentScreenId}
+                  onSelectScreen={handleScreenSelect}
                   reducedMotion={motionBudget.reduced}
                   particleCount={motionBudget.pageVisible ? motionBudget.ambientParticles : 0}
                   audioEnabled={state.audioEnabled}
@@ -754,23 +803,56 @@ export default function QaidaShell() {
                 />
               </motion.div>
             ) : (
-              /* Default: single-letter lesson screen (lessons view) */
+              /* Lesson view: alphabet, topic, revision, assessment, or certificate */
               <motion.div
-                key={`lesson-${activeLetterId ?? state.currentLesson}`}
+                key={`lesson-${currentScreenId}`}
                 className="absolute inset-0 overflow-auto"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
-                <LessonScreen
-                  letter={currentLetter}
-                  progress={state.progress}
-                  onComplete={handleLessonComplete}
-                  onGameSelect={handleGameSelect}
-                  audioEnabled={state.audioEnabled}
-                  gameCompletionCount={gameCompletionCount}
-                />
+                {currentScreenId === "certificate" ? (
+                  <CertificateScreen progress={state.progress} />
+                ) : currentScreenId === "mixed-revision" || currentScreenId === "final-assessment" ? (
+                  <ReviewAssessmentScreen
+                    mode={currentScreenId === "final-assessment" ? "assessment" : "revision"}
+                    reducedMotion={motionBudget.reduced}
+                    audioEnabled={state.audioEnabled}
+                    onComplete={(score, total) => {
+                      if (currentScreenId === "final-assessment") {
+                        const passed = score / total >= 0.8;
+                        state.dispatch({
+                          type: "record_assessment",
+                          attempt: { screenId: currentScreenId, score, total, passed, completedAt: new Date().toISOString() },
+                        });
+                        if (passed) handleTopicComplete(currentScreenId);
+                      } else {
+                        state.dispatch({
+                          type: "record_review",
+                          summary: { screenId: currentScreenId, correct: score, total, completedAt: new Date().toISOString() },
+                        });
+                        handleTopicComplete(currentScreenId);
+                      }
+                    }}
+                  />
+                ) : TOPIC_LESSON_BY_ID[currentScreenId] ? (
+                  <TopicLessonScreen
+                    lesson={TOPIC_LESSON_BY_ID[currentScreenId]}
+                    reducedMotion={motionBudget.reduced}
+                    audioEnabled={state.audioEnabled}
+                    onComplete={() => handleTopicComplete(currentScreenId)}
+                  />
+                ) : (
+                  <LessonScreen
+                    letter={currentLetter}
+                    progress={state.progress}
+                    onComplete={handleLessonComplete}
+                    onGameSelect={handleGameSelect}
+                    audioEnabled={state.audioEnabled}
+                    gameCompletionCount={gameCompletionCount}
+                  />
+                )}
               </motion.div>
             )}
           </AnimatePresence>

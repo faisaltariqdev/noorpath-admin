@@ -63,8 +63,12 @@ class QaidaAudioService {
     try {
       for (let index = 0; index < Math.max(1, repeat); index += 1) {
         if (!this.enabled || requestId !== this.requestId) return;
-        if (source) await this.playFile(source);
-        else await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78);
+        if (source) {
+          const played = await this.playFile(source);
+          if (!played) await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78);
+        } else {
+          await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78);
+        }
       }
     } finally {
       if (requestId === this.requestId) onEnd?.();
@@ -101,9 +105,9 @@ class QaidaAudioService {
   }
 
   private playFile(source: string) {
-    return new Promise<void>((resolve) => {
+    return new Promise<boolean>((resolve) => {
       if (typeof Audio === "undefined") {
-        resolve();
+        resolve(false);
         return;
       }
 
@@ -112,13 +116,13 @@ class QaidaAudioService {
       audio.preload = "auto";
       audio.onended = () => {
         if (this.activeAudio === audio) this.activeAudio = null;
-        resolve();
+        resolve(true);
       };
       audio.onerror = () => {
         if (this.activeAudio === audio) this.activeAudio = null;
-        resolve();
+        resolve(false);
       };
-      void audio.play().catch(() => resolve());
+      void audio.play().catch(() => resolve(false));
     });
   }
 }

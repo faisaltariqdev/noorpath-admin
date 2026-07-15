@@ -54,9 +54,10 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
           </div>
         </header>
 
-        <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Verified progress summary">
+        <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Verified progress summary">
           {[
-            ["Letters completed", `${snapshot.lettersCompleted}/${LETTERS.length}`, "📖"],
+            ["Curriculum progress", `${snapshot.overallCurriculumPercent}%`, "📖"],
+            ["Modules completed", `${snapshot.modulesCompleted}/11`, "🗺️"],
             ["Stored XP", progress.xp.toString(), "⭐"],
             ["Current streak", `${progress.streak} day${progress.streak === 1 ? "" : "s"}`, "🔥"],
             ["Practice recorded", formatPracticeTime(progress.totalPracticeSeconds), "⏱️"],
@@ -73,6 +74,17 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
               <span className="text-xs font-bold text-slate-600 sm:text-sm">{label}</span>
             </motion.article>
           ))}
+        </section>
+
+        <section className="qaida-panel mt-5 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-emerald-700">Current module</p>
+              <h2 className="mt-1 text-xl font-black text-slate-950">{snapshot.currentModuleTitle}</h2>
+              <p className="text-sm text-slate-600">{snapshot.homeworkReady ? "Ready for a short review assignment." : "Complete the first lesson to unlock home practice."}</p>
+            </div>
+            <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-800">{snapshot.practiceMinutes} min practice</span>
+          </div>
         </section>
 
         <div className="qaida-dashboard-grid mt-5">

@@ -1,6 +1,8 @@
 import { LETTERS } from "./curriculum";
 import { DEFAULT_PROGRESS, parseProgress, progressReducer } from "../state/progress";
 import type { QaidaProgress } from "../types";
+import { CURRICULUM_MODULES } from "./modules";
+import { getModuleProgress, getOverallCurriculumProgress } from "../state/curriculumProgress";
 
 export interface ParentProgressSnapshot {
   source: "device";
@@ -9,6 +11,11 @@ export interface ParentProgressSnapshot {
   completionPercent: number;
   nextLetterName: string | null;
   earnedBadges: number;
+  overallCurriculumPercent: number;
+  currentModuleTitle: string;
+  modulesCompleted: number;
+  practiceMinutes: number;
+  homeworkReady: boolean;
 }
 
 export type TutorProgressSnapshot =
@@ -25,6 +32,13 @@ export function createParentProgressSnapshot(raw: string | null): ParentProgress
     progress.completed.includes(`letter-${letter.id}`),
   ).length;
   const nextLetter = LETTERS.find((letter) => !progress.completed.includes(`letter-${letter.id}`));
+  const overall = getOverallCurriculumProgress(progress);
+  const moduleStates = CURRICULUM_MODULES.map((module) => ({
+    module,
+    state: getModuleProgress(progress, module.id),
+  }));
+  const currentModule = moduleStates.find(({ state }) => state.unlocked && !state.complete)?.module
+    ?? CURRICULUM_MODULES[CURRICULUM_MODULES.length - 1];
 
   return {
     source: "device",
@@ -33,6 +47,11 @@ export function createParentProgressSnapshot(raw: string | null): ParentProgress
     completionPercent: Math.round((lettersCompleted / LETTERS.length) * 100),
     nextLetterName: nextLetter?.name ?? null,
     earnedBadges: progress.badges.filter((badge) => badge.earned).length,
+    overallCurriculumPercent: overall.percent,
+    currentModuleTitle: currentModule.title,
+    modulesCompleted: moduleStates.filter(({ state }) => state.complete).length,
+    practiceMinutes: Math.round(progress.totalPracticeSeconds / 60),
+    homeworkReady: progress.completed.length > 0,
   };
 }
 

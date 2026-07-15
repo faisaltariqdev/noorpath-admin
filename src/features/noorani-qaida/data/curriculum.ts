@@ -33,6 +33,13 @@ export const LETTERS: Letter[] = [
   id: id as number, letter: letter as string, name: name as string, sound: sound as string,
   forms: forms as Letter["forms"], example: example as string, meaning: meaning as string,
   makharij: makharij as string,
+  mouthPosition: makharij as string,
+  childExplanation: `This is ${name}. Look at its shape, listen carefully, and say the sound gently.`,
+  teacherNote: `Model ${name} slowly from its correct articulation point, then compare the learner's sound without forcing repetition.`,
+  parentNote: `Practise ${name} for two or three minutes. Praise careful listening before asking for another try.`,
+  writingHint: `Begin from the top and follow the natural right-to-left Arabic writing direction for ${name}.`,
+  audioKey: `letter-${id}`,
+  reviewStatus: "pending-qari-review" as const,
 }));
 
 const base: CurriculumItem[] = [

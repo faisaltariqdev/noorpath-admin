@@ -2,8 +2,10 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { ScreenId } from "../types";
 import { qaidaAudio } from "../audio/QaidaAudioService";
+import { manifestToAudioAssets, preloadQaidaAudio, QAIDA_AUDIO_MANIFEST } from "../audio/manifest";
 import {
   DEFAULT_PROGRESS,
+  getCurrentCurriculumScreen,
   getCurrentLesson,
   isScreenUnlocked,
   LEGACY_PROGRESS_KEYS,
@@ -23,6 +25,7 @@ export function useQaidaState() {
 
   // Hydrate from localStorage
   useEffect(() => {
+    qaidaAudio.configure(manifestToAudioAssets(QAIDA_AUDIO_MANIFEST));
     const current = localStorage.getItem(PROGRESS_STORAGE_KEY);
     const legacy = LEGACY_PROGRESS_KEYS.map((k) => localStorage.getItem(k)).find(Boolean) ?? null;
     dispatch({ type: "hydrate", value: parseProgress(current ?? legacy) });
@@ -30,12 +33,18 @@ export function useQaidaState() {
     dispatch({ type: "update_streak" });
   }, []);
 
+  useEffect(() => {
+    if (!progress.hydrated) return;
+    preloadQaidaAudio([progress.currentScreenId]);
+  }, [progress.currentScreenId, progress.hydrated]);
+
   // Persist to localStorage
   useEffect(() => {
     if (progress.hydrated) {
       localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
       setAudioEnabled(progress.settings.audioEnabled);
       qaidaAudio.setEnabled(progress.settings.audioEnabled);
+      setScreen(progress.currentScreenId || getCurrentCurriculumScreen(progress));
     }
   }, [progress]);
 
@@ -61,13 +70,13 @@ export function useQaidaState() {
       return false;
     }
     setScreen(id);
+    dispatch({ type: "set_current_screen", id });
     window.scrollTo({ top: 0, behavior: "auto" });
     return true;
   }, [announce, progress]);
 
   const completeScreen = useCallback((id: ScreenId) => {
     dispatch({ type: "complete_screen", id });
-    dispatch({ type: "earn_xp", amount: 25 });
     celebrate("MashaAllah! Amazing! 🌟");
   }, [celebrate]);
 
@@ -91,5 +100,6 @@ export function useQaidaState() {
     celebrate,
     completeScreen,
     currentLesson: getCurrentLesson(progress),
+    currentCurriculumScreen: getCurrentCurriculumScreen(progress),
   };
 }
