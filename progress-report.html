@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    background: #0e3b2a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+  }
+
+  .page {
+    width: 1240px;
+    background: #0e3b2a;
+    padding: 22px;
+    position: relative;
+  }
+
+  .frame {
+    position: relative;
+    background:
+      radial-gradient(circle at top left, #fffdf7 0%, #fbf5e6 100%);
+    border: 3px solid #c9a24b;
+    border-radius: 4px;
+    padding: 48px 56px 40px;
+    box-shadow: inset 0 0 0 10px rgba(201,162,75,0.10);
+  }
+
+  /* corner ornaments */
+  .corner {
+    position: absolute;
+    width: 118px; height: 118px;
+    background-image:
+      radial-gradient(circle at 8px 8px, #c9a24b 2px, transparent 3px),
+      radial-gradient(circle at 26px 8px, #c9a24b 1.5px, transparent 2.5px),
+      radial-gradient(circle at 8px 26px, #c9a24b 1.5px, transparent 2.5px);
+    opacity: 0.9;
+  }
+  .corner::before {
+    content: "";
+    position: absolute;
+    width: 92px; height: 92px;
+    border: 2px solid #c9a24b;
+    border-right: none; border-bottom: none;
+    border-top-left-radius: 6px;
+  }
+  .corner::after {
+    content: "✦";
+    position: absolute;
+    top: 30px; left: 30px;
+    color: #c9a24b;
+    font-size: 26px;
+  }
+  .corner.tl { top: 14px; left: 14px; }
+  .corner.tr { top: 14px; right: 14px; transform: scaleX(-1); }
+  .corner.bl { bottom: 14px; left: 14px; transform: scaleY(-1); }
+  .corner.br { bottom: 14px; right: 14px; transform: scale(-1,-1); }
+
+  /* header */
+  .brand {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .brand .logo {
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: 58px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .brand .logo .noor { color: #14503a; }
+  .brand .logo .path { color: #c9a24b; }
+  .brand .crescent {
+    color: #c9a24b;
+    font-size: 30px;
+    vertical-align: middle;
+    margin-right: 10px;
+  }
+  .brand .sub {
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #4a5a52;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+  .divider {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin: 8px 0 4px;
+    color: #c9a24b;
+  }
+  .divider .line { height: 1px; width: 90px; background: #c9a24b; opacity: 0.6; }
+
+  .title {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: 44px;
+    color: #14503a;
+    margin: 10px 0 18px;
+  }
+
+  /* intro */
+  .intro {
+    text-align: center;
+    font-size: 20px;
+    color: #3a4a42;
+    line-height: 1.5;
+    max-width: 940px;
+    margin: 0 auto 24px;
+    font-style: italic;
+  }
+  .intro .salaam { font-weight: 700; font-style: normal; color: #14503a; }
+
+  /* student cards */
+  .students { display: flex; flex-direction: column; gap: 16px; }
+
+  .card {
+    background: rgba(255,255,255,0.55);
+    border: 1.5px solid rgba(201,162,75,0.45);
+    border-radius: 10px;
+    padding: 18px 24px 18px 22px;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(20,80,58,0.05);
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 12px; bottom: 12px;
+    width: 5px;
+    background: linear-gradient(#c9a24b, #e0c074);
+    border-radius: 4px;
+  }
+  .card .name-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .card .badge {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #14503a, #1d6b4a);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: 20px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(20,80,58,0.3);
+  }
+  .card .name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 24px;
+    color: #14503a;
+  }
+  .card .tag {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #b8862b;
+    background: rgba(201,162,75,0.15);
+    border: 1px solid rgba(201,162,75,0.4);
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .card .text {
+    font-size: 18.5px;
+    color: #384740;
+    line-height: 1.55;
+    padding-left: 52px;
+  }
+  .card .text b { color: #14503a; font-weight: 700; }
+
+  /* closing */
+  .closing {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 18px;
+    color: #3a4a42;
+    line-height: 1.55;
+    font-style: italic;
+    max-width: 980px;
+    margin-left: auto; margin-right: auto;
+  }
+  .dua {
+    margin-top: 14px;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 19px;
+    color: #14503a;
+    font-weight: 600;
+  }
+
+  /* signature */
+  .sign {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 18px;
+    color: #3a4a42;
+  }
+  .sign .from { font-size: 15px; letter-spacing: 1px; color: #6a7a72; }
+  .sign .who {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: 24px; color: #14503a;
+    margin-top: 2px;
+  }
+
+  /* footer */
+  .footer {
+    margin-top: 26px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px;
+    color: #4a5a52;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .footer .dot { color: #c9a24b; font-size: 16px; }
+  .footer .crescent { color: #c9a24b; font-size: 22px; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="frame">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <!-- Header -->
+      <div class="brand">
+        <div class="logo"><span class="crescent">☾</span><span class="noor">Noor</span><span class="path">Path</span></div>
+        <div class="divider"><span class="line"></span><span>◆</span><span class="line"></span></div>
+        <div class="sub">Online Quran Academy</div>
+      </div>
+
+      <div class="title">Students Progress Report</div>
+
+      <!-- Intro -->
+      <div class="intro">
+        <span class="salaam">Dear Parents,</span><br/>
+        We are pleased to share the progress of your children in their learning journey.
+        We truly appreciate your trust and cooperation.
+      </div>
+
+      <!-- Students -->
+      <div class="students">
+
+        <div class="card">
+          <div class="name-row">
+            <div class="badge">Z</div>
+            <div class="name">Zia</div>
+            <div class="tag">Kasrah — “E” Sound</div>
+          </div>
+          <div class="text">
+            Alhamdulillah, Zia has been taught <b>Qasra (Kasrah – the “E” sound)</b>. She is learning well
+            and shows good potential. At this stage, she needs a little more practice in remembering and
+            recognizing the different forms (shapes) of the Arabic letters. With regular revision at home and
+            encouragement — and definitely in the class — we are confident she will improve steadily, InshaAllah.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="name-row">
+            <div class="badge">I</div>
+            <div class="name">Iyla</div>
+            <div class="tag">Fatha — “A” Sound</div>
+          </div>
+          <div class="text">
+            Alhamdulillah, Ayla has successfully learned <b>Fatha (the “A” sound)</b>. She is making progress,
+            but she also needs additional practice in recognizing and remembering the different forms of the
+            Arabic letters. Daily revision for just a few minutes will greatly strengthen her confidence and learning.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="name-row">
+            <div class="badge">A</div>
+            <div class="name">Adam</div>
+            <div class="tag">Up to Dal &amp; Dhaal</div>
+          </div>
+          <div class="text">
+            Alhamdulillah, Adam has been taught up to the letters <b>Dal (د) and Dhaal (ذ)</b>. He understands
+            the lessons well and has the ability to learn quickly. He simply needs to stay focused and engaged
+            during class. With continued motivation and support from both home and the academy, we believe he
+            will progress beautifully, InshaAllah.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Closing -->
+      <div class="closing">
+        We sincerely thank you for your continued support. Every child learns at their own pace, and with
+        patience, regular practice, and positive encouragement, they will continue to grow in their Qur'anic
+        learning journey.
+      </div>
+      <div class="dua">
+        May Allah bless your children with beneficial knowledge and make learning the Qur'an easy and enjoyable for them. Ameen.
+      </div>
+
+      <!-- Signature -->
+      <div class="sign">
+        <div class="from">Warm regards,</div>
+        <div class="who">Maria</div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <span class="dot">✦</span>
+        <span class="crescent">☾</span>
+        <span>www.noorpath.online</span>
+        <span class="crescent">☾</span>
+        <span class="dot">✦</span>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

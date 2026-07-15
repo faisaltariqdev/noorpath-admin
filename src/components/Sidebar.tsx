@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Role } from "@/types/database";
 import {
@@ -29,8 +29,8 @@ const ADMIN_LINKS: NavSection[] = [
     { href: "/admin/earnings",      label: "Tutor Earnings",    icon: Star },
     { href: "/admin/reports",       label: "Progress Reports",  icon: FileText },
   ]},
-  { section: "Kids Studio", items: [
-    { href: "/admin/kids-studio",   label: "Kids Studio 🎮",    icon: Sparkles },
+  { section: "Learning Studio", items: [
+    { href: "/admin/noorani-qaida", label: "Noorani Qaida",     icon: Sparkles },
   ]},
   { section: "Analytics", items: [
     { href: "/admin/analytics",     label: "Analytics & Graphs",icon: BarChart2 },
@@ -81,9 +81,6 @@ const PARENT_LINKS: NavSection[] = [
     { href: "/parent/attendance",   label: "Attendance",          icon: Clock },
     { href: "/parent/homework",     label: "Homework",            icon: BookOpen },
   ]},
-  { section: "🎮 Kids Studio", items: [
-    { href: "/parent/kids-studio",  label: "Kids Studio",         icon: Sparkles },
-  ]},
   { section: "Learning Journey", items: [
     { href: "/parent/journey",      label: "Learning Journey",    icon: Sparkles },
     { href: "/parent/roadmap",      label: "Course Roadmap",      icon: BarChart2 },
@@ -114,10 +111,33 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState(userName);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const sections = LINKS[role];
   const { label, badgeClass } = ROLE_CONFIG[role];
 
   useEffect(() => { setOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    const toggle = () => {
+      returnFocusRef.current = document.activeElement as HTMLElement | null;
+      setOpen((current) => !current);
+    };
+    window.addEventListener("noorpath:sidebar-toggle", toggle);
+    return () => window.removeEventListener("noorpath:sidebar-toggle", toggle);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    sidebarRef.current?.querySelector<HTMLAnchorElement>("a")?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      returnFocusRef.current?.focus();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -146,13 +166,20 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   return (
     <>
       {/* Overlay */}
-      <div
+      <button
+        type="button"
+        aria-label="Close sidebar"
         className={`sidebar-overlay ${open ? "open" : ""}`}
         onClick={() => setOpen(false)}
       />
 
       {/* Sidebar */}
-      <div className={`sidebar ${open ? "open" : ""}`}>
+      <aside
+        ref={sidebarRef}
+        className={`sidebar ${open ? "open" : ""}`}
+        aria-label={`${label} navigation`}
+        aria-hidden={!open ? undefined : false}
+      >
         {/* Header */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
@@ -215,7 +242,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
             <span>Sign Out</span>
           </button>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
@@ -223,10 +250,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
 // Exposed for TopBar to use
 export function useSidebarToggle() {
   function toggle() {
-    const sidebar = document.querySelector(".sidebar");
-    const overlay = document.querySelector(".sidebar-overlay");
-    sidebar?.classList.toggle("open");
-    overlay?.classList.toggle("open");
+    window.dispatchEvent(new Event("noorpath:sidebar-toggle"));
   }
   return toggle;
 }
