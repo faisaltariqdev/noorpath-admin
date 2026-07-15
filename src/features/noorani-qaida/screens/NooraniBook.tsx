@@ -8,6 +8,9 @@ import { qaidaAudio } from "../audio/QaidaAudioService";
 import FloatingParticles from "../animations/FloatingParticles";
 import SparkleBurst from "../animations/SparkleBurst";
 import ZaydMascot, { type ZaydAction } from "../characters/ZaydMascot";
+import QaidaEbook from "./QaidaEbook";
+
+type BookMode = "book" | "cards";
 
 interface NooraniBookProps {
   progress: QaidaProgress;
@@ -60,6 +63,7 @@ export default function NooraniBook({
   particleCount,
   audioEnabled = true,
 }: NooraniBookProps) {
+  const [mode, setMode] = useState<BookMode>("book");
   const [tappedId, setTappedId] = useState<number | null>(null);
   const [mascotAction, setMascotAction] = useState<ZaydAction>("wave");
   const [mascotSpeech, setMascotSpeech] = useState("Tap a letter and let's learn together!");
@@ -131,6 +135,47 @@ export default function NooraniBook({
         </div>
       </motion.header>
 
+      {/* View toggle: eBook page vs interactive cards */}
+      <div className="mx-auto flex items-center gap-1 rounded-full border border-emerald-900/10 bg-white p-1 shadow-sm" role="tablist" aria-label="Book view">
+        {([
+          { id: "book", icon: "📖", label: "Book Page" },
+          { id: "cards", icon: "🃏", label: "Cards" },
+        ] as { id: BookMode; icon: string; label: string }[]).map((tab) => {
+          const selected = mode === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => setMode(tab.id)}
+              className={`relative rounded-full px-4 py-2 text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 ${
+                selected ? "text-white" : "text-slate-500 hover:text-emerald-700"
+              }`}
+            >
+              {selected && (
+                <motion.span
+                  layoutId="qaida-book-mode"
+                  className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                />
+              )}
+              <span aria-hidden="true">{tab.icon}</span> {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {mode === "book" ? (
+        <QaidaEbook
+          progress={progress}
+          currentLetterId={currentLetterId}
+          onSelectLetter={onSelectLetter}
+          reducedMotion={reducedMotion}
+          audioEnabled={audioEnabled}
+        />
+      ) : (
+      <>
       {/* Letter groups */}
       {GROUPS.map((group, groupIndex) => (
         <section key={group.title} aria-label={group.title} className="flex flex-col gap-3">
@@ -223,6 +268,8 @@ export default function NooraniBook({
           <h2 className="mt-2 text-xl font-black">MashaAllah!</h2>
           <p className="text-sm text-amber-50">You have completed the whole Qaida book!</p>
         </motion.div>
+      )}
+      </>
       )}
     </div>
   );
