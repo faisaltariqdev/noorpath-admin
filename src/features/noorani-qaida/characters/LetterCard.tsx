@@ -13,15 +13,30 @@ interface LetterCardProps {
   onTap?: () => void;
   interactive?: boolean;
   completed?: boolean;
+  pronouncing?: boolean;
+  reducedMotion?: boolean;
 }
 
 const sizeMap = {
   sm: { card: "w-24 h-28", text: "text-5xl", name: "text-sm" },
   md: { card: "w-40 h-48", text: "text-7xl", name: "text-base" },
-  lg: { card: "w-52 h-64", text: "text-9xl", name: "text-xl" },
+  lg: {
+    card: "h-48 w-40 sm:h-52 sm:w-44 xl:h-56 xl:w-48",
+    text: "text-7xl sm:text-8xl xl:text-9xl",
+    name: "text-base sm:text-lg",
+  },
 };
 
-export default function LetterCard({ letter, size = "md", showForms, onTap, interactive = true, completed }: LetterCardProps) {
+export default function LetterCard({
+  letter,
+  size = "md",
+  showForms,
+  onTap,
+  interactive = true,
+  completed,
+  pronouncing = false,
+  reducedMotion = false,
+}: LetterCardProps) {
   const [tapped, setTapped] = useState(false);
   const [sparkle, setSparkle] = useState(false);
   const [starBurst, setStarBurst] = useState(false);
@@ -31,8 +46,8 @@ export default function LetterCard({ letter, size = "md", showForms, onTap, inte
     if (!interactive) return;
     setTapped(true);
     setSparkle(true);
-    speakArabic(letter.letter);
     if (onTap) onTap();
+    else speakArabic(letter.letter);
     setTimeout(() => setTapped(false), 600);
     setTimeout(() => setSparkle(false), 900);
     if (completed) {
@@ -44,7 +59,7 @@ export default function LetterCard({ letter, size = "md", showForms, onTap, inte
   return (
     <div className="relative flex flex-col items-center gap-2">
       <motion.button
-        className={`relative ${s.card} cursor-pointer overflow-hidden rounded-3xl border-4 ${
+        className={`qaida-premium-button relative ${s.card} cursor-pointer overflow-hidden rounded-3xl border-4 ${
           completed
             ? "border-yellow-400 bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50"
             : "border-green-200 bg-gradient-to-br from-sky-50 via-white to-green-50"
@@ -54,10 +69,17 @@ export default function LetterCard({ letter, size = "md", showForms, onTap, inte
         animate={tapped ? {
           rotate: [0, -5, 5, -3, 3, 0],
           scale: [1, 1.08, 0.98, 1.04, 1],
-        } : {
+        } : pronouncing && !reducedMotion ? {
+          scale: [1, 1.035, 1],
+          boxShadow: [
+            "0 18px 38px rgba(14,79,45,.18)",
+            "0 22px 52px rgba(245,197,24,.38)",
+            "0 18px 38px rgba(14,79,45,.18)",
+          ],
+        } : !reducedMotion ? {
           y: [0, -6, 0],
-        }}
-        transition={tapped ? { duration: 0.5 } : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        } : undefined}
+        transition={tapped ? { duration: 0.5 } : { duration: pronouncing ? 1.2 : 3, repeat: Infinity, ease: "easeInOut" }}
         onClick={handleTap}
         aria-label={`Arabic letter ${letter.name}, tap to hear pronunciation`}
       >
@@ -85,14 +107,30 @@ export default function LetterCard({ letter, size = "md", showForms, onTap, inte
 
         {/* Main letter */}
         <div className="flex h-full flex-col items-center justify-center">
-          <motion.div
-            className={`${s.text} font-bold leading-none text-green-800`}
-            style={{ fontFamily: "serif", direction: "rtl" }}
-            animate={tapped ? { scale: [1, 1.2, 1] } : {}}
+          <motion.span
+            className={`qaida-arabic ${s.text} relative z-10 font-bold leading-none text-green-800`}
+            lang="ar"
+            dir="rtl"
+            initial={reducedMotion ? false : { opacity: 0, scale: 0.72, filter: "blur(8px)" }}
+            animate={tapped
+              ? { scale: [1, 1.2, 1], opacity: 1, filter: "blur(0px)" }
+              : { scale: 1, opacity: 1, filter: "blur(0px)" }}
             transition={{ duration: 0.4 }}
           >
             {letter.letter}
-          </motion.div>
+          </motion.span>
+          {pronouncing && (
+            <span className="qaida-waveform relative z-10 mt-3 flex h-5 items-center gap-1" aria-hidden="true">
+              {[8, 14, 20, 14, 8].map((height, index) => (
+                <motion.i
+                  key={`${height}-${index}`}
+                  className="w-1 rounded-full bg-emerald-600"
+                  animate={reducedMotion ? { height } : { height: [6, height, 6] }}
+                  transition={{ duration: 0.55, repeat: Infinity, delay: index * 0.08 }}
+                />
+              ))}
+            </span>
+          )}
         </div>
 
         {/* Sparkle overlay */}

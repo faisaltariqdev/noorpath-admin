@@ -1,173 +1,289 @@
 "use client";
-import { useRef, useEffect, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { validateTrace } from "./tracingValidation";
+
+interface Point {
+  x: number;
+  y: number;
+}
 
 interface TracingCanvasProps {
   letter: string;
   onComplete?: () => void;
 }
 
+const COMPLETION_SCORE = 68;
+
 export default function TracingCanvas({ letter, onComplete }: TracingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const guideMaskRef = useRef<HTMLCanvasElement | null>(null);
+  const strokesRef = useRef<Point[][]>([]);
+  const activeStrokeRef = useRef<Point[] | null>(null);
+  const completedRef = useRef(false);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [strokeCount, setStrokeCount] = useState(0);
+  const [score, setScore] = useState(0);
   const [completed, setCompleted] = useState(false);
-  const lastPos = useRef({ x: 0, y: 0 });
+  const [status, setStatus] = useState("Trace over the dotted letter shape.");
+
+  const drawScene = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+    }
+
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.clearRect(0, 0, width, height);
+    const fontSize = Math.min(height * 0.68, width * 0.48, 150);
+    const arabicFont = getComputedStyle(canvas).getPropertyValue("--font-qaida-arabic").trim() || "serif";
+    const font = `700 ${fontSize}px ${arabicFont}, serif`;
+
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.direction = "rtl";
+    context.font = font;
+    context.fillStyle = "rgba(22, 101, 52, 0.08)";
+    context.fillText(letter, width / 2, height / 2);
+    context.setLineDash([5, 7]);
+    context.strokeStyle = "rgba(16, 185, 129, 0.42)";
+    context.lineWidth = 2;
+    context.strokeText(letter, width / 2, height / 2);
+    context.setLineDash([]);
+
+    const drawStroke = (stroke: Point[]) => {
+      if (stroke.length < 2) return;
+      context.beginPath();
+      context.moveTo(stroke[0].x, stroke[0].y);
+      stroke.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+      context.strokeStyle = "#10b981";
+      context.lineWidth = 9;
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.shadowColor = "rgba(16, 185, 129, 0.75)";
+      context.shadowBlur = 10;
+      context.stroke();
+      context.shadowBlur = 0;
+    };
+
+    strokesRef.current.forEach(drawStroke);
+    if (activeStrokeRef.current) drawStroke(activeStrokeRef.current);
+
+    const guide = guideMaskRef.current ?? document.createElement("canvas");
+    guideMaskRef.current = guide;
+    guide.width = canvas.width;
+    guide.height = canvas.height;
+    const guideContext = guide.getContext("2d");
+    if (!guideContext) return;
+    guideContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    guideContext.clearRect(0, 0, width, height);
+    guideContext.textAlign = "center";
+    guideContext.textBaseline = "middle";
+    guideContext.direction = "rtl";
+    guideContext.font = font;
+    guideContext.fillStyle = "#000";
+    guideContext.fillText(letter, width / 2, height / 2);
+  }, [letter]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const observer = new ResizeObserver(drawScene);
+    observer.observe(canvas);
+    drawScene();
+    return () => observer.disconnect();
+  }, [drawScene]);
 
-    // Draw guide letter faintly
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  useEffect(() => {
+    strokesRef.current = [];
+    activeStrokeRef.current = null;
+    completedRef.current = false;
+    setCompleted(false);
+    setScore(0);
+    setStatus("Trace over the dotted letter shape.");
+    drawScene();
+  }, [drawScene, letter]);
 
-    // Guide letter
-    ctx.globalAlpha = 0.12;
-    ctx.font = `bold ${Math.min(canvas.height * 0.6, 100)}px serif`;
-    ctx.fillStyle = "#166534";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.direction = "rtl";
-    ctx.fillText(letter, canvas.width / 2, canvas.height / 2);
-    ctx.globalAlpha = 1;
-
-    // Dotted trace path hint
-    ctx.setLineDash([4, 6]);
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.25;
-    ctx.font = `bold ${Math.min(canvas.height * 0.6, 100)}px serif`;
-    ctx.strokeText(letter, canvas.width / 2, canvas.height / 2);
-    ctx.globalAlpha = 1;
-    ctx.setLineDash([]);
-  }, [letter]);
-
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    if ("touches" in e) {
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
-    }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  const getPoint = (event: React.PointerEvent<HTMLCanvasElement>): Point => {
+    const rectangle = event.currentTarget.getBoundingClientRect();
+    return { x: event.clientX - rectangle.left, y: event.clientY - rectangle.top };
   };
 
-  const startDraw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (completed) return;
-    setIsDrawing(true);
-    const pos = getPos(e);
-    lastPos.current = pos;
-  }, [completed]);
-
-  const draw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || completed) return;
+  const evaluate = useCallback(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    const guide = guideMaskRef.current;
+    const guideContext = guide?.getContext("2d");
+    if (!canvas || !guide || !guideContext) return;
 
-    const pos = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(lastPos.current.x, lastPos.current.y);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 6;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.shadowColor = "#10b981";
-    ctx.shadowBlur = 8;
-    ctx.stroke();
-    lastPos.current = pos;
-  }, [isDrawing, completed]);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const points = strokesRef.current.flat();
+    if (points.length < 8) {
+      setStatus("Keep tracing along the letter shape.");
+      return;
+    }
 
-  const endDraw = useCallback(() => {
-    if (!isDrawing) return;
-    setIsDrawing(false);
-    setStrokeCount((prev) => {
-      const next = prev + 1;
-      if (next >= 3 && !completed) {
-        setCompleted(true);
-        onComplete?.();
-      }
-      return next;
+    const image = guideContext.getImageData(0, 0, guide.width, guide.height);
+    let matchingPoints = 0;
+    let distance = 0;
+
+    strokesRef.current.forEach((stroke) => {
+      stroke.forEach((point, index) => {
+        if (index > 0) {
+          distance += Math.hypot(point.x - stroke[index - 1].x, point.y - stroke[index - 1].y);
+        }
+
+        const pixelX = Math.max(0, Math.min(guide.width - 1, Math.round(point.x * dpr)));
+        const pixelY = Math.max(0, Math.min(guide.height - 1, Math.round(point.y * dpr)));
+        let matched = false;
+        const radius = Math.round(15 * dpr);
+        for (let y = -radius; y <= radius && !matched; y += Math.max(1, Math.round(3 * dpr))) {
+          for (let x = -radius; x <= radius; x += Math.max(1, Math.round(3 * dpr))) {
+            const sampleX = pixelX + x;
+            const sampleY = pixelY + y;
+            if (sampleX < 0 || sampleY < 0 || sampleX >= guide.width || sampleY >= guide.height) continue;
+            if (image.data[(sampleY * guide.width + sampleX) * 4 + 3] > 20) {
+              matched = true;
+              break;
+            }
+          }
+        }
+        if (matched) matchingPoints += 1;
+      });
     });
-  }, [isDrawing, completed, onComplete]);
 
-  const clearCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const validation = validateTrace({
+      matchingPoints,
+      totalPoints: points.length,
+      distance,
+      targetDistance: Math.max(180, canvas.clientWidth * 0.75),
+      strokeCount: strokesRef.current.length,
+    }, COMPLETION_SCORE);
+    const { accuracy, score: nextScore } = validation;
+    setScore((current) => Math.max(current, nextScore));
 
-    ctx.globalAlpha = 0.12;
-    ctx.font = `bold ${Math.min(canvas.height * 0.6, 100)}px serif`;
-    ctx.fillStyle = "#166534";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(letter, canvas.width / 2, canvas.height / 2);
-    ctx.globalAlpha = 1;
+    if (validation.complete && !completedRef.current) {
+      completedRef.current = true;
+      setCompleted(true);
+      setStatus("Excellent tracing. The letter shape is complete.");
+      onComplete?.();
+    } else if (accuracy < 0.45) {
+      setStatus("Try staying closer to the dotted letter.");
+    } else {
+      setStatus("Good tracing. Add another careful stroke.");
+    }
+  }, [onComplete]);
 
-    setStrokeCount(0);
+  const start = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (completedRef.current) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    activeStrokeRef.current = [getPoint(event)];
+    setIsDrawing(true);
+  };
+
+  const move = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !activeStrokeRef.current || completedRef.current) return;
+    activeStrokeRef.current.push(getPoint(event));
+    drawScene();
+  };
+
+  const finish = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !activeStrokeRef.current) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    strokesRef.current.push(activeStrokeRef.current);
+    activeStrokeRef.current = null;
+    setIsDrawing(false);
+    drawScene();
+    evaluate();
+  };
+
+  const clear = () => {
+    strokesRef.current = [];
+    activeStrokeRef.current = null;
+    completedRef.current = false;
     setCompleted(false);
-  }, [letter]);
+    setScore(0);
+    setStatus("Canvas cleared. Trace over the dotted letter shape.");
+    drawScene();
+  };
+
+  const completeKeyboardAlternative = () => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setCompleted(true);
+    setScore(100);
+    setStatus("Guided letter-shape review completed.");
+    onComplete?.();
+  };
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative overflow-hidden rounded-2xl bg-amber-50 shadow-inner" style={{ height: 160 }}>
+      <div className="relative h-52 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-emerald-50 shadow-inner sm:h-60">
         <canvas
           ref={canvasRef}
           className="h-full w-full cursor-crosshair touch-none"
-          onMouseDown={startDraw}
-          onMouseMove={draw}
-          onMouseUp={endDraw}
-          onMouseLeave={endDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={endDraw}
-          aria-label={`Tracing canvas for letter ${letter}`}
-          role="img"
+          onPointerDown={start}
+          onPointerMove={move}
+          onPointerUp={finish}
+          onPointerCancel={finish}
+          aria-label={`Interactive tracing area for Arabic letter ${letter}`}
         />
 
         <AnimatePresence>
           {completed && (
             <motion.div
-              className="absolute inset-0 flex items-center justify-center bg-green-500/20"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center bg-emerald-500/15"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
               <motion.div
                 className="rounded-2xl bg-white px-6 py-3 text-center shadow-xl"
-                initial={{ scale: 0.5 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                initial={{ scale: 0.7, y: 12 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 320, damping: 22 }}
               >
-                <div className="text-3xl">⭐</div>
-                <div className="font-bold text-green-700">Excellent Tracing!</div>
+                <div className="text-2xl" aria-hidden="true">★★★</div>
+                <div className="font-black text-emerald-800">Excellent tracing</div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          {completed ? "✅ Tracing complete!" : `Draw ${Math.max(0, 3 - strokeCount)} more strokes to complete`}
+      <div className="flex items-center gap-3">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
+          <motion.div className="h-full rounded-full bg-emerald-500" animate={{ width: `${score}%` }} />
         </div>
-        <motion.button
-          className="rounded-xl bg-gray-100 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200"
-          onClick={clearCanvas}
-          whileTap={{ scale: 0.97 }}
-          aria-label="Clear canvas and try again"
+        <span className="qaida-progress-value text-xs font-black text-emerald-800">{score}%</span>
+      </div>
+
+      <p className="text-sm font-semibold text-slate-600" role="status" aria-live="polite">{status}</p>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="min-h-11 rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-200"
+          onClick={clear}
         >
-          🔄 Clear
-        </motion.button>
+          Clear and retry
+        </button>
+        <button
+          type="button"
+          className="min-h-11 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-800 hover:bg-emerald-50"
+          onClick={completeKeyboardAlternative}
+        >
+          Keyboard alternative: shape reviewed
+        </button>
       </div>
     </div>
   );

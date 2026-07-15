@@ -10,34 +10,53 @@ interface QaidaHUDProps {
   onAudioToggle?: () => void;
   audioEnabled?: boolean;
   onMenuToggle?: () => void;
+  menuOpen?: boolean;
 }
 
-function Badge({ icon, value, label, color }: { icon: string; value: string | number; label: string; color: string }) {
+function Badge({
+  icon,
+  value,
+  label,
+  className = "",
+}: {
+  icon: string;
+  value: string | number;
+  label: string;
+  className?: string;
+}) {
   return (
     <motion.div
-      className={`flex items-center gap-1.5 rounded-full ${color} px-3 py-1.5 shadow-md`}
+      className={`items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-[#0a493f] to-[#123c4b] px-2.5 py-2 shadow-md ring-1 ring-white/15 ${className}`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.96 }}
     >
       <span className="text-sm">{icon}</span>
-      <span className="text-sm font-bold text-white">{value}</span>
+      <motion.span
+        key={String(value)}
+        className="qaida-progress-value text-sm font-bold text-white"
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {value}
+      </motion.span>
       <span className="hidden text-xs text-white/70 sm:inline">{label}</span>
     </motion.div>
   );
 }
 
-export default function QaidaHUD({ progress, onBack, breadcrumb, title, onAudioToggle, audioEnabled = true, onMenuToggle }: QaidaHUDProps) {
+export default function QaidaHUD({ progress, onBack, breadcrumb, title, onAudioToggle, audioEnabled = true, onMenuToggle, menuOpen = false }: QaidaHUDProps) {
   return (
     <motion.header
-      className="flex items-center gap-2 border-b border-white/20 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-sm sm:gap-3 sm:px-6"
-      initial={{ opacity: 0 }}
+      className="flex min-h-16 flex-none items-center gap-2 border-b border-emerald-900/10 bg-white/[0.94] px-3 py-2.5 shadow-sm backdrop-blur-md sm:gap-3 sm:px-5"
+      initial={false}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25 }}
     >
       {/* Back button */}
       {onBack && (
         <motion.button
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-emerald-900/10 text-lg text-emerald-950 hover:bg-emerald-900/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
           onClick={onBack}
           whileTap={{ scale: 0.9 }}
           aria-label="Go back"
@@ -46,6 +65,18 @@ export default function QaidaHUD({ progress, onBack, breadcrumb, title, onAudioT
         </motion.button>
       )}
 
+      <motion.button
+        id="qaida-menu-button"
+        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#123c4b] text-white shadow-md hover:bg-[#185468] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 lg:hidden"
+        onClick={onMenuToggle}
+        whileTap={{ scale: 0.9 }}
+        aria-label="Open menu"
+        aria-controls="qaida-mobile-navigation"
+        aria-expanded={menuOpen}
+      >
+        ☰
+      </motion.button>
+
       {/* Breadcrumb + title */}
       <div className="min-w-0 flex-1">
         {breadcrumb && <div className="text-[10px] uppercase tracking-wider text-gray-400">{breadcrumb}</div>}
@@ -53,30 +84,20 @@ export default function QaidaHUD({ progress, onBack, breadcrumb, title, onAudioT
       </div>
 
       {/* Badges row */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        <Badge icon="⭐" value={`Level ${progress.level}`} label="" color="bg-gradient-to-r from-violet-500 to-purple-600" />
-        <Badge icon="⚡" value={`${progress.xp} XP`} label="" color="bg-gradient-to-r from-yellow-500 to-amber-500" />
-        <Badge icon="🪙" value={progress.coins} label="Coins" color="bg-gradient-to-r from-yellow-400 to-orange-500" />
-        <Badge icon="🔥" value={`${progress.streak} Day`} label="Streak" color="bg-gradient-to-r from-orange-500 to-red-500" />
+      <div className="flex flex-none items-center gap-1.5 sm:gap-2">
+        <Badge icon="🌟" value={`Level ${progress.level}`} label="" className="hidden min-[480px]:flex" />
+        <Badge icon="⭐" value={`${progress.xp} XP`} label="" className="hidden sm:flex" />
+        <Badge icon="🪙" value={progress.coins} label="Coins" className="hidden md:flex" />
+        <Badge icon="🔥" value={`${progress.streak} Day`} label="Streak" className="hidden xl:flex" />
 
         {/* Audio toggle */}
         <motion.button
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-[#123c4b] text-white shadow-md hover:bg-[#185468] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
           onClick={onAudioToggle}
           whileTap={{ scale: 0.9 }}
           aria-label={audioEnabled ? "Mute audio" : "Enable audio"}
         >
           {audioEnabled ? "🔊" : "🔇"}
-        </motion.button>
-
-        {/* Menu */}
-        <motion.button
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
-          onClick={onMenuToggle}
-          whileTap={{ scale: 0.9 }}
-          aria-label="Open menu"
-        >
-          ☰
         </motion.button>
       </div>
     </motion.header>

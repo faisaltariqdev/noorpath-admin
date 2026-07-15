@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { ScreenId } from "../types";
+import { qaidaAudio } from "../audio/QaidaAudioService";
 import {
   DEFAULT_PROGRESS,
   getCurrentLesson,
@@ -33,6 +34,8 @@ export function useQaidaState() {
   useEffect(() => {
     if (progress.hydrated) {
       localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+      setAudioEnabled(progress.settings.audioEnabled);
+      qaidaAudio.setEnabled(progress.settings.audioEnabled);
     }
   }, [progress]);
 
@@ -68,6 +71,12 @@ export function useQaidaState() {
     celebrate("MashaAllah! Amazing! 🌟");
   }, [celebrate]);
 
+  const updateAudioEnabled = useCallback((enabled: boolean) => {
+    setAudioEnabled(enabled);
+    qaidaAudio.setEnabled(enabled);
+    dispatch({ type: "update_settings", settings: { audioEnabled: enabled } });
+  }, []);
+
   return {
     screen,
     navigate,
@@ -76,7 +85,7 @@ export function useQaidaState() {
     feedback,
     announce,
     audioEnabled,
-    setAudioEnabled,
+    setAudioEnabled: updateAudioEnabled,
     showCelebration,
     celebrationMessage,
     celebrate,

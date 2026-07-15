@@ -13,6 +13,8 @@ interface QaidaSidebarProps {
   xpMax?: number;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  expandedWidth?: number;
+  instanceId?: string;
 }
 
 interface NavItem {
@@ -24,11 +26,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard",     label: "Dashboard",      icon: "🏠", color: "text-emerald-400" },
-  { id: "journey",       label: "My Progress",    icon: "📊", color: "text-blue-400" },
   { id: "qaida",         label: "Noorani Qaida",  icon: "📖", color: "text-yellow-400" },
-  { id: "lessons",       label: "Lessons",        icon: "🎓", color: "text-purple-400" },
-  { id: "games",         label: "Games",          icon: "🎮", color: "text-pink-400" },
+  { id: "lessons",       label: "Lesson",         icon: "🎓", color: "text-purple-400" },
   { id: "practice",      label: "Practice",       icon: "✏️",  color: "text-orange-400" },
+  { id: "journey",       label: "My Progress",    icon: "📊", color: "text-blue-400" },
+  { id: "games",         label: "Games",          icon: "🎮", color: "text-pink-400" },
   { id: "rewards",       label: "Rewards",        icon: "🏆", color: "text-yellow-300" },
   { id: "certificates",  label: "Certificates",   icon: "📜", color: "text-green-300" },
   { id: "parents",       label: "Parents",        icon: "👨‍👩‍👧", color: "text-cyan-400" },
@@ -36,15 +38,26 @@ const NAV_ITEMS: NavItem[] = [
   { id: "settings",      label: "Settings",       icon: "⚙️",  color: "text-gray-400" },
 ];
 
-export default function QaidaSidebar({ activeView, onNavigate, userName = "Ali Raza", xp = 150, level = 1, xpMax = 300, collapsed, onToggleCollapse }: QaidaSidebarProps) {
+export default function QaidaSidebar({
+  activeView,
+  onNavigate,
+  userName = "Ali Raza",
+  xp = 150,
+  level = 1,
+  xpMax = 300,
+  collapsed = false,
+  onToggleCollapse,
+  expandedWidth = 220,
+  instanceId = "desktop",
+}: QaidaSidebarProps) {
   const [hoveredItem, setHoveredItem] = useState<ActiveView | null>(null);
   const pct = Math.min(100, Math.round((xp / xpMax) * 100));
 
   return (
     <motion.aside
-      className="flex h-full flex-shrink-0 flex-col bg-gradient-to-b from-[#0a2e1c] to-[#0d3b26] text-white"
-      style={{ width: collapsed ? 64 : 220 }}
-      animate={{ width: collapsed ? 64 : 220 }}
+      className="flex h-full flex-shrink-0 flex-col overflow-hidden bg-gradient-to-b from-[#061f27] via-[#07352f] to-[#0a442f] text-white shadow-[8px_0_30px_rgba(2,44,34,0.18)]"
+      style={{ width: collapsed ? 64 : expandedWidth }}
+      animate={{ width: collapsed ? 64 : expandedWidth }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       {/* Logo */}
@@ -90,7 +103,7 @@ export default function QaidaSidebar({ activeView, onNavigate, userName = "Ali R
               {/* Active indicator */}
               {isActive && (
                 <motion.div
-                  layoutId="qaida-nav-active"
+                  layoutId={`qaida-nav-active-${instanceId}`}
                   className="absolute left-0 top-0 h-full w-1 rounded-r-full bg-yellow-400"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />

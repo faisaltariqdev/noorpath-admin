@@ -1,0 +1,165 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Letter } from "../types";
+import { qaidaAudio } from "../audio/QaidaAudioService";
+import GameShell from "./GameShell";
+
+interface SoundMatchProps {
+  letters: Letter[];
+  onComplete: (stars: 1 | 2 | 3) => void;
+  onClose: () => void;
+  /** When set, every round matches this letter (letter-focused practice). */
+  focusLetter?: Letter;
+}
+
+const ROUNDS = 5;
+const TIME_LIMIT = 60;
+
+export default function SoundMatch({ letters, onComplete, onClose, focusLetter }: SoundMatchProps) {
+  const targets = useMemo(
+    () =>
+      focusLetter
+        ? Array.from({ length: ROUNDS }, () => focusLetter)
+        : [...letters].sort(() => Math.random() - 0.5).slice(0, ROUNDS),
+    [letters, focusLetter],
+  );
+  const [round, setRound] = useState(0);
+  const [score, setScore] = useState(0);
+  const [mistakes, setMistakes] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
+  const [finished, setFinished] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const completedRef = useRef(false);
+  const target = targets[Math.min(round, targets.length - 1)];
+  const options = useMemo(() => {
+    const distractors = letters.filter((letter) => letter.id !== target.id).sort(() => Math.random() - 0.5).slice(0, 3);
+    return [target, ...distractors].sort(() => Math.random() - 0.5);
+  }, [letters, target]);
+
+  const playTarget = useCallback((mode: "normal" | "slow" = "normal") => {
+    void qaidaAudio.pronounce({
+      key: `letter-${target.id}`,
+      fallbackText: target.letter,
+      mode,
+    });
+  }, [target]);
+
+  const finish = useCallback((finalScore: number) => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setFinished(true);
+    const stars: 1 | 2 | 3 = finalScore === ROUNDS && mistakes === 0 ? 3 : finalScore >= 3 ? 2 : 1;
+    void qaidaAudio.effect("reward");
+    window.setTimeout(() => onComplete(stars), 1100);
+  }, [mistakes, onComplete]);
+
+  useEffect(() => {
+    playTarget();
+  }, [playTarget]);
+
+  useEffect(() => {
+    if (finished || paused) return;
+    const timer = window.setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          finish(score);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [finish, finished, paused, score]);
+
+  const choose = (letter: Letter) => {
+    if (selected !== null || finished) return;
+    setSelected(letter.id);
+    const correct = letter.id === target.id;
+    const nextScore = score + (correct ? 1 : 0);
+    if (correct) {
+      setScore(nextScore);
+      void qaidaAudio.effect("correct");
+    } else {
+      setMistakes((value) => value + 1);
+      qaidaAudio.feedback("Listen once more and try the matching shape.");
+    }
+
+    window.setTimeout(() => {
+      if (round + 1 >= ROUNDS) finish(nextScore);
+      else {
+        setRound((value) => value + 1);
+        setSelected(null);
+      }
+    }, 900);
+  };
+
+  const stars: 1 | 2 | 3 = score === ROUNDS && mistakes === 0 ? 3 : score >= 3 ? 2 : 1;
+
+  return (
+    <GameShell
+      title="Sound Match"
+      instruction="Listen carefully and choose the matching Arabic letter."
+      icon="🎵"
+      round={round + 1}
+      totalRounds={ROUNDS}
+      score={score}
+      mistakes={mistakes}
+      timeLeft={timeLeft}
+      timeLimit={TIME_LIMIT}
+      finished={finished}
+      stars={stars}
+      resultText={`You matched ${score} of ${ROUNDS} sounds.`}
+      onClose={onClose}
+      paused={paused}
+      onPauseToggle={() => setPaused((value) => !value)}
+    >
+      <div className="flex h-full flex-col items-center justify-center gap-6 overflow-y-auto rounded-[1.5rem] bg-gradient-to-br from-fuchsia-100 to-sky-100 p-4">
+        <motion.button
+          type="button"
+          className="qaida-premium-button flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-indigo-700 text-5xl text-white shadow-xl"
+          onClick={() => playTarget()}
+          animate={{ boxShadow: ["0 12px 28px rgba(99,102,241,.25)", "0 18px 45px rgba(217,70,239,.4)", "0 12px 28px rgba(99,102,241,.25)"] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          aria-label="Play target letter sound"
+        >
+          🔊
+        </motion.button>
+        <button
+          type="button"
+          className="min-h-11 rounded-full bg-white px-5 py-2 text-sm font-black text-indigo-800 shadow-md"
+          onClick={() => playTarget("slow")}
+        >
+          Play slowly
+        </button>
+
+        <div className="grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+          {options.map((letter) => {
+            const chosen = selected === letter.id;
+            const correct = letter.id === target.id;
+            return (
+              <motion.button
+                key={letter.id}
+                className={`qaida-arabic min-h-24 rounded-[1.5rem] border-2 text-5xl font-bold shadow-lg ${
+                  chosen ? (correct ? "border-emerald-500 bg-emerald-100 text-emerald-800" : "border-rose-400 bg-rose-50 text-rose-700") : "border-white bg-white text-indigo-950"
+                }`}
+                onClick={() => choose(letter)}
+                disabled={selected !== null}
+                whileHover={selected === null ? { y: -4, scale: 1.03 } : undefined}
+                whileTap={selected === null ? { scale: 0.96 } : undefined}
+                lang="ar"
+                dir="rtl"
+                aria-label={`Choose ${letter.name}`}
+              >
+                {letter.letter}
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    </GameShell>
+  );
+}

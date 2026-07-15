@@ -1,8 +1,9 @@
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback, useMemo } from "react";
+import { motion } from "framer-motion";
+import { useState, useCallback, useEffect } from "react";
 import type { Letter } from "../types";
-import { speakArabic } from "../audio/speech";
+import { qaidaAudio } from "../audio/QaidaAudioService";
+import GameShell from "./GameShell";
 
 interface Card {
   id: string;
@@ -23,6 +24,8 @@ export default function MemoryMatch({ letters, onComplete, onClose }: MemoryMatc
   const [moves, setMoves] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [finished, setFinished] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(90);
+  const [paused, setPaused] = useState(false);
 
   const [cards, setCards] = useState<Card[]>(() => {
     const pool = [...letters].sort(() => Math.random() - 0.5).slice(0, PAIR_COUNT);
@@ -45,23 +48,24 @@ export default function MemoryMatch({ letters, onComplete, onClose }: MemoryMatc
     if (newSelected.length === 2) {
       setMoves((m) => m + 1);
       const [a, b] = newSelected.map((id) => cards.find((c) => c.id === id)!);
-      speakArabic(b.letter.letter);
+      void qaidaAudio.pronounce({ key: `letter-${b.letter.id}`, fallbackText: b.letter.letter });
 
       if (a.letter.id === b.letter.id && a.type !== b.type) {
         // Match!
         setTimeout(() => {
-          setCards((prev) => prev.map((c) =>
-            c.letter.id === a.letter.id ? { ...c, matched: true } : c
-          ));
-          setSelected([]);
           setCards((prev) => {
-            if (prev.every((c) => c.matched)) {
+            const nextCards = prev.map((card) =>
+              card.letter.id === a.letter.id ? { ...card, matched: true } : card
+            );
+            if (nextCards.every((card) => card.matched)) {
               setFinished(true);
-              const stars = moves <= PAIR_COUNT + 2 ? 3 : moves <= PAIR_COUNT * 2 ? 2 : 1;
+              const finalMoves = moves + 1;
+              const stars: 1 | 2 | 3 = finalMoves <= PAIR_COUNT + 2 ? 3 : finalMoves <= PAIR_COUNT * 2 ? 2 : 1;
               setTimeout(() => onComplete(stars as 1 | 2 | 3), 1000);
             }
-            return prev;
+            return nextCards;
           });
+          setSelected([]);
         }, 600);
       } else {
         // No match
@@ -75,23 +79,45 @@ export default function MemoryMatch({ letters, onComplete, onClose }: MemoryMatc
     }
   }, [selected, cards, moves, onComplete]);
 
+  useEffect(() => {
+    if (finished || paused) return;
+    const timer = window.setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          setFinished(true);
+          const matched = cards.filter((card) => card.matched).length / 2;
+          const stars: 1 | 2 | 3 = matched >= 3 ? 2 : 1;
+          window.setTimeout(() => onComplete(stars), 900);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [cards, finished, onComplete, paused]);
+
   const matchedCount = cards.filter((c) => c.matched).length / 2;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between p-4">
-        <button onClick={onClose} className="rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200">← Back</button>
-        <div className="flex gap-4 text-sm font-semibold text-gray-700">
-          <span>🃏 Moves: {moves}</span>
-          <span>✅ Matches: {matchedCount}/{PAIR_COUNT}</span>
-        </div>
-      </div>
-
-      <div className="px-4 text-center text-sm font-medium text-gray-600">
-        Match the Arabic letter with its English name!
-      </div>
-
-      <div className="flex-1 overflow-hidden p-4">
+    <GameShell
+      title="Memory Match"
+      instruction="Match each Arabic letter with its English name."
+      icon="🃏"
+      round={matchedCount}
+      totalRounds={PAIR_COUNT}
+      score={matchedCount}
+      mistakes={Math.max(0, moves - matchedCount)}
+      timeLeft={timeLeft}
+      timeLimit={90}
+      finished={finished}
+      stars={moves <= PAIR_COUNT + 2 ? 3 : moves <= PAIR_COUNT * 2 ? 2 : 1}
+      resultText={`Matched ${matchedCount} pairs in ${moves} moves.`}
+      onClose={onClose}
+      paused={paused}
+      onPauseToggle={() => setPaused((value) => !value)}
+    >
+      <div className="h-full min-h-[320px] overflow-hidden">
         <div className="grid grid-cols-4 gap-3 h-full">
           {cards.map((card) => (
             <motion.button
@@ -122,7 +148,7 @@ export default function MemoryMatch({ letters, onComplete, onClose }: MemoryMatc
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                   {card.type === "arabic" ? (
-                    <span className="text-3xl font-black text-green-800" style={{ fontFamily: "serif", direction: "rtl" }}>
+                    <span className="qaida-arabic text-3xl font-black text-green-800" lang="ar" dir="rtl">
                       {card.letter.letter}
                     </span>
                   ) : (
@@ -139,27 +165,6 @@ export default function MemoryMatch({ letters, onComplete, onClose }: MemoryMatc
           ))}
         </div>
       </div>
-
-      <AnimatePresence>
-        {finished && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <motion.div
-              className="rounded-3xl bg-white p-8 text-center shadow-2xl"
-              initial={{ scale: 0.7 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <div className="text-5xl">🎊</div>
-              <h2 className="mt-2 text-xl font-black text-gray-900">All Matched!</h2>
-              <p className="text-gray-500">Completed in {moves} moves</p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </GameShell>
   );
 }

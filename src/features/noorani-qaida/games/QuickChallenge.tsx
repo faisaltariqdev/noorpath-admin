@@ -1,8 +1,9 @@
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState, useCallback, useEffect } from "react";
 import type { Letter } from "../types";
-import { speakArabic } from "../audio/speech";
+import { qaidaAudio } from "../audio/QaidaAudioService";
+import GameShell from "./GameShell";
 
 interface QuickChallengeProps {
   letters: Letter[];
@@ -39,26 +40,38 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15);
 
   const q = questions[current];
 
   useEffect(() => {
-    if (finished || selected) return;
-    speakArabic(q.arabic);
+    if (finished || paused || selected) return;
+    void qaidaAudio.pronounce({ key: `letter-${q.letter.id}`, fallbackText: q.arabic });
     const t = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(t);
           setSelected("__timeout__");
+          window.setTimeout(() => {
+            const next = current + 1;
+            if (next >= questions.length) {
+              setFinished(true);
+              const stars: 1 | 2 | 3 = score >= 4 ? 3 : score >= 2 ? 2 : 1;
+              window.setTimeout(() => onComplete(stars), 900);
+            } else {
+              setCurrent(next);
+              setSelected(null);
+              setTimeLeft(15);
+            }
+          }, 500);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, finished]);
+  }, [current, finished, onComplete, paused, q, questions.length, score, selected]);
 
   const handleAnswer = useCallback((answer: string) => {
     if (selected || finished) return;
@@ -66,7 +79,7 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
     const correct = answer === q.correct;
     if (correct) {
       setScore((s) => s + 1);
-      speakArabic("ممتاز");
+      void qaidaAudio.effect("correct");
     }
     setTimeout(() => {
       const next = current + 1;
@@ -82,31 +95,26 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
     }, 900);
   }, [selected, finished, q, current, questions, score, onComplete]);
 
-  const timerPct = (timeLeft / 15) * 100;
-
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between p-4">
-        <button onClick={onClose} className="rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200">← Back</button>
-        <div className="flex gap-3 text-sm font-semibold">
-          <span className="text-gray-700">Question {current + 1}/{questions.length}</span>
-          <span className="text-green-600">✅ {score}</span>
-        </div>
-      </div>
-
-      {/* Timer bar */}
-      <div className="mx-4 h-2 overflow-hidden rounded-full bg-gray-200">
-        <motion.div
-          className={`h-full rounded-full ${timerPct > 40 ? "bg-green-500" : timerPct > 20 ? "bg-yellow-500" : "bg-red-500"}`}
-          animate={{ width: `${timerPct}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
-      <div className="mx-4 mt-0.5 text-right text-xs text-gray-400">{timeLeft}s</div>
-
+    <GameShell
+      title="Quick Challenge"
+      instruction="Name the letter before the timer reaches zero."
+      icon="⚡"
+      round={current + 1}
+      totalRounds={questions.length}
+      score={score}
+      timeLeft={timeLeft}
+      timeLimit={15}
+      finished={finished}
+      stars={score >= 4 ? 3 : score >= 2 ? 2 : 1}
+      resultText={`You answered ${score} of ${questions.length} correctly.`}
+      onClose={onClose}
+      paused={paused}
+      onPauseToggle={() => setPaused((value) => !value)}
+    >
       {/* Question */}
       <motion.div
-        className="mx-4 mt-4 flex flex-col items-center rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-100 p-6 text-center shadow-md"
+        className="flex flex-col items-center rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-100 p-5 text-center shadow-md"
         key={current}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -114,8 +122,7 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
       >
         <div className="text-sm font-medium text-indigo-500 uppercase tracking-wider">{q.prompt}</div>
         <motion.div
-          className="mt-3 text-8xl font-black text-indigo-900"
-          style={{ fontFamily: "serif", direction: "rtl" }}
+          className="qaida-arabic mt-3 text-7xl font-black text-indigo-900 sm:text-8xl"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
@@ -123,7 +130,7 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
         </motion.div>
         <button
           className="mt-2 flex items-center gap-1 rounded-full bg-indigo-200 px-3 py-1 text-xs text-indigo-700 hover:bg-indigo-300"
-          onClick={() => speakArabic(q.arabic)}
+          onClick={() => void qaidaAudio.pronounce({ key: `letter-${q.letter.id}`, fallbackText: q.arabic })}
           aria-label="Hear pronunciation"
         >
           🔊 Hear
@@ -131,7 +138,7 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
       </motion.div>
 
       {/* Options */}
-      <div className="flex-1 grid grid-cols-2 gap-3 p-4">
+      <div className="grid min-h-[220px] flex-1 grid-cols-2 gap-3 pt-4">
         {q.options.map((opt) => {
           const isSelected = selected === opt;
           const isCorrect = opt === q.correct;
@@ -159,27 +166,6 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
         })}
       </div>
 
-      <AnimatePresence>
-        {finished && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <motion.div
-              className="rounded-3xl bg-white p-8 text-center shadow-2xl"
-              initial={{ scale: 0.7 }}
-              animate={{ scale: 1 }}
-            >
-              <div className="text-5xl">{score >= 4 ? "🏆" : score >= 2 ? "🌟" : "💪"}</div>
-              <h2 className="mt-2 text-xl font-black text-gray-900">
-                {"⭐".repeat(score >= 4 ? 3 : score >= 2 ? 2 : 1)}
-              </h2>
-              <p className="text-gray-600">Score: {score}/{questions.length}</p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </GameShell>
   );
 }

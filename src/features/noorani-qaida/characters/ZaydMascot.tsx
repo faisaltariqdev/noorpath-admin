@@ -3,23 +3,43 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 type ZaydMood = "idle" | "happy" | "excited" | "thinking" | "celebrating";
+export type ZaydAction = "idle" | "wave" | "point" | "clap" | "jump" | "dance";
 
 interface ZaydMascotProps {
   mood?: ZaydMood;
   speechBubble?: string;
   size?: number;
   className?: string;
+  action?: ZaydAction;
+  lookAt?: "left" | "center" | "right";
 }
 
-function ZaydSVG({ mood, blinkPhase }: { mood: ZaydMood; blinkPhase: boolean }) {
+function ZaydSVG({
+  mood,
+  blinkPhase,
+  action,
+  lookAt,
+}: {
+  mood: ZaydMood;
+  blinkPhase: boolean;
+  action: ZaydAction;
+  lookAt: "left" | "center" | "right";
+}) {
   const eyeScaleY = blinkPhase ? 0.1 : 1;
+  const gazeOffset = lookAt === "left" ? -1.5 : lookAt === "right" ? 1.5 : 0;
   const mouthPath = mood === "happy" || mood === "celebrating" || mood === "excited"
     ? "M 42 68 Q 50 76 58 68"
     : mood === "thinking"
     ? "M 42 70 Q 50 70 58 70"
     : "M 44 70 Q 50 74 56 70";
 
-  const bodyRotate = mood === "excited" ? [0, -5, 5, -3, 3, 0] : mood === "celebrating" ? [0, 10, -10, 5, -5, 0] : [0, -2, 2, 0];
+  const bodyRotate = action === "dance"
+    ? [0, -8, 8, -6, 6, 0]
+    : mood === "excited"
+      ? [0, -5, 5, -3, 3, 0]
+      : mood === "celebrating"
+        ? [0, 10, -10, 5, -5, 0]
+        : [0, -2, 2, 0];
 
   return (
     <motion.svg
@@ -50,7 +70,17 @@ function ZaydSVG({ mood, blinkPhase }: { mood: ZaydMood; blinkPhase: boolean }) 
 
       {/* Left arm */}
       <motion.g
-        animate={{ rotate: mood === "celebrating" ? [0, 30, -10, 20, 0] : mood === "happy" ? [0, 15, 0] : [0, 5, 0] }}
+        animate={{
+          rotate: action === "wave"
+            ? [0, 38, 12, 42, 8, 34, 0]
+            : action === "clap"
+              ? [0, -32, 0, -32, 0]
+              : mood === "celebrating"
+                ? [0, 30, -10, 20, 0]
+                : mood === "happy"
+                  ? [0, 15, 0]
+                  : [0, 5, 0],
+        }}
         transition={{ duration: mood === "celebrating" ? 1 : 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
         style={{ transformOrigin: "30px 90px" }}
       >
@@ -69,7 +99,17 @@ function ZaydSVG({ mood, blinkPhase }: { mood: ZaydMood; blinkPhase: boolean }) 
 
       {/* Right arm */}
       <motion.g
-        animate={{ rotate: mood === "celebrating" ? [0, -30, 10, -20, 0] : mood === "happy" ? [0, -10, 0] : [0, -3, 0] }}
+        animate={{
+          rotate: action === "point"
+            ? [0, -58, -52]
+            : action === "clap"
+              ? [0, 32, 0, 32, 0]
+              : mood === "celebrating"
+                ? [0, -30, 10, -20, 0]
+                : mood === "happy"
+                  ? [0, -10, 0]
+                  : [0, -3, 0],
+        }}
         transition={{ duration: mood === "celebrating" ? 1 : 2.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: 0.3 }}
         style={{ transformOrigin: "70px 90px" }}
       >
@@ -92,13 +132,13 @@ function ZaydSVG({ mood, blinkPhase }: { mood: ZaydMood; blinkPhase: boolean }) 
       {/* Eyes */}
       <motion.g animate={{ scaleY: eyeScaleY }} style={{ transformOrigin: "40px 56px" }}>
         <ellipse cx="40" cy="56" rx="6" ry="7" fill="white" />
-        <ellipse cx="41" cy="57" rx="4" ry="4.5" fill="#2d1b0e" />
-        <ellipse cx="42.5" cy="55.5" rx="1.5" ry="1.5" fill="white" />
+        <ellipse cx={41 + gazeOffset} cy="57" rx="4" ry="4.5" fill="#2d1b0e" />
+        <ellipse cx={42.5 + gazeOffset} cy="55.5" rx="1.5" ry="1.5" fill="white" />
       </motion.g>
       <motion.g animate={{ scaleY: eyeScaleY }} style={{ transformOrigin: "60px 56px" }}>
         <ellipse cx="60" cy="56" rx="6" ry="7" fill="white" />
-        <ellipse cx="61" cy="57" rx="4" ry="4.5" fill="#2d1b0e" />
-        <ellipse cx="62.5" cy="55.5" rx="1.5" ry="1.5" fill="white" />
+        <ellipse cx={61 + gazeOffset} cy="57" rx="4" ry="4.5" fill="#2d1b0e" />
+        <ellipse cx={62.5 + gazeOffset} cy="55.5" rx="1.5" ry="1.5" fill="white" />
       </motion.g>
 
       {/* Eyebrows */}
@@ -134,7 +174,14 @@ function ZaydSVG({ mood, blinkPhase }: { mood: ZaydMood; blinkPhase: boolean }) 
   );
 }
 
-export default function ZaydMascot({ mood = "idle", speechBubble, size = 160, className = "" }: ZaydMascotProps) {
+export default function ZaydMascot({
+  mood = "idle",
+  speechBubble,
+  size = 160,
+  className = "",
+  action = "idle",
+  lookAt = "center",
+}: ZaydMascotProps) {
   const [blinkPhase, setBlinkPhase] = useState(false);
 
   useEffect(() => {
@@ -147,7 +194,12 @@ export default function ZaydMascot({ mood = "idle", speechBubble, size = 160, cl
   }, []);
 
   return (
-    <div className={`relative flex flex-col items-center ${className}`} style={{ width: size }}>
+    <div
+      className={`relative flex flex-col items-center ${className}`}
+      style={{ width: size }}
+      role="img"
+      aria-label={`Zayd learning companion is ${mood}`}
+    >
       {/* Speech bubble */}
       <AnimatePresence>
         {speechBubble && (
@@ -157,6 +209,8 @@ export default function ZaydMascot({ mood = "idle", speechBubble, size = 160, cl
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.8 }}
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            role="status"
+            aria-live="polite"
           >
             {speechBubble}
             {/* Bubble tail */}
@@ -168,10 +222,19 @@ export default function ZaydMascot({ mood = "idle", speechBubble, size = 160, cl
       {/* Character */}
       <motion.div
         style={{ width: size, height: size * 1.6 }}
-        animate={{ y: mood === "idle" ? [0, -6, 0] : mood === "celebrating" ? [0, -12, 0, -8, 0] : [0, -4, 0] }}
-        transition={{ duration: mood === "celebrating" ? 0.6 : 3, repeat: Infinity, ease: "easeInOut" }}
+        animate={{
+          y: action === "jump"
+            ? [0, -24, 0, -12, 0]
+            : mood === "idle"
+              ? [0, -6, 0]
+              : mood === "celebrating"
+                ? [0, -12, 0, -8, 0]
+                : [0, -4, 0],
+          scale: action === "clap" ? [1, 1.03, 1] : 1,
+        }}
+        transition={{ duration: action === "jump" ? 0.9 : mood === "celebrating" ? 0.6 : 3, repeat: Infinity, ease: "easeInOut" }}
       >
-        <ZaydSVG mood={mood} blinkPhase={blinkPhase} />
+        <ZaydSVG mood={mood} blinkPhase={blinkPhase} action={action} lookAt={lookAt} />
       </motion.div>
     </div>
   );

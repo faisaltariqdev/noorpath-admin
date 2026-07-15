@@ -2,7 +2,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { Letter } from "../types";
-import { speakArabic } from "../audio/speech";
+import { qaidaAudio } from "../audio/QaidaAudioService";
+import GameShell from "./GameShell";
 
 interface Bubble {
   id: number;
@@ -13,6 +14,7 @@ interface Bubble {
   size: number;
   color: string;
   popped: boolean;
+  duration: number;
 }
 
 interface BubblePopProps {
@@ -37,6 +39,8 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
   const [mistakes, setMistakes] = useState(0);
   const [rounds, setRounds] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(45);
+  const [paused, setPaused] = useState(false);
   const totalRounds = 5;
 
   const generateBubbles = useCallback(() => {
@@ -54,14 +58,32 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
         size: 70 + Math.floor(Math.random() * 30),
         color: BUBBLE_COLORS[i % BUBBLE_COLORS.length],
         popped: false,
+        duration: 3 + (i % 3) * 0.65,
       }))
     );
   }, [letters, targetLetter]);
 
   useEffect(() => {
     generateBubbles();
-    speakArabic(`Find ${targetLetter.name}`);
+    qaidaAudio.feedback(`Find ${targetLetter.name}`);
   }, [generateBubbles, targetLetter]);
+
+  useEffect(() => {
+    if (finished || paused) return;
+    const timer = window.setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          setFinished(true);
+          const stars: 1 | 2 | 3 = score >= 4 ? 3 : score >= 2 ? 2 : 1;
+          window.setTimeout(() => onComplete(stars), 900);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [finished, onComplete, paused, score]);
 
   const handlePop = useCallback((bubble: Bubble) => {
     if (bubble.popped || finished) return;
@@ -70,7 +92,7 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
 
     if (bubble.isTarget) {
       setScore((s) => s + 1);
-      speakArabic("صحيح");
+      void qaidaAudio.effect("correct");
       const nextRound = rounds + 1;
       setRounds(nextRound);
       if (nextRound >= totalRounds) {
@@ -82,22 +104,28 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
       }
     } else {
       setMistakes((m) => m + 1);
-      speakArabic("حاول مرة أخرى");
+      qaidaAudio.feedback("حاول مرة أخرى", "ar");
     }
   }, [finished, rounds, mistakes, generateBubbles, onComplete]);
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4">
-        <button onClick={onClose} className="rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200">← Back</button>
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-gray-700">Round {Math.min(rounds + 1, totalRounds)} / {totalRounds}</span>
-          <span className="text-yellow-500">⭐ {score}</span>
-          {mistakes > 0 && <span className="text-red-400">❌ {mistakes}</span>}
-        </div>
-      </div>
-
+    <GameShell
+      title="Bubble Pop"
+      instruction={`Pop the bubble with ${targetLetter.name}.`}
+      icon="🫧"
+      round={rounds + 1}
+      totalRounds={totalRounds}
+      score={score}
+      mistakes={mistakes}
+      timeLeft={timeLeft}
+      timeLimit={45}
+      finished={finished}
+      stars={mistakes === 0 && score === totalRounds ? 3 : mistakes <= 2 ? 2 : 1}
+      resultText={`You found ${score} correct letters.`}
+      onClose={onClose}
+      paused={paused}
+      onPauseToggle={() => setPaused((value) => !value)}
+    >
       {/* Target */}
       <motion.div
         className="mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-100 px-6 py-3 text-center shadow-md"
@@ -105,12 +133,12 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
         transition={{ duration: 2, repeat: Infinity }}
       >
         <div className="text-xs font-medium uppercase text-amber-600">Pop the bubble with</div>
-        <div className="text-4xl font-black text-amber-800" style={{ fontFamily: "serif" }}>{targetLetter.letter}</div>
+        <div className="qaida-arabic text-4xl font-black text-amber-800" lang="ar" dir="rtl">{targetLetter.letter}</div>
         <div className="text-sm font-semibold text-amber-700">{targetLetter.name}</div>
       </motion.div>
 
       {/* Bubble field */}
-      <div className="relative flex-1 overflow-hidden rounded-2xl bg-gradient-to-b from-sky-100 to-blue-200 mx-4">
+      <div className="relative min-h-[300px] flex-1 overflow-hidden rounded-2xl bg-gradient-to-b from-sky-100 to-blue-200">
         <AnimatePresence>
           {bubbles.filter((b) => !b.popped).map((bubble) => (
             <motion.button
@@ -130,32 +158,17 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
                 opacity: 1,
               }}
               exit={{ scale: [1, 1.3, 0], opacity: 0, transition: { duration: 0.3 } }}
-              transition={{ duration: 3 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: bubble.duration, repeat: Infinity, ease: "easeInOut" }}
               onClick={() => handlePop(bubble)}
               whileTap={{ scale: 0.8 }}
               aria-label={`Pop bubble with letter ${bubble.letter.name}`}
             >
-              <span style={{ fontFamily: "serif", direction: "rtl" }}>{bubble.letter.letter}</span>
+              <span className="qaida-arabic" lang="ar" dir="rtl">{bubble.letter.letter}</span>
             </motion.button>
           ))}
         </AnimatePresence>
 
-        {finished && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="text-center">
-              <div className="text-5xl">🎉</div>
-              <div className="text-xl font-black text-gray-900">Excellent!</div>
-              <div className="text-gray-600">Score: {score}/{totalRounds}</div>
-            </div>
-          </motion.div>
-        )}
       </div>
-
-      <div className="p-3 text-center text-xs text-gray-400">Tap the correct bubble!</div>
-    </div>
+    </GameShell>
   );
 }

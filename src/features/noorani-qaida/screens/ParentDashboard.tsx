@@ -1,145 +1,145 @@
 "use client";
-import { useEffect, useReducer } from "react";
-import { motion } from "framer-motion";
-import { LETTERS } from "../data/curriculum";
-import { DEFAULT_PROGRESS, parseProgress, PROGRESS_STORAGE_KEY, progressReducer } from "../state/progress";
-import type { QaidaProgress } from "../types";
-import FloatingParticles from "../animations/FloatingParticles";
 
-function useChildProgress(): QaidaProgress {
-  const [progress, dispatch] = useReducer(progressReducer, DEFAULT_PROGRESS);
-  useEffect(() => {
-    const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
-    dispatch({ type: "hydrate", value: parseProgress(raw) });
-  }, []);
-  return progress;
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { LETTERS } from "../data/curriculum";
+import { createParentProgressSnapshot, type ParentProgressSnapshot } from "../data/progressAdapters";
+import { PROGRESS_STORAGE_KEY } from "../state/progress";
+
+function formatPracticeTime(totalSeconds: number) {
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
 }
 
-export default function ParentQaidaDashboard() {
-  const progress = useChildProgress();
-  const lettersDone = LETTERS.filter((l) => progress.completed.includes(`letter-${l.id}`)).length;
-  const pct = Math.round((lettersDone / 28) * 100);
-  const earnedBadges = progress.badges.filter((b) => b.earned).length;
+export default function ParentDashboard({ embedded = false }: { embedded?: boolean }) {
+  const [snapshot, setSnapshot] = useState<ParentProgressSnapshot | null>(null);
 
-  const weeklyData = [
-    { day: "Mon", mins: 12 }, { day: "Tue", mins: 18 }, { day: "Wed", mins: 8 },
-    { day: "Thu", mins: 22 }, { day: "Fri", mins: 15 }, { day: "Sat", mins: 20 }, { day: "Sun", mins: 5 },
-  ];
-  const maxMins = Math.max(...weeklyData.map((d) => d.mins));
+  useEffect(() => {
+    const read = () => setSnapshot(createParentProgressSnapshot(localStorage.getItem(PROGRESS_STORAGE_KEY)));
+    read();
+    window.addEventListener("storage", read);
+    return () => window.removeEventListener("storage", read);
+  }, []);
+
+  if (!snapshot) {
+    return (
+      <main className={`${embedded ? "h-full" : "min-h-screen"} qaida-root flex items-center justify-center bg-emerald-50 p-6`}>
+        <p className="font-bold text-emerald-800" role="status">Loading device progress…</p>
+      </main>
+    );
+  }
+
+  const { progress } = snapshot;
+  const currentLetter = LETTERS.find((letter) => !progress.completed.includes(`letter-${letter.id}`)) ?? null;
 
   return (
-    <div className="relative min-h-screen overflow-auto bg-gradient-to-br from-green-50 to-sky-50 p-6">
-      <FloatingParticles count={8} />
-
-      {/* Header */}
-      <motion.div
-        className="mb-6"
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-      >
-        <h1 className="text-2xl font-black text-gray-900">Parent Dashboard 👨‍👩‍👧</h1>
-        <p className="text-sm text-gray-500">Track your child's Noorani Qaida progress</p>
-      </motion.div>
-
-      {/* Child progress overview */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { icon: "📖", label: "Letters Learned", value: `${lettersDone}/28`, color: "from-green-400 to-emerald-600" },
-          { icon: "⚡", label: "Total XP", value: progress.xp, color: "from-yellow-400 to-amber-500" },
-          { icon: "🔥", label: "Study Streak", value: `${progress.streak} days`, color: "from-orange-400 to-red-500" },
-          { icon: "🏆", label: "Badges Earned", value: `${earnedBadges}/${progress.badges.length}`, color: "from-purple-400 to-purple-600" },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            className={`overflow-hidden rounded-2xl bg-gradient-to-br ${stat.color} p-5 text-white shadow-lg`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <div className="text-3xl">{stat.icon}</div>
-            <div className="mt-2 text-3xl font-black">{stat.value}</div>
-            <div className="text-sm opacity-80">{stat.label}</div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Progress bar */}
-      <motion.div
-        className="mb-6 rounded-3xl bg-white p-6 shadow-lg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Alphabet Progress</h2>
-          <span className="text-lg font-bold text-green-600">{pct}%</span>
-        </div>
-        <div className="h-4 overflow-hidden rounded-full bg-gray-100">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500"
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-          />
-        </div>
-        <p className="mt-2 text-sm text-gray-500">
-          Your child has learned {lettersDone} out of 28 Arabic letters. 
-          {lettersDone < 28 ? ` Next: ${LETTERS.find((l) => !progress.completed.includes(`letter-${l.id}`))?.name ?? "—"}.` : " All letters complete! 🎉"}
-        </p>
-      </motion.div>
-
-      {/* Weekly practice chart */}
-      <motion.div
-        className="mb-6 rounded-3xl bg-white p-6 shadow-lg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
-        <h2 className="mb-4 text-lg font-bold text-gray-900">Weekly Practice (minutes)</h2>
-        <div className="flex items-end justify-between gap-2" style={{ height: 120 }}>
-          {weeklyData.map((d) => (
-            <div key={d.day} className="flex flex-1 flex-col items-center gap-1">
-              <motion.div
-                className="w-full rounded-t-lg bg-gradient-to-t from-green-500 to-emerald-400"
-                initial={{ height: 0 }}
-                animate={{ height: `${(d.mins / maxMins) * 100}px` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              />
-              <span className="text-xs text-gray-500">{d.day}</span>
-              <span className="text-[10px] font-bold text-gray-700">{d.mins}m</span>
+    <main
+      className={`${embedded ? "min-h-full" : "min-h-screen"} qaida-root bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-4 sm:p-6`}
+    >
+      <div className="qaida-dashboard">
+        <header className="qaida-panel overflow-hidden p-5 sm:p-7">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Parent view</p>
+              <h1 className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">Noorani Qaida progress</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                This report shows only learning activity stored in this browser. It is not yet synced across devices or to academy records.
+              </p>
             </div>
-          ))}
-        </div>
-      </motion.div>
+            <span className="inline-flex w-fit rounded-full bg-sky-100 px-4 py-2 text-xs font-black text-sky-800">
+              Source: this device
+            </span>
+          </div>
+        </header>
 
-      {/* Recommendations */}
-      <motion.div
-        className="rounded-3xl bg-white p-6 shadow-lg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <h2 className="mb-4 text-lg font-bold text-gray-900">Parent Tips</h2>
-        <div className="space-y-3">
+        <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Verified progress summary">
           {[
-            { icon: "⏰", tip: "Practice 10–15 minutes daily for best results." },
-            { icon: "🎯", tip: "Focus on letters your child finds difficult before moving forward." },
-            { icon: "🏆", tip: "Celebrate every badge earned — positive reinforcement helps!" },
-            { icon: "📱", tip: "Use the games section to make learning fun and interactive." },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              className="flex items-start gap-3 rounded-2xl bg-green-50 p-3"
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.6 + i * 0.1 }}
+            ["Letters completed", `${snapshot.lettersCompleted}/${LETTERS.length}`, "📖"],
+            ["Stored XP", progress.xp.toString(), "⭐"],
+            ["Current streak", `${progress.streak} day${progress.streak === 1 ? "" : "s"}`, "🔥"],
+            ["Practice recorded", formatPracticeTime(progress.totalPracticeSeconds), "⏱️"],
+          ].map(([label, value, icon], index) => (
+            <motion.article
+              key={label}
+              className="qaida-panel p-4 sm:p-5"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-sm text-gray-700">{item.tip}</span>
-            </motion.div>
+              <span className="text-2xl" aria-hidden="true">{icon}</span>
+              <strong className="qaida-progress-value mt-2 block text-xl font-black text-slate-950 sm:text-2xl">{value}</strong>
+              <span className="text-xs font-bold text-slate-600 sm:text-sm">{label}</span>
+            </motion.article>
           ))}
+        </section>
+
+        <div className="qaida-dashboard-grid mt-5">
+          <section className="qaida-panel col-span-12 p-5 lg:col-span-8" aria-labelledby="letter-progress-title">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 id="letter-progress-title" className="text-lg font-black text-slate-950">Arabic letter journey</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {currentLetter ? `Next device lesson: ${currentLetter.name}` : "All 28 letter lessons are marked complete."}
+                </p>
+              </div>
+              <span className="qaida-progress-value rounded-full bg-emerald-100 px-3 py-1 text-sm font-black text-emerald-800">
+                {snapshot.completionPercent}%
+              </span>
+            </div>
+
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-lime-400"
+                initial={{ width: 0 }}
+                animate={{ width: `${snapshot.completionPercent}%` }}
+              />
+            </div>
+
+            <div className="mt-5 grid grid-cols-5 gap-2 sm:grid-cols-7 md:grid-cols-10">
+              {LETTERS.map((letter) => {
+                const complete = progress.completed.includes(`letter-${letter.id}`);
+                return (
+                  <div
+                    key={letter.id}
+                    className={`qaida-arabic flex aspect-square items-center justify-center rounded-xl border text-xl font-bold ${
+                      complete
+                        ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                        : "border-slate-200 bg-slate-50 text-slate-400"
+                    }`}
+                    title={`${letter.name}: ${complete ? "completed" : "not completed"}`}
+                    lang="ar"
+                    dir="rtl"
+                  >
+                    {letter.letter}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <aside className="qaida-panel col-span-12 p-5 lg:col-span-4" aria-labelledby="earned-badges-title">
+            <h2 id="earned-badges-title" className="text-lg font-black text-slate-950">Earned badges</h2>
+            <p className="mt-1 text-sm text-slate-600">{snapshot.earnedBadges} verified on this device</p>
+            <div className="mt-4 space-y-2">
+              {progress.badges.filter((badge) => badge.earned).length ? (
+                progress.badges.filter((badge) => badge.earned).map((badge) => (
+                  <div key={badge.id} className="flex items-center gap-3 rounded-2xl bg-amber-50 p-3">
+                    <span className="text-2xl" aria-hidden="true">{badge.icon}</span>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">{badge.label}</h3>
+                      <p className="text-xs text-slate-600">{badge.description}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">No badges have been earned on this device yet.</p>
+              )}
+            </div>
+          </aside>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </main>
   );
 }

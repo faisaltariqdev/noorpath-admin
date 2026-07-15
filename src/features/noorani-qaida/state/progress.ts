@@ -77,7 +77,24 @@ function awardBadgesForState(progress: QaidaProgress): QaidaProgress {
 export function progressReducer(state: QaidaProgress, action: QaidaAction): QaidaProgress {
   switch (action.type) {
     case "hydrate": {
-      return awardBadgesForState({ ...DEFAULT_PROGRESS, ...action.value, hydrated: true });
+      const storedBadges = Array.isArray(action.value.badges) ? action.value.badges : [];
+      const badges = ALL_BADGES.map((defaultBadge) => ({
+        ...defaultBadge,
+        ...storedBadges.find((badge) => badge.id === defaultBadge.id),
+      }));
+      return awardBadgesForState({
+        ...DEFAULT_PROGRESS,
+        ...action.value,
+        version: DEFAULT_PROGRESS.version,
+        hydrated: true,
+        completed: Array.isArray(action.value.completed) ? action.value.completed : [],
+        ratings: action.value.ratings && typeof action.value.ratings === "object" ? action.value.ratings : {},
+        badges,
+        settings: {
+          ...DEFAULT_PROGRESS.settings,
+          ...(action.value.settings ?? {}),
+        },
+      });
     }
 
     case "complete_screen": {

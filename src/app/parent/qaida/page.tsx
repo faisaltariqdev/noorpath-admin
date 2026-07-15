@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ParentQaidaDashboard from "@/features/noorani-qaida/screens/ParentDashboard";
+import { qaidaFontVariables } from "@/features/noorani-qaida/fonts";
 
 export const metadata: Metadata = {
   title: "Qaida Progress — Parent Dashboard",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function ParentQaidaPage() {
-  return <ParentQaidaDashboard />;
+  return (
+    <div className={qaidaFontVariables}>
+      <ParentQaidaDashboard />
+    </div>
+  );
 }
