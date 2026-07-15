@@ -28,8 +28,7 @@ const arabic = Amiri({
 export default function NooraniQaidaLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`${display.variable} ${body.variable} ${arabic.variable} h-screen overflow-hidden`}
-      style={{ fontFamily: "var(--font-qaida-body), system-ui, sans-serif" }}
+      className={`${display.variable} ${body.variable} ${arabic.variable} qaida-root h-screen overflow-hidden`}
     >
       {children}
     </div>

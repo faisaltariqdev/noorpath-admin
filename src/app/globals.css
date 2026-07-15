@@ -41,6 +41,14 @@ body {
   line-height: 1.5;
 }
 
+/*
+ * The Qaida learning experience is a self-contained full-screen application.
+ * Scope its typography so it cannot alter the established admin dashboard.
+ */
+.qaida-root {
+  font-family: var(--font-qaida-body), system-ui, sans-serif;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-playfair), Georgia, serif;
   font-weight: 700;

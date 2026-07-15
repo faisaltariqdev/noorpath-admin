@@ -1,4 +1,4 @@
-import Sidebar from "@/components/Sidebar";
+import AdminChrome from "@/components/AdminChrome";
 import { authorizeAdmin } from "@/lib/server-auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -16,10 +16,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login");
   }
 
-  return (
-    <div className="admin-layout">
-      <Sidebar role="admin" userName={auth.fullName} />
-      <div className="page-wrapper">{children}</div>
-    </div>
-  );
+  return <AdminChrome userName={auth.fullName}>{children}</AdminChrome>;
 }
