@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { QaidaProgress } from "../types";
 import { LETTERS } from "../data/curriculum";
 import { qaidaAudio } from "../audio/QaidaAudioService";
 import FloatingParticles from "../animations/FloatingParticles";
 import SparkleBurst from "../animations/SparkleBurst";
 import ZaydMascot, { type ZaydAction } from "../characters/ZaydMascot";
+import FullscreenButton from "../ui/FullscreenButton";
 import QaidaEbook from "./QaidaEbook";
 
 type BookMode = "book" | "cards";
@@ -63,6 +64,7 @@ export default function NooraniBook({
   particleCount,
   audioEnabled = true,
 }: NooraniBookProps) {
+  const bookRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<BookMode>("book");
   const [tappedId, setTappedId] = useState<number | null>(null);
   const [mascotAction, setMascotAction] = useState<ZaydAction>("wave");
@@ -100,18 +102,21 @@ export default function NooraniBook({
   );
 
   return (
-    <div className="qaida-scroll relative mx-auto flex h-full w-full max-w-6xl flex-col gap-5 overflow-y-auto p-4 sm:p-6">
+    <div
+      ref={bookRef}
+      className="qaida-scroll relative mx-auto flex h-full w-full max-w-6xl flex-col gap-5 overflow-y-auto bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-4 sm:p-6 fullscreen:max-w-none"
+    >
       <FloatingParticles count={particleCount} />
 
       {/* Book header */}
       <motion.header
-        className="relative isolate overflow-hidden rounded-[1.75rem] border border-white/15 bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-700 p-5 text-white shadow-[0_24px_60px_-20px_rgba(6,78,59,0.6)] sm:p-6"
+        className="relative isolate flex min-h-[190px] overflow-hidden rounded-[1.75rem] border border-white/15 bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-700 p-5 text-white shadow-[0_24px_60px_-20px_rgba(6,78,59,0.6)] sm:min-h-[220px] sm:p-7"
         initial={reducedMotion ? false : { opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 240, damping: 26 }}
       >
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
-        <div className="relative z-10 flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative z-10 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex-none rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
               <ZaydMascot mood="happy" action={mascotAction} size={84} lookAt="center" />
@@ -124,13 +129,20 @@ export default function NooraniBook({
               <p aria-live="polite" className="mt-1 max-w-sm text-sm text-emerald-50/90">{mascotSpeech}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-3xl bg-white/10 p-3 backdrop-blur-md">
-            <BookRing pct={pct} reduced={reducedMotion} />
-            <div className="pr-1">
-              <p className="text-xs font-bold uppercase tracking-wide text-emerald-100/80">Completed</p>
-              <p className="text-2xl font-black leading-tight">{completedCount}<span className="text-emerald-100/70">/28</span></p>
-              <p className="text-xs text-emerald-100/80">letters mastered</p>
+          <div className="flex flex-col items-center gap-3 sm:items-end">
+            <div className="flex items-center gap-3 rounded-3xl bg-white/10 p-3 backdrop-blur-md">
+              <BookRing pct={pct} reduced={reducedMotion} />
+              <div className="pr-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-100/80">Completed</p>
+                <p className="text-2xl font-black leading-tight">{completedCount}<span className="text-emerald-100/70">/28</span></p>
+                <p className="text-xs text-emerald-100/80">letters mastered</p>
+              </div>
             </div>
+            <FullscreenButton
+              targetRef={bookRef}
+              label="Noorani Qaida Book"
+              className="border border-white/20 bg-white/15 text-white hover:bg-white/25"
+            />
           </div>
         </div>
       </motion.header>

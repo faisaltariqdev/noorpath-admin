@@ -12,6 +12,7 @@ import { LETTERS } from "../data/curriculum";
 import { letterWindow } from "../data/games";
 import { useMotionBudget } from "../motion/useMotionBudget";
 import { pageVariants } from "../motion/config";
+import QaidaLoader from "../ui/QaidaLoader";
 
 const LessonScreen = dynamic(() => import("../screens/LessonScreen"), {
   ssr: false,
@@ -58,21 +59,6 @@ const SoundMatch = dynamic(() => import("../games/SoundMatch"), { ssr: false });
 
 type ActiveView = "dashboard" | "journey" | "qaida" | "lessons" | "games" | "practice" | "rewards" | "certificates" | "parents" | "teachers" | "settings";
 type ActiveGame = "bubble-pop" | "find-letter" | "memory-match" | "quick-challenge" | "letter-train" | "puzzle" | "sound-match" | null;
-
-function QaidaLoader() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <motion.div
-        className="text-center"
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-      >
-        <div className="text-6xl" style={{ fontFamily: "serif" }}>ن</div>
-        <div className="mt-2 text-sm text-gray-500">Loading…</div>
-      </motion.div>
-    </div>
-  );
-}
 
 const DASHBOARD_CONTAINER_VARIANTS: Variants = {
   initial: {},

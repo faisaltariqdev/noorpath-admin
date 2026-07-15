@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { Letter, QaidaProgress } from "../types";
 import { qaidaAudio, type PronunciationMode } from "../audio/QaidaAudioService";
 import ScenicLearningBackground from "../animations/ScenicLearningBackground";
@@ -19,6 +19,7 @@ import {
   type LessonStep,
 } from "../lesson/flow";
 import { useMotionBudget } from "../motion/useMotionBudget";
+import FullscreenButton from "../ui/FullscreenButton";
 
 const ConfettiExplosion = dynamic(() => import("../animations/ConfettiExplosion"), { ssr: false });
 const TracingCanvas = dynamic(() => import("../ui/TracingCanvas"), {
@@ -131,6 +132,7 @@ export default function LessonScreen({
   audioEnabled = true,
   gameCompletionCount = 0,
 }: LessonScreenProps) {
+  const lessonRef = useRef<HTMLElement>(null);
   const motionBudget = useMotionBudget(progress.settings.reducedMotion);
   const [flow, flowDispatch] = useReducer(lessonFlowReducer, INITIAL_LESSON_FLOW);
   const [activeTab, setActiveTab] = useState<ActionTab>("listen");
@@ -231,36 +233,43 @@ export default function LessonScreen({
     <>
       <ConfettiExplosion active={showConfetti} particleCount={motionBudget.celebrationParticles} />
 
-      <main className="relative min-h-full overflow-x-hidden bg-emerald-100">
+      <main ref={lessonRef} className="relative min-h-full overflow-x-hidden bg-emerald-100 fullscreen:h-screen fullscreen:overflow-y-auto">
         <ScenicLearningBackground reducedMotion={motionBudget.reduced} />
 
         <div className="relative z-10 mx-auto flex min-h-full w-full max-w-[1600px] flex-col gap-3 p-3 sm:p-4 xl:gap-4 xl:p-5">
-          <nav
-            className="qaida-panel flex items-center gap-1.5 overflow-x-auto p-2 sm:justify-center"
-            aria-label="Lesson adventure progress"
-          >
-            {LESSON_STEPS.filter((step) => FLOW_LABELS[step]).map((step, index) => {
-              const complete = flow.completedSteps.includes(step);
-              const current = flow.step === step;
-              return (
-                <div key={step} className="flex flex-none items-center gap-1.5">
-                  {index > 0 && <span className="h-px w-3 bg-emerald-900/15 sm:w-6" aria-hidden="true" />}
-                  <span
-                    className={`rounded-full px-3 py-1.5 text-xs font-black ${
-                      current
-                        ? "bg-emerald-700 text-white"
-                        : complete
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-white/70 text-slate-500"
-                    }`}
-                    aria-current={current ? "step" : undefined}
-                  >
-                    {complete ? "✓ " : ""}{FLOW_LABELS[step]}
-                  </span>
-                </div>
-              );
-            })}
-          </nav>
+          <div className="flex items-center gap-2">
+            <nav
+              className="qaida-panel flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto p-2 sm:justify-center"
+              aria-label="Lesson adventure progress"
+            >
+              {LESSON_STEPS.filter((step) => FLOW_LABELS[step]).map((step, index) => {
+                const complete = flow.completedSteps.includes(step);
+                const current = flow.step === step;
+                return (
+                  <div key={step} className="flex flex-none items-center gap-1.5">
+                    {index > 0 && <span className="h-px w-3 bg-emerald-900/15 sm:w-6" aria-hidden="true" />}
+                    <span
+                      className={`rounded-full px-3 py-1.5 text-xs font-black ${
+                        current
+                          ? "bg-emerald-700 text-white"
+                          : complete
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-white/70 text-slate-500"
+                      }`}
+                      aria-current={current ? "step" : undefined}
+                    >
+                      {complete ? "✓ " : ""}{FLOW_LABELS[step]}
+                    </span>
+                  </div>
+                );
+              })}
+            </nav>
+            <FullscreenButton
+              targetRef={lessonRef}
+              label={`${letter.name} lesson`}
+              className="flex-none border border-emerald-900/10 bg-white text-emerald-800 hover:bg-emerald-50"
+            />
+          </div>
 
           <section className="grid gap-3 lg:grid-cols-12 xl:gap-4">
             <motion.div

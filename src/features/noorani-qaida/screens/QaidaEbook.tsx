@@ -85,7 +85,7 @@ export default function QaidaEbook({
                 whileHover={reducedMotion ? undefined : { y: -3, scale: 1.05 }}
                 whileTap={{ scale: 0.94 }}
                 aria-label={`${letter.name}, tap to hear pronunciation`}
-                className={`group relative flex aspect-square items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                className={`group relative flex min-h-[92px] flex-col items-center justify-center gap-1 rounded-xl border px-1.5 pb-2 pt-3 transition-colors sm:min-h-[108px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
                   isActive
                     ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]"
                     : isCurrent
@@ -106,6 +106,11 @@ export default function QaidaEbook({
                 >
                   {letter.letter}
                 </motion.span>
+                <span className={`max-w-full truncate text-[11px] font-black tracking-wide sm:text-xs ${
+                  isActive || isCurrent ? "text-emerald-700" : "text-slate-600"
+                }`}>
+                  {letter.name}
+                </span>
               </motion.button>
             );
           })}
