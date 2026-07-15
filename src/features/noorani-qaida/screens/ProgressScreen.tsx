@@ -23,7 +23,7 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
   ];
 
   return (
-    <div className="relative h-full overflow-auto p-6">
+    <div className="relative p-6">
       <FloatingParticles count={10} />
 
       <motion.h1

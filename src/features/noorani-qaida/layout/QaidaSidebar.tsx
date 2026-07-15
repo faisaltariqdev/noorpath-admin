@@ -42,7 +42,8 @@ export default function QaidaSidebar({ activeView, onNavigate, userName = "Ali R
 
   return (
     <motion.aside
-      className="flex h-full flex-col bg-gradient-to-b from-[#0a2e1c] to-[#0d3b26] text-white"
+      className="flex h-full flex-shrink-0 flex-col bg-gradient-to-b from-[#0a2e1c] to-[#0d3b26] text-white"
+      style={{ width: collapsed ? 64 : 220 }}
       animate={{ width: collapsed ? 64 : 220 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >

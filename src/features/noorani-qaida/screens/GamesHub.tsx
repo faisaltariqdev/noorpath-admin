@@ -20,7 +20,7 @@ interface GamesHubProps {
 
 export default function GamesHub({ onGameSelect, progress }: GamesHubProps) {
   return (
-    <div className="relative h-full overflow-auto p-6">
+    <div className="relative p-6">
       <FloatingParticles count={10} />
 
       <motion.div

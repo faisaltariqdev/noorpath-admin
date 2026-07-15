@@ -31,7 +31,7 @@ export default function JourneyMap({ progress, onSelectLetter }: JourneyMapProps
   const pct = Math.round((completedCount / 28) * 100);
 
   return (
-    <div className="relative min-h-0 overflow-y-auto p-4">
+    <div className="relative p-4">
       <FloatingParticles count={12} />
 
       {/* Header */}

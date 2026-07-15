@@ -55,7 +55,7 @@ function WelcomeDashboard({ onStart, progress }: { onStart: () => void; progress
   const earnedBadges = progress.badges.filter((b) => b.earned).length;
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-auto p-6">
+    <div className="relative flex h-full flex-col gap-6 overflow-y-auto p-6">
       <FloatingParticles count={15} />
 
       {/* Hero */}
@@ -237,7 +237,7 @@ export default function QaidaShell() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-sky-50">
+    <div className="flex h-full overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-sky-50">
       {/* Confetti / Coin effects */}
       <ConfettiExplosion active={showConfetti} />
       <CoinRain active={showCoinRain} count={10} />
@@ -332,7 +332,7 @@ export default function QaidaShell() {
             ) : activeView === "journey" ? (
               <motion.div
                 key="journey"
-                className="absolute inset-0"
+                className="absolute inset-0 overflow-y-auto"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -345,7 +345,7 @@ export default function QaidaShell() {
             ) : activeView === "games" ? (
               <motion.div
                 key="games"
-                className="absolute inset-0"
+                className="absolute inset-0 overflow-y-auto"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -358,7 +358,7 @@ export default function QaidaShell() {
             ) : (activeView === "rewards" || activeView === "certificates") ? (
               <motion.div
                 key="progress"
-                className="absolute inset-0"
+                className="absolute inset-0 overflow-y-auto"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >

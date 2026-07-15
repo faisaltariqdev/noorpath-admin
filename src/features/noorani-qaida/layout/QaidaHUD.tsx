@@ -30,9 +30,9 @@ export default function QaidaHUD({ progress, onBack, breadcrumb, title, onAudioT
   return (
     <motion.header
       className="flex items-center gap-2 border-b border-white/20 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-sm sm:gap-3 sm:px-6"
-      initial={{ y: -60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25 }}
     >
       {/* Back button */}
       {onBack && (
