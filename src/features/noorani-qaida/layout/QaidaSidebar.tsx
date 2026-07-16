@@ -15,6 +15,10 @@ interface QaidaSidebarProps {
   onToggleCollapse?: () => void;
   expandedWidth?: number;
   instanceId?: string;
+  /** When set, only these views are interactive; all others render as locked. */
+  unlockedViews?: ActiveView[];
+  /** Called when a locked item is activated (e.g. to surface an enrol prompt). */
+  onLockedSelect?: (view: ActiveView) => void;
 }
 
 interface NavItem {
@@ -49,9 +53,12 @@ export default function QaidaSidebar({
   onToggleCollapse,
   expandedWidth = 220,
   instanceId = "desktop",
+  unlockedViews,
+  onLockedSelect,
 }: QaidaSidebarProps) {
   const [hoveredItem, setHoveredItem] = useState<ActiveView | null>(null);
   const pct = Math.min(100, Math.round((xp / xpMax) * 100));
+  const isLocked = (view: ActiveView) => Boolean(unlockedViews) && !unlockedViews!.includes(view);
 
   return (
     <motion.aside
@@ -87,21 +94,29 @@ export default function QaidaSidebar({
       <nav className="flex-1 overflow-y-auto py-3" aria-label="Qaida Navigation">
         {NAV_ITEMS.map((item) => {
           const isActive = activeView === item.id;
+          const locked = isLocked(item.id);
           return (
             <motion.button
               key={item.id}
+              type="button"
               className={`relative flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                isActive ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+                locked
+                  ? "cursor-not-allowed text-white/35"
+                  : isActive
+                    ? "bg-white/15 text-white"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
               }`}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => (locked ? onLockedSelect?.(item.id) : onNavigate(item.id))}
               onHoverStart={() => setHoveredItem(item.id)}
               onHoverEnd={() => setHoveredItem(null)}
-              whileTap={{ scale: 0.97 }}
-              aria-label={item.label}
+              whileTap={locked ? undefined : { scale: 0.97 }}
+              aria-label={locked ? `${item.label} (locked — enrol to unlock)` : item.label}
               aria-current={isActive ? "page" : undefined}
+              aria-disabled={locked || undefined}
+              title={locked ? "Enrol for full access" : undefined}
             >
               {/* Active indicator */}
-              {isActive && (
+              {isActive && !locked && (
                 <motion.div
                   layoutId={`qaida-nav-active-${instanceId}`}
                   className="absolute left-0 top-0 h-full w-1 rounded-r-full bg-yellow-400"
@@ -111,8 +126,8 @@ export default function QaidaSidebar({
 
               {/* Icon */}
               <motion.span
-                className={`flex-shrink-0 text-lg ${isActive ? item.color : ""}`}
-                animate={{ scale: hoveredItem === item.id || isActive ? 1.2 : 1 }}
+                className={`flex-shrink-0 text-lg ${locked ? "grayscale" : isActive ? item.color : ""}`}
+                animate={{ scale: hoveredItem === item.id && !locked ? 1.2 : isActive ? 1.2 : 1 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
               >
                 {item.icon}
@@ -132,8 +147,13 @@ export default function QaidaSidebar({
                 )}
               </AnimatePresence>
 
+              {/* Lock icon for locked items */}
+              {locked && !collapsed && (
+                <span className="ml-auto flex-shrink-0 text-xs text-white/40" aria-hidden="true">🔒</span>
+              )}
+
               {/* Active badge */}
-              {isActive && !collapsed && (
+              {isActive && !locked && !collapsed && (
                 <motion.span
                   className="ml-auto h-2 w-2 flex-shrink-0 rounded-full bg-yellow-400"
                   animate={{ opacity: [1, 0.3, 1] }}

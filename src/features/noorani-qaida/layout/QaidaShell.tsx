@@ -74,6 +74,12 @@ const SoundMatch = dynamic(() => import("../games/SoundMatch"), { ssr: false });
 type ActiveView = "dashboard" | "journey" | "qaida" | "lessons" | "games" | "practice" | "rewards" | "certificates" | "parents" | "teachers" | "settings";
 type ActiveGame = "bubble-pop" | "find-letter" | "memory-match" | "quick-challenge" | "letter-train" | "puzzle" | "sound-match" | null;
 
+/** Views a public website visitor can access in preview mode. */
+const PREVIEW_UNLOCKED_VIEWS: ActiveView[] = ["lessons"];
+/** The single lesson (Alif) unlocked for the public preview. */
+const PREVIEW_LESSON_ID = "letter-1";
+const DEFAULT_ENROL_URL = "https://www.noorpath.online/courses/noorani-qaida-online";
+
 const DASHBOARD_CONTAINER_VARIANTS: Variants = {
   initial: {},
   enter: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
@@ -320,19 +326,27 @@ function WelcomeDashboard({
   );
 }
 
-export default function QaidaShell() {
+interface QaidaShellProps {
+  /** Public website preview: only the Alif lesson is unlocked, everything else is locked. */
+  preview?: boolean;
+  /** Where the "Enrol" CTA should send locked-feature clicks. */
+  enrolUrl?: string;
+}
+
+export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_URL }: QaidaShellProps = {}) {
   const state = useQaidaState();
   const motionBudget = useMotionBudget(state.progress.settings.reducedMotion);
   const contentRef = useRef<HTMLDivElement>(null);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
-  const [activeView, setActiveView] = useState<ActiveView>("dashboard");
+  const [activeView, setActiveView] = useState<ActiveView>(preview ? "lessons" : "dashboard");
   const [activeGame, setActiveGame] = useState<ActiveGame>(null);
-  const [activeScreenId, setActiveScreenId] = useState<string | null>(null);
+  const [activeScreenId, setActiveScreenId] = useState<string | null>(preview ? PREVIEW_LESSON_ID : null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showCoinRain, setShowCoinRain] = useState(false);
   const [gameCompletionCount, setGameCompletionCount] = useState(0);
+  const [showEnrolPrompt, setShowEnrolPrompt] = useState(false);
 
   const currentLetter = activeScreenId?.startsWith("letter-")
     ? LETTERS.find((l) => `letter-${l.id}` === activeScreenId) ?? LETTERS[0]
@@ -391,23 +405,41 @@ export default function QaidaShell() {
     };
   }, [mobileMenuOpen]);
 
+  const handleLockedSelect = useCallback(() => {
+    setShowEnrolPrompt(true);
+    setMobileMenuOpen(false);
+  }, []);
+
   const handleNavigate = useCallback((view: ActiveView) => {
+    // In preview mode only the Alif lesson is reachable.
+    if (preview && !PREVIEW_UNLOCKED_VIEWS.includes(view)) {
+      handleLockedSelect();
+      return;
+    }
     setActiveView(view);
     setActiveGame(null);
     setMobileMenuOpen(false);
+    if (preview) {
+      setActiveScreenId(PREVIEW_LESSON_ID);
+      return;
+    }
     if (view === "lessons" && !activeScreenId) {
       setActiveScreenId(state.currentCurriculumScreen);
     } else if (view === "practice" && !activeScreenId?.startsWith("letter-")) {
       setActiveScreenId(state.currentLesson);
     }
-  }, [activeScreenId, state.currentCurriculumScreen, state.currentLesson]);
+  }, [preview, handleLockedSelect, activeScreenId, state.currentCurriculumScreen, state.currentLesson]);
 
   const handleScreenSelect = useCallback((id: string) => {
+    if (preview && id !== PREVIEW_LESSON_ID) {
+      handleLockedSelect();
+      return;
+    }
     if (!state.navigate(id)) return;
     setActiveScreenId(id);
     setActiveView("lessons");
     setActiveGame(null);
-  }, [state]);
+  }, [preview, handleLockedSelect, state]);
 
   const handleGameSelect = useCallback((gameId: string) => {
     setActiveGame(gameId as ActiveGame);
@@ -423,6 +455,11 @@ export default function QaidaShell() {
     setTimeout(() => {
       setShowConfetti(false);
       setShowCoinRain(false);
+      // Preview visitors cannot advance beyond Alif — invite them to enrol instead.
+      if (preview) {
+        setShowEnrolPrompt(true);
+        return;
+      }
       // Auto-advance to next letter
       const currentId = activeScreenId ?? state.currentLesson;
       const num = parseInt(currentId.replace("letter-", ""), 10);
@@ -432,7 +469,7 @@ export default function QaidaShell() {
         setActiveView("journey");
       }
     }, 3500);
-  }, [activeScreenId, state]);
+  }, [preview, activeScreenId, state]);
 
   const handleTopicComplete = useCallback((id: string) => {
     state.completeScreen(id);
@@ -503,7 +540,24 @@ export default function QaidaShell() {
 
   return (
     <MotionConfig reducedMotion={state.progress.settings.reducedMotion ? "always" : "user"}>
-    <div className="flex h-full overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-sky-50">
+    <div className="flex h-full flex-col overflow-hidden">
+      {preview && (
+        <div className="flex flex-none flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gradient-to-r from-emerald-700 to-emerald-600 px-4 py-2 text-center text-xs font-semibold text-white sm:text-sm">
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden="true">🎬</span>
+            Preview mode — the Alif lesson is unlocked. Enrol for all 28 letters, games and progress.
+          </span>
+          <a
+            href={enrolUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            Enrol now →
+          </a>
+        </div>
+      )}
+    <div className="flex min-h-0 flex-1 overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-sky-50">
       {/* Confetti / Coin effects */}
       <ConfettiExplosion active={showConfetti} particleCount={motionBudget.celebrationParticles} />
       <CoinRain active={showCoinRain} count={motionBudget.reduced ? 0 : 10} />
@@ -513,13 +567,15 @@ export default function QaidaShell() {
         <QaidaSidebar
           activeView={activeView}
           onNavigate={handleNavigate}
-          userName="Ali Raza"
+          userName={preview ? "Guest" : "Ali Raza"}
           xp={state.progress.xp}
           level={state.progress.level}
           xpMax={state.progress.xpMax}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((p) => !p)}
           instanceId="desktop"
+          unlockedViews={preview ? PREVIEW_UNLOCKED_VIEWS : undefined}
+          onLockedSelect={preview ? handleLockedSelect : undefined}
         />
       </div>
 
@@ -553,12 +609,14 @@ export default function QaidaShell() {
               <QaidaSidebar
                 activeView={activeView}
                 onNavigate={handleNavigate}
-                userName="Ali Raza"
+                userName={preview ? "Guest" : "Ali Raza"}
                 xp={state.progress.xp}
                 level={state.progress.level}
                 xpMax={state.progress.xpMax}
                 expandedWidth={280}
                 instanceId="mobile"
+                unlockedViews={preview ? PREVIEW_UNLOCKED_VIEWS : undefined}
+                onLockedSelect={preview ? handleLockedSelect : undefined}
               />
               <button
                 type="button"
@@ -583,11 +641,13 @@ export default function QaidaShell() {
           onBack={
             activeGame
               ? () => setActiveGame(null)
-              : activeView === "lessons" || activeView === "practice"
-                ? () => setActiveView("qaida")
-                : activeView !== "dashboard"
-                  ? () => setActiveView("dashboard")
-                  : undefined
+              : preview
+                ? undefined
+                : activeView === "lessons" || activeView === "practice"
+                  ? () => setActiveView("qaida")
+                  : activeView !== "dashboard"
+                    ? () => setActiveView("dashboard")
+                    : undefined
           }
           audioEnabled={state.audioEnabled}
           onAudioToggle={() => state.setAudioEnabled(!state.audioEnabled)}
@@ -858,6 +918,55 @@ export default function QaidaShell() {
           </AnimatePresence>
         </div>
       </div>
+    </div>
+    {/* end inner row */}
+
+      {/* Enrol prompt — shown when a preview visitor taps a locked feature */}
+      <AnimatePresence>
+        {preview && showEnrolPrompt && (
+          <motion.div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qaida-enrol-title"
+          >
+            <motion.div
+              className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl"
+              initial={{ scale: 0.92, y: 12 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 12 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+            >
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl" aria-hidden="true">🔒</div>
+              <h2 id="qaida-enrol-title" className="text-lg font-black text-slate-900">This is a free preview</h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                You’re exploring the Alif lesson. Enrol to unlock all 28 letters, Harakaat, joining,
+                games, rewards, and progress tracking with a qualified tutor.
+              </p>
+              <div className="mt-5 flex flex-col gap-2">
+                <a
+                  href={enrolUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full bg-emerald-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-950/20 transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
+                >
+                  Enrol / Book a Free Trial
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowEnrolPrompt(false)}
+                  className="rounded-full px-5 py-2.5 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+                >
+                  Keep exploring Alif
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
     </MotionConfig>
   );
