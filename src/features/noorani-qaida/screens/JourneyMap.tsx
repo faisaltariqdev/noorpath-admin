@@ -83,8 +83,7 @@ export default function JourneyMap({ progress, onSelectLetter }: JourneyMapProps
                 if (!letter) return null;
                 const id = `letter-${lid}`;
                 const isCompleted = progress.completed.includes(id);
-                const prevId = lid === 1 ? null : `letter-${lid - 1}`;
-                const isUnlocked = lid === 1 || (prevId ? progress.completed.includes(prevId) : false) || isCompleted;
+                const isUnlocked = true;
 
                 return (
                   <motion.button

@@ -209,8 +209,7 @@ export default function NooraniBook({
               const id = `letter-${lid}`;
               const isCompleted = progress.completed.includes(id);
               const isCurrent = id === currentScreenId;
-              const prevCompleted = lid === 1 || progress.completed.includes(`letter-${lid - 1}`);
-              const isUnlocked = lid === 1 || prevCompleted || isCompleted;
+              const isUnlocked = true;
               const stars = progress.ratings[id] ?? (isCompleted ? 3 : 0);
 
               return (

@@ -17,35 +17,21 @@ export function isModuleComplete(progress: QaidaProgress, moduleId: ModuleId): b
   return required.length > 0 && required.every((id) => progress.completed.includes(id));
 }
 
+// Every module in the Noorani Qaida is freely accessible; progress is still
+// tracked, but no chapter, lesson, or letter is gated behind another.
 export function isModuleUnlocked(progress: QaidaProgress, moduleId: ModuleId): boolean {
-  const moduleDefinition = CURRICULUM_MODULES.find((item) => item.id === moduleId);
-  if (!moduleDefinition) return false;
-  return !moduleDefinition.prerequisite || isModuleComplete(progress, moduleDefinition.prerequisite);
+  void progress;
+  return CURRICULUM_MODULES.some((item) => item.id === moduleId);
 }
 
 export function isCurriculumScreenUnlocked(progress: QaidaProgress, id: ScreenId): boolean {
-  if (id === "cover" || id === "toc") return true;
-  const moduleDefinition = moduleForScreen(id);
-  if (!moduleDefinition || !isModuleUnlocked(progress, moduleDefinition.id)) return false;
-
-  if (id === "letter-1") return true;
-  if (id.startsWith("letter-")) {
-    const number = Number(id.slice(7));
-    return number === 1 || progress.completed.includes(`letter-${number - 1}`);
-  }
-  if (id === "certificate") {
-    return progress.assessmentAttempts.some((attempt) =>
-      attempt.screenId === "final-assessment" && attempt.passed
-    );
-  }
-
-  const index = moduleDefinition.screenIds.indexOf(id);
-  return index <= 0 || progress.completed.includes(moduleDefinition.screenIds[index - 1]);
+  void progress;
+  return id === "cover" || id === "toc" || Boolean(moduleForScreen(id));
 }
 
 export function getCurrentCurriculumScreen(progress: QaidaProgress): ScreenId {
   return ALL_CURRICULUM_SCREEN_IDS.find((id) =>
-    !progress.completed.includes(id) && isCurriculumScreenUnlocked(progress, id)
+    id !== "certificate" && !progress.completed.includes(id)
   ) ?? "certificate";
 }
 

@@ -101,13 +101,14 @@ assert.equal(motion.createMotionBudget(false, 1440).ambientParticles <= 12, true
 
 assert.equal(curriculum.CURRICULUM_MODULES.length, 11, "the complete curriculum must expose 11 modules");
 assert.equal(new Set(Array.from(curriculum.ALL_CURRICULUM_SCREEN_IDS)).size, curriculum.ALL_CURRICULUM_SCREEN_IDS.length, "screen ids must be unique");
-assert.equal(curriculumProgress.isModuleUnlocked(completedOnce, "harakaat"), false, "Harakaat stays locked until the alphabet is complete");
+assert.equal(curriculumProgress.isModuleUnlocked(completedOnce, "harakaat"), true, "every module is freely accessible — nothing is locked");
 const allLetters = Array.from({ length: 28 }, (_, index) => `letter-${index + 1}`);
 const alphabetComplete = progress.progressReducer(progress.DEFAULT_PROGRESS, {
   type: "hydrate",
   value: { completed: allLetters },
 });
 assert.equal(curriculumProgress.isModuleUnlocked(alphabetComplete, "harakaat"), true);
+assert.equal(curriculumProgress.isCurriculumScreenUnlocked(progress.DEFAULT_PROGRESS, "final-assessment"), true, "no screen is gated behind another");
 assert.equal(curriculumProgress.getCurrentCurriculumScreen(alphabetComplete), "fatha");
 assert.equal(audioManifest.QAIDA_AUDIO_MANIFEST.version, 1);
 assert.equal(audioManifest.QAIDA_AUDIO_MANIFEST.entries.length > 28, true, "audio manifest must include topic examples");
