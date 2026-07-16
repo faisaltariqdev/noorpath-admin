@@ -87,10 +87,10 @@ export default function SessionsPage() {
 
   return (
     <>
-      <TopBar title="All Sessions" subtitle="Schedule and track all classes" />
+      <TopBar title="Live Classes" subtitle="Schedule and track all classes" />
       <div className="page-header" style={{ paddingTop: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div><h1 className="page-title">All Sessions</h1><p className="page-subtitle">{sessions.length} total sessions</p></div>
+          <div><h1 className="page-title">Live Classes</h1><p className="page-subtitle">{sessions.length} total classes</p></div>
           <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={15} /> Schedule Class</button>
         </div>
       </div>

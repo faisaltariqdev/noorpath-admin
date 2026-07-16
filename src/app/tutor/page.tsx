@@ -90,7 +90,7 @@ export default function TutorDashboard() {
       <div className="page-header" style={{ paddingTop: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800, color: "#0f172a" }}>Tutor Dashboard 📚</h1>
+            <h1 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800, color: "#0f172a" }}>Teacher Dashboard</h1>
             <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.8rem" }}>{today}</p>
           </div>
           <Link href="/tutor/reports/new" className="btn btn-primary btn-sm">
@@ -102,16 +102,16 @@ export default function TutorDashboard() {
         <div className="stats-grid">
           {statCards.map(c => (
             <div key={c.label} className="stat-card">
-              <div className="stat-card-icon" style={{ background: c.bg, marginBottom: 12 }}>
+              <div className="stat-icon" style={{ background: c.bg, marginBottom: 12 }}>
                 <c.icon size={20} color={c.color} />
               </div>
-              <div className="stat-card-value">{c.value}</div>
-              <div className="stat-card-label">{c.label}</div>
+              <div className="stat-value">{c.value}</div>
+              <div className="stat-label">{c.label}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" }}>
+        <div className="portal-dashboard-split">
           {/* Sessions */}
           <div className="card">
             <div className="card-header">

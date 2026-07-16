@@ -1,9 +1,10 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
-import { FileText, CheckCircle, XCircle, Star, TrendingUp, Search } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Star, TrendingUp, Search, BarChart3 } from "lucide-react";
 
 interface Report {
   id: string;
@@ -65,8 +66,13 @@ export default function AdminReportsPage() {
     <>
       <TopBar title="Progress Reports" subtitle="All student progress reports" />
       <div className="page-header" style={{ paddingTop: 24 }}>
-        <h1 className="page-title">Progress Reports</h1>
-        <p className="page-subtitle">{reports.length} total reports submitted</p>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <h1 className="page-title">Reports</h1>
+            <p className="page-subtitle">{reports.length} student reports submitted</p>
+          </div>
+          <Link href="/admin/analytics" className="btn btn-ghost"><BarChart3 size={14} /> Business analytics</Link>
+        </div>
       </div>
       <div className="page-body">
         <div className="stats-grid" style={{ marginBottom: 20 }}>
@@ -111,7 +117,20 @@ export default function AdminReportsPage() {
                     {filtered.map(r => {
                       const cfg = RATING_CFG[r.overall_rating] || { color: "#64748b", bg: "#f1f5f9" };
                       return (
-                        <tr key={r.id} onClick={() => setSelected(selected?.id === r.id ? null : r)} style={{ cursor: "pointer", background: selected?.id === r.id ? "#f8fafc" : "transparent" }}>
+                        <tr
+                          key={r.id}
+                          onClick={() => setSelected(selected?.id === r.id ? null : r)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              setSelected(selected?.id === r.id ? null : r);
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-expanded={selected?.id === r.id}
+                          style={{ cursor: "pointer", background: selected?.id === r.id ? "#f8fafc" : "transparent" }}
+                        >
                           <td><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div className="avatar" style={{ width: 28, height: 28, fontSize: "0.7rem" }}>{r.student_name.charAt(0)}</div><span style={{ fontWeight: 600 }}>{r.student_name}</span></div></td>
                           <td style={{ color: "#64748b" }}>{r.tutor_name}</td>
                           <td style={{ color: "#64748b", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.surah_covered || r.pages_covered || "—"}</td>

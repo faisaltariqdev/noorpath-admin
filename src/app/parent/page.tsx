@@ -418,7 +418,7 @@ export default function ParentDashboard() {
                   </div>
                 )}
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                <div className="portal-dashboard-halves">
                   <div className="card">
                     <div className="card-header">
                       <h3 className="card-title">

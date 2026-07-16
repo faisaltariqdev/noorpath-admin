@@ -7,9 +7,9 @@ import { supabase } from "@/lib/supabase";
 import type { Role } from "@/types/database";
 import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
-  DollarSign, Bell, MessageSquare, Settings, LogOut,
-  GraduationCap, FileText, Clock, Star, Home, ChevronRight,
-  BarChart2, Mic, Map, Sparkles,
+  DollarSign, MessageSquare, Settings, LogOut,
+  GraduationCap, FileText, Clock, Home, ChevronRight,
+  BarChart2, Sparkles,
 } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,28 +20,27 @@ const ADMIN_LINKS: NavSection[] = [
   { section: "Overview", items: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   ]},
-  { section: "Management", items: [
-    { href: "/admin/users",         label: "Users & Tutors",    icon: Users },
+  { section: "People", items: [
     { href: "/admin/students",      label: "Students",          icon: GraduationCap },
-    { href: "/admin/courses",       label: "Course Management", icon: BookOpen },
-    { href: "/admin/sessions",      label: "All Sessions",      icon: Calendar },
-    { href: "/admin/fees",          label: "Fee Management",    icon: DollarSign },
-    { href: "/admin/earnings",      label: "Tutor Earnings",    icon: Star },
-    { href: "/admin/reports",       label: "Progress Reports",  icon: FileText },
+    { href: "/admin/teachers",      label: "Teachers",          icon: Users },
+    { href: "/admin/parents",       label: "Parents",           icon: Home },
   ]},
-  { section: "Learning Studio", items: [
+  { section: "Learning", items: [
+    { href: "/admin/courses",       label: "Courses",           icon: BookOpen },
     { href: "/admin/noorani-qaida", label: "Noorani Qaida",     icon: Sparkles },
+    { href: "/admin/assignments",   label: "Assignments",       icon: ClipboardList },
   ]},
-  { section: "Analytics", items: [
-    { href: "/admin/analytics",     label: "Analytics & Graphs",icon: BarChart2 },
+  { section: "Operations", items: [
+    { href: "/admin/live-classes",  label: "Live Classes",      icon: Calendar },
+    { href: "/admin/attendance",    label: "Attendance",        icon: Clock },
+    { href: "/admin/payments",      label: "Payments",          icon: DollarSign },
+    { href: "/admin/reports",       label: "Reports",           icon: BarChart2 },
   ]},
   { section: "Communication", items: [
     { href: "/admin/messages",      label: "Messages",          icon: MessageSquare },
-    { href: "/admin/notifications", label: "Notifications",     icon: Bell },
   ]},
   { section: "System", items: [
-    { href: "/admin/profile",       label: "My Profile",        icon: GraduationCap },
-    { href: "/admin/settings",      label: "Settings & Reminders", icon: Settings },
+    { href: "/admin/settings",      label: "Settings",          icon: Settings },
   ]},
 ];
 
@@ -49,25 +48,18 @@ const TUTOR_LINKS: NavSection[] = [
   { section: "Overview", items: [
     { href: "/tutor", label: "Dashboard", icon: LayoutDashboard, exact: true },
   ]},
-  { section: "Classes", items: [
-    { href: "/tutor/classes",       label: "Today's Classes",   icon: Calendar },
+  { section: "Teaching", items: [
+    { href: "/tutor/students",      label: "Students",          icon: GraduationCap },
+    { href: "/tutor/classes",       label: "Live Classes",      icon: Calendar },
+    { href: "/tutor/homework",      label: "Assignments",       icon: BookOpen },
     { href: "/tutor/attendance",    label: "Attendance",        icon: Clock },
-  ]},
-  { section: "Students", items: [
-    { href: "/tutor/students",      label: "My Students",       icon: GraduationCap },
-    { href: "/tutor/reports",       label: "Progress Reports",  icon: ClipboardList },
-    { href: "/tutor/homework",      label: "Homework",          icon: BookOpen },
-  ]},
-  { section: "Planning", items: [
-    { href: "/tutor/roadmap",       label: "Course Roadmap",    icon: Map },
-  ]},
-  { section: "AI Tools", items: [
-    { href: "/tutor/voice-tracker", label: "AI Voice Tracker",  icon: Mic },
+    { href: "/tutor/reports",       label: "Reports",           icon: ClipboardList },
+    { href: "/tutor/qaida",         label: "Noorani Qaida",     icon: Sparkles },
   ]},
   { section: "Account", items: [
-    { href: "/tutor/earnings",      label: "My Earnings",       icon: DollarSign },
+    { href: "/tutor/earnings",      label: "Payments",          icon: DollarSign },
     { href: "/tutor/messages",      label: "Messages",          icon: MessageSquare },
-    { href: "/tutor/profile",       label: "My Profile",        icon: GraduationCap },
+    { href: "/tutor/profile",       label: "Settings",          icon: Settings },
   ]},
 ];
 
@@ -75,22 +67,17 @@ const PARENT_LINKS: NavSection[] = [
   { section: "Overview", items: [
     { href: "/parent", label: "Home", icon: Home, exact: true },
   ]},
-  { section: "My Child", items: [
-    { href: "/parent/progress",     label: "Progress & Reports",  icon: Star },
-    { href: "/parent/sessions",     label: "Classes & Schedule",  icon: Calendar },
+  { section: "My Children", items: [
+    { href: "/parent/progress",     label: "Children & Progress", icon: GraduationCap },
+    { href: "/parent/sessions",     label: "Live Classes",        icon: Calendar },
+    { href: "/parent/homework",     label: "Assignments",         icon: BookOpen },
     { href: "/parent/attendance",   label: "Attendance",          icon: Clock },
-    { href: "/parent/homework",     label: "Homework",            icon: BookOpen },
-  ]},
-  { section: "Learning Journey", items: [
-    { href: "/parent/journey",      label: "Learning Journey",    icon: Sparkles },
-    { href: "/parent/roadmap",      label: "Course Roadmap",      icon: BarChart2 },
-    { href: "/parent/mushaf",       label: "Mushaf Tracker",      icon: Map },
-    { href: "/parent/timeline",     label: "Class Timeline",      icon: LayoutDashboard },
+    { href: "/parent/qaida",        label: "Noorani Qaida",       icon: Sparkles },
   ]},
   { section: "Account", items: [
-    { href: "/parent/fees",         label: "Fees & Payments",     icon: DollarSign },
+    { href: "/parent/fees",         label: "Payments",            icon: DollarSign },
     { href: "/parent/messages",     label: "Messages",            icon: MessageSquare },
-    { href: "/parent/profile",      label: "My Profile",          icon: GraduationCap },
+    { href: "/parent/profile",      label: "Settings",            icon: Settings },
   ]},
 ];
 
@@ -175,6 +162,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
+        id="portal-sidebar"
         ref={sidebarRef}
         className={`sidebar ${open ? "open" : ""}`}
         aria-label={`${label} navigation`}
@@ -245,12 +233,4 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       </aside>
     </>
   );
-}
-
-// Exposed for TopBar to use
-export function useSidebarToggle() {
-  function toggle() {
-    window.dispatchEvent(new Event("noorpath:sidebar-toggle"));
-  }
-  return toggle;
 }

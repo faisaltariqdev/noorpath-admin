@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
+import Link from "next/link";
 import { Bell, MessageCircle, Clock, DollarSign, CheckCircle, AlertTriangle, Phone, Search, Filter } from "lucide-react";
 
 interface PendingFee {
@@ -182,8 +183,18 @@ export default function SettingsPage() {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      <TopBar title="Settings" subtitle="System configuration and automated reminders" />
+      <TopBar title="Settings" subtitle="Account, reminders, and communication preferences" />
       <div className="page-content">
+        <div className="portal-page-header">
+          <div>
+            <p className="portal-eyebrow">Configuration</p>
+            <h1 className="portal-page-title">Settings</h1>
+            <p className="portal-page-description">Only active, production-backed settings are shown. Organization integrations can be added when their data models exist.</p>
+          </div>
+          <div className="portal-page-actions">
+            <Link href="/admin/profile" className="btn btn-ghost">Profile & security</Link>
+          </div>
+        </div>
 
         {/* Reminder Settings */}
         <div className="card" style={{ marginBottom: 24 }}>

@@ -12,7 +12,7 @@ const COOKIE_CHUNK_SIZE = 3000;
 const MAX_COOKIE_CHUNKS = 8;
 
 export type AuthorizationResult =
-  | { authorized: true; user: User; role: "admin"; fullName: string }
+  | { authorized: true; user: User; role: Role; fullName: string }
   | { authorized: false; reason: "anonymous" | "inactive" | "wrong-role" | "configuration"; role?: Role };
 
 export function createServerSupabase(cookies: CookieAdapter) {
@@ -62,7 +62,10 @@ export function createServerSupabase(cookies: CookieAdapter) {
   });
 }
 
-export async function authorizeAdmin(cookies: CookieAdapter): Promise<AuthorizationResult> {
+export async function authorizeRole(
+  cookies: CookieAdapter,
+  expectedRole: Role,
+): Promise<AuthorizationResult> {
   const client = createServerSupabase(cookies);
   if (!client) return { authorized: false, reason: "configuration" };
 
@@ -78,13 +81,17 @@ export async function authorizeAdmin(cookies: CookieAdapter): Promise<Authorizat
   if (profileError || !profile || !profile.is_active) {
     return { authorized: false, reason: "inactive" };
   }
-  if (profile.role !== "admin") {
+  if (profile.role !== expectedRole) {
     return { authorized: false, reason: "wrong-role", role: profile.role };
   }
   return {
     authorized: true,
     user,
-    role: "admin",
+    role: profile.role,
     fullName: profile.full_name,
   };
+}
+
+export function authorizeAdmin(cookies: CookieAdapter): Promise<AuthorizationResult> {
+  return authorizeRole(cookies, "admin");
 }

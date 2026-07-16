@@ -19,8 +19,6 @@ interface MonthlyRevenue {
 interface CountryData {
   country: string;
   students: number;
-  revenue: number;
-  currency: string;
 }
 
 interface LateData {
@@ -72,10 +70,10 @@ export default function AnalyticsPage() {
       setTotalRevenue(revData.reduce((s, d) => s + d.revenue, 0));
 
       // Country Data
-      const countryMap: Record<string, { students: number; revenue: number; currency: string }> = {};
+      const countryMap: Record<string, { students: number }> = {};
       (students || []).forEach((s: { country?: string }) => {
         const c = s.country || "Unknown";
-        if (!countryMap[c]) countryMap[c] = { students: 0, revenue: 0, currency: "USD" };
+        if (!countryMap[c]) countryMap[c] = { students: 0 };
         countryMap[c].students += 1;
       });
       const cData = Object.entries(countryMap).map(([country, d]) => ({ country, ...d })).sort((a, b) => b.students - a.students).slice(0, 8);
@@ -278,10 +276,10 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* Revenue by Country */}
+        {/* Student distribution by country */}
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">Revenue by Country / Currency</h3>
+            <h3 className="card-title">Student Distribution by Country</h3>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table className="data-table">
@@ -289,8 +287,6 @@ export default function AnalyticsPage() {
                 <tr>
                   <th>Country</th>
                   <th>Students</th>
-                  <th>Currency</th>
-                  <th>Revenue</th>
                   <th>Share</th>
                 </tr>
               </thead>
@@ -304,12 +300,6 @@ export default function AnalyticsPage() {
                       </div>
                     </td>
                     <td>{c.students}</td>
-                    <td>
-                      <span className="badge badge-blue">{c.currency || "USD"}</span>
-                    </td>
-                    <td style={{ fontWeight: 700, color: "#1b5e42" }}>
-                      ${c.revenue.toLocaleString()}
-                    </td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ flex: 1, height: 6, background: "#f1f5f9", borderRadius: 3 }}>

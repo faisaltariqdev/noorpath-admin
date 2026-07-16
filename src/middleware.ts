@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authorizeAdmin } from "@/lib/server-auth";
+import { authorizeRole } from "@/lib/server-auth";
+import type { Role } from "@/types/database";
 
 function loginRedirect(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -10,7 +11,12 @@ function loginRedirect(request: NextRequest) {
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
-  const auth = await authorizeAdmin({
+  const expectedRole: Role = request.nextUrl.pathname.startsWith("/tutor")
+    ? "tutor"
+    : request.nextUrl.pathname.startsWith("/parent")
+      ? "parent"
+      : "admin";
+  const auth = await authorizeRole({
     get: (name) => request.cookies.get(name)?.value,
     set: (name, value, maxAge) => {
       request.cookies.set(name, value);
@@ -26,13 +32,16 @@ export async function middleware(request: NextRequest) {
       request.cookies.delete(name);
       response.cookies.delete(name);
     },
-  });
+  }, expectedRole);
 
   const isApi = request.nextUrl.pathname.startsWith("/api/");
   if (!auth.authorized) {
     if (isApi) {
       const status = auth.reason === "anonymous" ? 401 : 403;
-      return NextResponse.json({ error: status === 401 ? "Authentication required." : "Admin access required." }, { status });
+      return NextResponse.json(
+        { error: status === 401 ? "Authentication required." : `${expectedRole} access required.` },
+        { status },
+      );
     }
     if (auth.reason === "wrong-role" && auth.role) {
       return NextResponse.redirect(new URL(`/${auth.role}`, request.url));
@@ -44,5 +53,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*", "/tutor/:path*", "/parent/:path*"],
 };

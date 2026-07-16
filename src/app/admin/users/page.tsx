@@ -1,6 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import {
@@ -46,6 +47,7 @@ const DEFAULT_SLOT: AvailabilitySlot = {
 };
 
 export default function UsersPage() {
+  const searchParams = useSearchParams();
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [filtered, setFiltered] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,6 +93,13 @@ export default function UsersPage() {
   }
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const requestedRole = searchParams.get("role");
+    if (requestedRole === "tutor" || requestedRole === "parent" || requestedRole === "admin") {
+      setRoleFilter(requestedRole);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const q = search.toLowerCase();
