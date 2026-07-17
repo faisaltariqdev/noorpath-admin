@@ -12,6 +12,7 @@ interface Student {
   id: string;
   full_name: string;
   age: number;
+  gender?: string | null;
   level: string;
   course?: string;
   is_active: boolean;
@@ -26,6 +27,24 @@ const LEVELS = [
   { label: "Intermediate", value: "intermediate" },
   { label: "Advanced", value: "advanced" },
 ];
+
+const GENDERS = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+];
+
+const emptyStudentForm = {
+  full_name: "",
+  age: "",
+  gender: "",
+  country: "",
+  level: "beginner",
+  course: "",
+  tutor_id: "",
+  parent_id: "",
+  timezone: "",
+  source: "organic",
+};
 
 export default function StudentsPage() {
   const router = useRouter();
@@ -42,22 +61,12 @@ export default function StudentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-  const [form, setForm] = useState({
-    full_name: "",
-    age: "",
-    country: "",
-    level: "beginner",
-    course: "",
-    tutor_id: "",
-    parent_id: "",
-    timezone: "",
-    source: "organic",
-  });
+  const [form, setForm] = useState(emptyStudentForm);
 
   async function load() {
     setLoading(true);
     const [{ data: studs }, { data: tutorProfiles }, { data: parentProfiles }, { data: courseRows }] = await Promise.all([
-      supabase.from("students").select("id, full_name, age, level, course, is_active, created_at, country, tutor:profiles!students_tutor_id_fkey(full_name), parent:profiles!students_parent_id_fkey(full_name)").order("created_at", { ascending: false }),
+      supabase.from("students").select("id, full_name, age, gender, level, course, is_active, created_at, country, tutor:profiles!students_tutor_id_fkey(full_name), parent:profiles!students_parent_id_fkey(full_name)").order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name").eq("role", "tutor"),
       supabase.from("profiles").select("id, full_name").eq("role", "parent"),
       supabase.from("courses").select("id, title, level, category, is_active").eq("is_active", true).order("sort_order"),
@@ -99,6 +108,7 @@ export default function StudentsPage() {
     setSaving(true);
     const { error } = await supabase.from("students").insert({
       full_name: form.full_name, age: parseInt(form.age) || null,
+      gender: form.gender || null,
       country: form.country,
       level: form.level,
       course: form.course || null,
@@ -113,7 +123,7 @@ export default function StudentsPage() {
     else {
       setMsg("Student added successfully!");
       setShowForm(false);
-      setForm({ full_name: "", age: "", country: "", level: "beginner", course: "", tutor_id: "", parent_id: "", timezone: "", source: "organic" });
+      setForm(emptyStudentForm);
       await load();
     }
     setSaving(false);
@@ -176,12 +186,13 @@ export default function StudentsPage() {
           ) : (
               <div className="table-shell">
             <table className="data-table">
-                  <thead><tr><th>Student</th><th>Age</th><th>Country</th><th>Level</th><th>Course</th><th>Parent</th><th>Tutor</th><th>Status</th><th>Enrolled</th><th>Progress</th></tr></thead>
+                  <thead><tr><th>Student</th><th>Age</th><th>Gender</th><th>Country</th><th>Level</th><th>Course</th><th>Parent</th><th>Tutor</th><th>Status</th><th>Enrolled</th><th>Progress</th></tr></thead>
               <tbody>
                 {filtered.map(s => (
                   <tr key={s.id} onClick={() => router.push(`/admin/students/${s.id}`)} style={{ cursor: "pointer" }}>
                     <td><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div className="avatar">{s.full_name.charAt(0)}</div><span style={{ fontWeight: 600 }}>{s.full_name}</span></div></td>
                     <td style={{ color: "#64748b" }}>{s.age || "—"}</td>
+                    <td style={{ color: "#64748b", textTransform: "capitalize" }}>{s.gender || "—"}</td>
                     <td style={{ color: "#64748b" }}>{s.country || "—"}</td>
                         <td><span className="badge badge-blue">{formatStudentLevel(s.level)}</span></td>
                         <td style={{ color: "#64748b" }}>{s.course || "—"}</td>
@@ -225,9 +236,16 @@ export default function StudentsPage() {
                     <input type="number" className="form-input" value={form.age} onChange={e => setForm(p => ({ ...p, age: e.target.value }))} placeholder="e.g. 8" min={3} max={60} />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Country</label>
-                    <input className="form-input" list="student-country-suggestions" value={form.country} onChange={e => handleCountryChange(e.target.value)} placeholder="UK, USA, Pakistan..." />
+                    <label className="form-label">Gender</label>
+                    <select className="form-input form-select" value={form.gender} onChange={e => setForm(p => ({ ...p, gender: e.target.value }))}>
+                      <option value="">Select gender</option>
+                      {GENDERS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+                    </select>
                   </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Country</label>
+                  <input className="form-input" list="student-country-suggestions" value={form.country} onChange={e => handleCountryChange(e.target.value)} placeholder="UK, USA, Pakistan..." />
                 </div>
                 <datalist id="student-country-suggestions">
                   {TIMEZONE_OPTIONS.map(option => <option key={option.country} value={option.country}>{option.label}</option>)}

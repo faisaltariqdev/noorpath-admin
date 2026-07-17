@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
-import { BookOpen, CheckCircle, Clock, DollarSign, Layers, Plus, Search, ToggleLeft, ToggleRight, X } from "lucide-react";
+import { BookOpen, CheckCircle, Clock, DollarSign, Layers, Pencil, Plus, Search, ToggleLeft, ToggleRight, X } from "lucide-react";
 
 interface Course {
   id: string;
@@ -24,6 +24,16 @@ const LEVELS = ["beginner", "intermediate", "advanced"];
 const CATEGORIES = ["foundation", "quran", "tajweed", "hifz", "tafseer", "arabic", "other"];
 const CURRENCIES = ["GBP", "USD", "EUR", "PKR", "AED", "CAD", "AUD"];
 
+const emptyCourseForm = {
+  title: "",
+  description: "",
+  category: "quran",
+  level: "beginner",
+  duration_weeks: "",
+  price_amount: "",
+  currency: "GBP",
+};
+
 function titleCase(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -32,21 +42,14 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    category: "quran",
-    level: "beginner",
-    duration_weeks: "",
-    price_amount: "",
-    currency: "GBP",
-  });
+  const [form, setForm] = useState(emptyCourseForm);
 
   async function load() {
     setLoading(true);
@@ -89,7 +92,7 @@ export default function CoursesPage() {
     setSaving(true);
     setMessage("");
 
-    const { error } = await supabase.from("courses").insert({
+    const payload = {
       title: form.title.trim(),
       description: form.description.trim() || null,
       category: form.category,
@@ -97,21 +100,53 @@ export default function CoursesPage() {
       duration_weeks: form.duration_weeks ? Number(form.duration_weeks) : null,
       price_amount: form.price_amount ? Number(form.price_amount) : null,
       currency: form.currency,
-      is_active: true,
-      sort_order: courses.length + 1,
-    });
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = editingId
+      ? await supabase.from("courses").update(payload).eq("id", editingId)
+      : await supabase.from("courses").insert({
+          ...payload,
+          is_active: true,
+          sort_order: courses.length + 1,
+        });
 
     if (error) {
       setMessage("Error: " + error.message);
     } else {
-      setMessage("Course added successfully.");
-      setShowForm(false);
-      setForm({ title: "", description: "", category: "quran", level: "beginner", duration_weeks: "", price_amount: "", currency: "GBP" });
+      setMessage(editingId ? "Course updated successfully." : "Course added successfully.");
+      closeForm();
       await load();
     }
 
     setSaving(false);
     setTimeout(() => setMessage(""), 3500);
+  }
+
+  function openCreateForm() {
+    setEditingId(null);
+    setForm(emptyCourseForm);
+    setShowForm(true);
+  }
+
+  function openEditForm(course: Course) {
+    setEditingId(course.id);
+    setForm({
+      title: course.title,
+      description: course.description || "",
+      category: course.category,
+      level: course.level,
+      duration_weeks: course.duration_weeks != null ? String(course.duration_weeks) : "",
+      price_amount: course.price_amount != null ? String(course.price_amount) : "",
+      currency: course.currency || "GBP",
+    });
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyCourseForm);
   }
 
   async function toggleCourse(id: string, isActive: boolean) {
@@ -133,7 +168,7 @@ export default function CoursesPage() {
             <h1 className="page-title">Course Management</h1>
             <p className="page-subtitle">Build a clean course catalog for students, parents and tutors.</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+          <button className="btn btn-primary" onClick={openCreateForm}>
             <Plus size={15} /> Add Course
           </button>
         </div>
@@ -214,7 +249,10 @@ export default function CoursesPage() {
 
                   <div className="course-actions">
                     <span className={`badge ${course.is_active ? "badge-green" : "badge-gray"}`}>{course.is_active ? "Active" : "Inactive"}</span>
-                    <button className="btn btn-xs btn-ghost" onClick={() => toggleCourse(course.id, course.is_active)}>
+                    <button type="button" className="btn btn-xs btn-ghost" onClick={() => openEditForm(course)}>
+                      <Pencil size={13} /> Edit
+                    </button>
+                    <button type="button" className="btn btn-xs btn-ghost" onClick={() => toggleCourse(course.id, course.is_active)}>
                       {course.is_active ? <><ToggleRight size={13} /> Disable</> : <><ToggleLeft size={13} /> Enable</>}
                     </button>
                   </div>
@@ -228,8 +266,10 @@ export default function CoursesPage() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.58)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
             <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 520, maxHeight: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
               <div style={{ background: "linear-gradient(135deg, #0f172a, #1b5e42)", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-                <h2 style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1.05rem", fontWeight: 700, margin: 0 }}>Add New Course</h2>
-                <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer" }}><X size={20} /></button>
+                <h2 style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1.05rem", fontWeight: 700, margin: 0 }}>
+                  {editingId ? "Edit Course" : "Add New Course"}
+                </h2>
+                <button onClick={closeForm} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer" }}><X size={20} /></button>
               </div>
               <form onSubmit={addCourse} style={{ padding: 24, overflowY: "auto", flex: 1 }}>
                 <div className="form-group">
@@ -271,9 +311,9 @@ export default function CoursesPage() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setShowForm(false)} style={{ flex: 1 }}>Cancel</button>
+                  <button type="button" className="btn btn-ghost" onClick={closeForm} style={{ flex: 1 }}>Cancel</button>
                   <button type="submit" className="btn btn-primary" disabled={saving} style={{ flex: 1, justifyContent: "center" }}>
-                    {saving ? "Saving..." : "Add Course"}
+                    {saving ? "Saving..." : editingId ? "Save Changes" : "Add Course"}
                   </button>
                 </div>
               </form>
