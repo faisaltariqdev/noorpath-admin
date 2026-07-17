@@ -18,7 +18,15 @@ export interface Profile {
   timezone: string;
   avatar_url?: string;
   is_active: boolean;
+  /** When true, parent can open Noorani Qaida in their portal. */
+  qaida_enabled?: boolean;
   created_at: string;
+  updated_at: string;
+}
+
+export interface AppSetting {
+  key: string;
+  value: Record<string, unknown>;
   updated_at: string;
 }
 
@@ -81,6 +89,19 @@ export interface Attendance {
   tutor_id?: string;
   notes?: string;
   session_date?: string;
+}
+
+export interface TeacherAttendance {
+  id: string;
+  tutor_id: string;
+  session_date: string;
+  status: AttendanceStatus;
+  late_minutes?: number;
+  notes?: string;
+  marked_by?: string;
+  created_at: string;
+  updated_at: string;
+  tutor?: Profile;
 }
 
 export interface ProgressReport {
@@ -242,6 +263,7 @@ export interface Database {
       students: { Row: Student; Insert: Partial<Student>; Update: Partial<Student> };
       class_sessions: { Row: ClassSession; Insert: Partial<ClassSession>; Update: Partial<ClassSession> };
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };
+      teacher_attendance: { Row: TeacherAttendance; Insert: Partial<TeacherAttendance>; Update: Partial<TeacherAttendance> };
       progress_reports: { Row: ProgressReport; Insert: Partial<ProgressReport>; Update: Partial<ProgressReport> };
       course_roadmaps: { Row: CourseRoadmap; Insert: Partial<CourseRoadmap>; Update: Partial<CourseRoadmap> };
       daily_work_notes: { Row: DailyWorkNote; Insert: Partial<DailyWorkNote>; Update: Partial<DailyWorkNote> };
@@ -252,6 +274,7 @@ export interface Database {
       messages: { Row: LegacyMessage; Insert: Partial<LegacyMessage>; Update: Partial<LegacyMessage> };
       chat_messages: { Row: ChatMessage; Insert: Partial<ChatMessage>; Update: Partial<ChatMessage> };
       tutor_earnings: { Row: TutorEarning; Insert: Partial<TutorEarning>; Update: Partial<TutorEarning> };
+      app_settings: { Row: AppSetting; Insert: Partial<AppSetting>; Update: Partial<AppSetting> };
     };
   };
 }

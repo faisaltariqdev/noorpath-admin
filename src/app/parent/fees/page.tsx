@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import ParentStudentSwitcher from "@/components/ParentStudentSwitcher";
 import { formatCurrency, formatFeePeriod, formatStudentLevel } from "@/lib/portal";
+import { currencyForCountry } from "@/lib/currency";
 import { DollarSign, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
 interface StudentInfo {
@@ -12,6 +13,8 @@ interface StudentInfo {
   full_name: string;
   level?: string | null;
   course?: string | null;
+  country?: string | null;
+  currency: string;
 }
 
 interface Fee {
@@ -44,13 +47,27 @@ export default function ParentFeesPage() {
     async function loadStudents() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase
-        .from("students")
-        .select("id, full_name, level, course")
-        .eq("parent_id", user.id)
-        .eq("is_active", true)
-        .order("full_name");
-      const mapped = (data || []) as StudentInfo[];
+      const [{ data }, { data: parentProfile }] = await Promise.all([
+        supabase
+          .from("students")
+          .select("id, full_name, level, course, country")
+          .eq("parent_id", user.id)
+          .eq("is_active", true)
+          .order("full_name"),
+        supabase.from("profiles").select("country").eq("id", user.id).maybeSingle(),
+      ]);
+      const parentCountry = parentProfile?.country || "";
+      const mapped = (data || []).map((student: any) => {
+        const country = student.country || parentCountry || "";
+        return {
+          id: student.id,
+          full_name: student.full_name,
+          level: student.level,
+          course: student.course,
+          country,
+          currency: currencyForCountry(country),
+        } as StudentInfo;
+      });
       setStudents(mapped);
       setSelectedStudentId((current) => current || mapped[0]?.id || "");
       setLoading(false);
@@ -79,6 +96,7 @@ export default function ParentFeesPage() {
     [selectedStudentId, students]
   );
 
+  const currency = selectedStudent?.currency || "USD";
   const totalPaid = fees.filter(f => f.status === "paid").reduce((s, f) => s + f.amount, 0);
   const totalPending = fees.filter(f => f.status !== "paid" && f.status !== "waived").reduce((s, f) => s + f.amount, 0);
 
@@ -117,8 +135,8 @@ export default function ParentFeesPage() {
 
         <div className="stats-grid" style={{ marginBottom: 20 }}>
           {[
-            { label: "Total Paid", value: formatCurrency(totalPaid, fees[0]?.currency || "USD"), icon: CheckCircle, color: "#16a34a", bg: "#dcfce7" },
-            { label: "Amount Due", value: formatCurrency(totalPending, fees[0]?.currency || "USD"), icon: AlertCircle, color: totalPending > 0 ? "#dc2626" : "#16a34a", bg: totalPending > 0 ? "#fee2e2" : "#dcfce7" },
+            { label: "Total Paid", value: formatCurrency(totalPaid, currency), icon: CheckCircle, color: "#16a34a", bg: "#dcfce7" },
+            { label: "Amount Due", value: formatCurrency(totalPending, currency), icon: AlertCircle, color: totalPending > 0 ? "#dc2626" : "#16a34a", bg: totalPending > 0 ? "#fee2e2" : "#dcfce7" },
             { label: "Total Records", value: fees.length, icon: DollarSign, color: "#2563eb", bg: "#eff6ff" },
             { label: "Overdue", value: fees.filter(f => f.status === "overdue").length, icon: Clock, color: "#d97706", bg: "#fef9c3" },
           ].map(c => (
@@ -150,7 +168,7 @@ export default function ParentFeesPage() {
                           {f.notes || "Monthly tuition invoice"}
                         </div>
                       </td>
-                      <td style={{ fontWeight: 700, color: "#0f172a" }}>{formatCurrency(f.amount, f.currency || "USD")}</td>
+                      <td style={{ fontWeight: 700, color: "#0f172a" }}>{formatCurrency(f.amount, currency)}</td>
                       <td style={{ color: isOverdue ? "#dc2626" : "#94a3b8", fontWeight: isOverdue ? 700 : 400 }}>
                         {f.due_date ? new Date(f.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                         {isOverdue && " ⚠️"}
@@ -174,7 +192,7 @@ export default function ParentFeesPage() {
           <div style={{ marginTop: 16, background: "linear-gradient(135deg, #fef9c3, #fffbeb)", border: "1px solid #fde68a", borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
             <div>
               <div style={{ fontWeight: 700, color: "#a16207", fontSize: "0.9rem", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                {formatCurrency(totalPending, fees[0]?.currency || "USD")} payment due
+                {formatCurrency(totalPending, currency)} payment due
               </div>
               <div style={{ fontSize: "0.78rem", color: "#92400e", marginTop: 3, fontFamily: "var(--font-jakarta), sans-serif" }}>
                 Please contact your academy to confirm payment arrangements or request an invoice reminder.

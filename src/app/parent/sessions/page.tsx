@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import ParentStudentSwitcher from "@/components/ParentStudentSwitcher";
 import { formatStudentLevel, getSessionSubject } from "@/lib/portal";
+import { unwrapOne } from "@/lib/currency";
 import { formatTimePair } from "@/lib/timezones";
 import { Calendar, Video, Clock, CheckCircle, XCircle } from "lucide-react";
 
@@ -14,6 +15,7 @@ interface StudentInfo {
   level?: string | null;
   course?: string | null;
   timezone?: string | null;
+  assigned_tutor_name?: string | null;
 }
 
 interface Session {
@@ -40,11 +42,18 @@ export default function ParentSessionsPage() {
       if (!user) return;
       const { data } = await supabase
         .from("students")
-        .select("id, full_name, level, course, timezone")
+        .select("id, full_name, level, course, timezone, tutor:profiles!students_tutor_id_fkey(full_name)")
         .eq("parent_id", user.id)
         .eq("is_active", true)
         .order("full_name");
-      const mapped = (data || []) as StudentInfo[];
+      const mapped = (data || []).map((student: any) => ({
+        id: student.id,
+        full_name: student.full_name,
+        level: student.level,
+        course: student.course,
+        timezone: student.timezone,
+        assigned_tutor_name: unwrapOne(student.tutor)?.full_name || null,
+      })) as StudentInfo[];
       setStudents(mapped);
       setSelectedStudentId((current) => current || mapped[0]?.id || "");
       setLoading(false);
@@ -58,18 +67,21 @@ export default function ParentSessionsPage() {
       setLoading(true);
       const { data } = await supabase
         .from("class_sessions")
-        .select("id, scheduled_at, status, duration_minutes, meeting_link, notes, tutor:profiles(full_name)")
+        .select("id, scheduled_at, status, duration_minutes, meeting_link, notes, tutor:profiles!class_sessions_tutor_id_fkey(full_name)")
         .eq("student_id", selectedStudentId)
-        .order("scheduled_at", { ascending: false });
-      setSessions((data || []).map((session: any) => ({
-        id: session.id,
-        scheduled_at: session.scheduled_at,
-        status: session.status,
-        duration: session.duration_minutes || 30,
-        tutor_name: session.tutor?.full_name || "—",
-        meeting_link: session.meeting_link || "",
-        notes: session.notes || "",
-      })));
+        .order("scheduled_at", { ascending: true });
+      setSessions((data || []).map((session: any) => {
+        const tutor = unwrapOne(session.tutor);
+        return {
+          id: session.id,
+          scheduled_at: session.scheduled_at,
+          status: session.status,
+          duration: session.duration_minutes || 30,
+          tutor_name: tutor?.full_name || "",
+          meeting_link: session.meeting_link || "",
+          notes: session.notes || "",
+        };
+      }));
       setLoading(false);
     }
     loadSessions();
@@ -81,8 +93,12 @@ export default function ParentSessionsPage() {
   );
 
   const now = new Date();
-  const upcoming = sessions.filter(s => new Date(s.scheduled_at) >= now && s.status === "scheduled");
-  const past     = sessions.filter(s => new Date(s.scheduled_at) < now || s.status !== "scheduled");
+  const upcoming = sessions
+    .filter(s => new Date(s.scheduled_at) >= now && s.status === "scheduled")
+    .sort((a, b) => +new Date(a.scheduled_at) - +new Date(b.scheduled_at));
+  const past = sessions
+    .filter(s => new Date(s.scheduled_at) < now || s.status !== "scheduled")
+    .sort((a, b) => +new Date(b.scheduled_at) - +new Date(a.scheduled_at));
   const display  = tab === "upcoming" ? upcoming : past;
 
   return (
@@ -153,7 +169,7 @@ export default function ParentSessionsPage() {
                         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={13} />Local: {times.local}</span>
                         <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#1b5e42" }}>PKT: {times.pkt}</span>
                         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Calendar size={13} />{s.duration} minutes</span>
-                        <span>Tutor: {s.tutor_name}</span>
+                        <span>Tutor: {s.tutor_name || selectedStudent?.assigned_tutor_name || "Not assigned"}</span>
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>

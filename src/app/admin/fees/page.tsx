@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { formatCurrency, formatFeePeriod } from "@/lib/portal";
+import { currencyForCountry } from "@/lib/currency";
 import { DollarSign, Plus, X, AlertCircle, CheckCircle, Clock, Search } from "lucide-react";
 
 interface Fee {
@@ -28,7 +29,7 @@ const STATUS_BADGE: Record<string, string> = { paid: "badge badge-green", pendin
 
 export default function FeesPage() {
   const [fees, setFees] = useState<Fee[]>([]);
-  const [students, setStudents] = useState<{ id: string; full_name: string }[]>([]);
+  const [students, setStudents] = useState<{ id: string; full_name: string; country?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -53,7 +54,7 @@ export default function FeesPage() {
     setLoading(true);
     const [{ data: feesData }, { data: studs }] = await Promise.all([
       supabase.from("fees").select("id, amount, currency, status, due_date, period_month, period_year, payment_method, notes, created_at, student:students(full_name, country), parent:profiles!fees_parent_id_fkey(full_name, whatsapp, phone)").order("created_at", { ascending: false }),
-      supabase.from("students").select("id, full_name").eq("is_active", true),
+      supabase.from("students").select("id, full_name, country").eq("is_active", true),
     ]);
     setFees((feesData || []).map((f: any) => ({
       ...f,
@@ -65,6 +66,15 @@ export default function FeesPage() {
     })));
     setStudents(studs || []);
     setLoading(false);
+  }
+
+  function selectStudentForFee(studentId: string) {
+    const student = students.find((s) => s.id === studentId);
+    setForm((prev) => ({
+      ...prev,
+      student_id: studentId,
+      currency: currencyForCountry(student?.country) || prev.currency,
+    }));
   }
 
   useEffect(() => { load(); }, []);
@@ -223,9 +233,13 @@ export default function FeesPage() {
               <form onSubmit={addFee} style={{ padding: 24 }}>
                 <div className="form-group">
                   <label className="form-label">Student *</label>
-                  <select className="form-input form-select" value={form.student_id} onChange={e => setForm(p => ({ ...p, student_id: e.target.value }))} required>
+                  <select className="form-input form-select" value={form.student_id} onChange={e => selectStudentForFee(e.target.value)} required>
                     <option value="">Select student</option>
-                    {students.map(s => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.full_name}{s.country ? ` · ${s.country} (${currencyForCountry(s.country)})` : ""}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>

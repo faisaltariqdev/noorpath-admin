@@ -16,6 +16,7 @@ import TopBar from "@/components/TopBar";
 import ParentStudentSwitcher from "@/components/ParentStudentSwitcher";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatStudentLevel } from "@/lib/portal";
+import { currencyForCountry, unwrapOne } from "@/lib/currency";
 
 interface ParentStudent {
   id: string;
@@ -23,6 +24,8 @@ interface ParentStudent {
   level?: string | null;
   course?: string | null;
   tutor_name?: string | null;
+  country?: string | null;
+  currency: string;
 }
 
 interface DashboardHomework {
@@ -67,6 +70,7 @@ export default function ParentDashboard() {
   const [latestReport, setLatestReport] = useState<DashboardReport | null>(null);
   const [homework, setHomework] = useState<DashboardHomework[]>([]);
   const [fees, setFees] = useState<FeeInfo>({ pending: 0, total: 0, overdueCount: 0 });
+  const [displayCurrency, setDisplayCurrency] = useState("USD");
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [nextSessionLabel, setNextSessionLabel] = useState("");
   const [loading, setLoading] = useState(true);
@@ -90,20 +94,30 @@ export default function ParentDashboard() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
-        .from("students")
-        .select("id, full_name, level, course, tutor:profiles!students_tutor_id_fkey(full_name)")
-        .eq("parent_id", user.id)
-        .eq("is_active", true)
-        .order("full_name");
+      const [{ data }, { data: parentProfile }] = await Promise.all([
+        supabase
+          .from("students")
+          .select("id, full_name, level, course, country, tutor:profiles!students_tutor_id_fkey(full_name)")
+          .eq("parent_id", user.id)
+          .eq("is_active", true)
+          .order("full_name"),
+        supabase.from("profiles").select("country").eq("id", user.id).maybeSingle(),
+      ]);
 
-      const mapped = (data || []).map((student: any) => ({
-        id: student.id,
-        full_name: student.full_name,
-        level: student.level,
-        course: student.course,
-        tutor_name: student.tutor?.full_name || "Not assigned",
-      }));
+      const parentCountry = parentProfile?.country || "";
+      const mapped = (data || []).map((student: any) => {
+        const tutor = unwrapOne(student.tutor);
+        const country = student.country || parentCountry || "";
+        return {
+          id: student.id,
+          full_name: student.full_name,
+          level: student.level,
+          course: student.course,
+          country,
+          currency: currencyForCountry(country),
+          tutor_name: tutor?.full_name || "Not assigned",
+        };
+      });
 
       setStudents(mapped);
       setSelectedStudentId((current) => current || mapped[0]?.id || "");
@@ -135,7 +149,7 @@ export default function ParentDashboard() {
             .limit(5),
           supabase
             .from("fees")
-            .select("amount, status, due_date")
+            .select("amount, status, due_date, currency")
             .eq("student_id", selectedStudentId),
           supabase
             .from("class_sessions")
@@ -149,6 +163,9 @@ export default function ParentDashboard() {
 
       setLatestReport(reports?.[0] || null);
       setHomework((homeworkData || []) as DashboardHomework[]);
+
+      const selected = students.find((s) => s.id === selectedStudentId);
+      setDisplayCurrency(selected?.currency || currencyForCountry(selected?.country) || "USD");
 
       const pending = (feeData || [])
         .filter((fee: any) => fee.status !== "paid" && fee.status !== "waived")
@@ -177,7 +194,7 @@ export default function ParentDashboard() {
     }
 
     loadStudentDashboard();
-  }, [selectedStudentId]);
+  }, [selectedStudentId, students]);
 
   async function markHomeworkDone(id: string) {
     await supabase
@@ -314,7 +331,7 @@ export default function ParentDashboard() {
                   {[
                     {
                       label: "Pending Fees",
-                      value: formatCurrency(fees.pending, "GBP"),
+                      value: formatCurrency(fees.pending, displayCurrency),
                       icon: DollarSign,
                       color: fees.pending > 0 ? "#dc2626" : "#16a34a",
                       bg: fees.pending > 0 ? "#fee2e2" : "#dcfce7",

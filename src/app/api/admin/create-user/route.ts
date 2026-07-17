@@ -54,6 +54,17 @@ export async function POST(request: Request) {
     }
 
     if (data.user?.id) {
+      let qaidaEnabled = false;
+      if (role === "parent") {
+        const { data: settings } = await admin
+          .from("app_settings")
+          .select("value")
+          .eq("key", "role_permissions")
+          .maybeSingle();
+        const parentDefaults = (settings?.value as { parent?: { qaida_default?: boolean } } | null)?.parent;
+        qaidaEnabled = Boolean(parentDefaults?.qaida_default);
+      }
+
       const { error: profileError } = await admin
         .from("profiles")
         .upsert({
@@ -66,6 +77,7 @@ export async function POST(request: Request) {
           timezone: timezone || "UTC",
           role,
           is_active: true,
+          qaida_enabled: qaidaEnabled,
           updated_at: new Date().toISOString(),
         }, { onConflict: "id" });
 

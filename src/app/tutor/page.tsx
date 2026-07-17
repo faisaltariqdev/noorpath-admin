@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { getSessionSubject } from "@/lib/portal";
+import { unwrapOne } from "@/lib/currency";
 import { Calendar, Clock, BookOpen, Users, Video, CheckCircle, ArrowUpRight, Star, FileText } from "lucide-react";
 import Link from "next/link";
 
@@ -26,6 +27,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function TutorDashboard() {
   const [sessions, setSessions] = useState<ClassSession[]>([]);
+  const [upcoming, setUpcoming] = useState<ClassSession[]>([]);
   const [stats, setStats] = useState<TutorStats>({ todayCount: 0, completedCount: 0, studentsCount: 0, pendingReports: 0 });
   const [loading, setLoading] = useState(true);
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
@@ -34,27 +36,60 @@ export default function TutorDashboard() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const todayStr = new Date().toISOString().split("T")[0];
-      const [{ data: todaySessions }, { count: studentsCount }, { data: completedSessions }, { data: reports }] = await Promise.all([
-        supabase.from("class_sessions").select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course)").eq("tutor_id", user.id).gte("scheduled_at", todayStr).lt("scheduled_at", todayStr + "T23:59:59").order("scheduled_at"),
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(now);
+      todayEnd.setHours(23, 59, 59, 999);
+      const weekEnd = new Date(now);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+
+      const [{ data: todaySessions }, { data: upcomingSessions }, { count: studentsCount }, { data: completedSessions }, { data: reports }] = await Promise.all([
+        supabase.from("class_sessions")
+          .select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course)")
+          .eq("tutor_id", user.id)
+          .gte("scheduled_at", todayStart.toISOString())
+          .lte("scheduled_at", todayEnd.toISOString())
+          .order("scheduled_at", { ascending: true }),
+        supabase.from("class_sessions")
+          .select("id, scheduled_at, duration_minutes, status, meeting_link, notes, student:students(full_name, course)")
+          .eq("tutor_id", user.id)
+          .eq("status", "scheduled")
+          .gte("scheduled_at", now.toISOString())
+          .lte("scheduled_at", weekEnd.toISOString())
+          .order("scheduled_at", { ascending: true })
+          .limit(8),
         supabase.from("students").select("*", { count: "exact", head: true }).eq("tutor_id", user.id).eq("is_active", true),
         supabase.from("class_sessions").select("id").eq("tutor_id", user.id).eq("status", "completed"),
         supabase.from("progress_reports").select("session_id").eq("tutor_id", user.id).not("session_id", "is", null),
       ]);
       const reportedSessionIds = new Set((reports || []).map((report: any) => report.session_id));
       const pendingReports = (completedSessions || []).filter((session: any) => !reportedSessionIds.has(session.id)).length;
-      const mapped = (todaySessions || []).map((s: any) => ({
-        id: s.id,
-        student: s.student?.full_name || "—",
-        course: s.student?.course || "",
-        scheduled_at: s.scheduled_at,
-        duration: s.duration_minutes || 30,
-        status: s.status,
-        meeting_link: s.meeting_link || "",
-        notes: s.notes || "",
-      }));
+      const mapSession = (s: any): ClassSession => {
+        const student = unwrapOne(s.student);
+        return {
+          id: s.id,
+          student: student?.full_name || "—",
+          course: student?.course || "",
+          scheduled_at: s.scheduled_at,
+          duration: s.duration_minutes || 30,
+          status: s.status,
+          meeting_link: s.meeting_link || "",
+          notes: s.notes || "",
+        };
+      };
+      const mapped = (todaySessions || []).map(mapSession)
+        .sort((a, b) => {
+          const aUpcoming = a.status === "scheduled" ? 0 : 1;
+          const bUpcoming = b.status === "scheduled" ? 0 : 1;
+          if (aUpcoming !== bUpcoming) return aUpcoming - bUpcoming;
+          return +new Date(a.scheduled_at) - +new Date(b.scheduled_at);
+        });
+      const upcomingMapped = (upcomingSessions || []).map(mapSession)
+        .sort((a, b) => +new Date(a.scheduled_at) - +new Date(b.scheduled_at));
       const completed = mapped.filter(s => s.status === "completed").length;
       setSessions(mapped);
+      setUpcoming(upcomingMapped);
       setStats({ todayCount: mapped.length, completedCount: completed, studentsCount: studentsCount || 0, pendingReports });
       setLoading(false);
     }
@@ -156,6 +191,30 @@ export default function TutorDashboard() {
                         </Link>
                       )}
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {upcoming.length > 0 && (
+              <div style={{ borderTop: "1px solid #f1f5f9", padding: "14px 20px 8px" }}>
+                <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#0f172a", marginBottom: 8 }}>
+                  Upcoming (next 7 days) · soonest first
+                </div>
+                {upcoming.map((s) => (
+                  <div key={`up-${s.id}`} style={{ padding: "10px 0", borderBottom: "1px solid #f8fafc", display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: "0.84rem" }}>{s.student}</div>
+                      <div style={{ fontSize: "0.72rem", color: "#64748b" }}>
+                        {new Date(s.scheduled_at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true })}
+                        {" · "}{getSessionSubject(s.course, s.notes)}
+                      </div>
+                    </div>
+                    {s.meeting_link && (
+                      <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-xs">
+                        <Video size={12} /> Join
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>

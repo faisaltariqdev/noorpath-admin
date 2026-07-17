@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { getSessionSubject } from "@/lib/portal";
+import { unwrapOne } from "@/lib/currency";
 import { formatTimePair } from "@/lib/timezones";
 import { Calendar, Video, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -49,18 +50,22 @@ export default function TutorClassesPage() {
         .gte("scheduled_at", start)
         .lt("scheduled_at", endDate.toISOString().split("T")[0])
         .order("scheduled_at");
-      setSessions((data || []).map((s: any) => ({
-        id: s.id,
-        student_name: s.student?.full_name || "—",
-        course: s.student?.course || "",
-        scheduled_at: s.scheduled_at,
-        duration: s.duration_minutes || 30,
-        status: s.status,
-        meeting_link: s.meeting_link || "",
-        notes: s.notes || "",
-        student_timezone: s.student?.timezone || "",
-        tutor_timezone: s.tutor?.timezone || "",
-      })));
+      setSessions((data || []).map((s: any) => {
+        const student = unwrapOne(s.student);
+        const tutor = unwrapOne(s.tutor);
+        return {
+          id: s.id,
+          student_name: student?.full_name || "—",
+          course: student?.course || "",
+          scheduled_at: s.scheduled_at,
+          duration: s.duration_minutes || 30,
+          status: s.status,
+          meeting_link: s.meeting_link || "",
+          notes: s.notes || "",
+          student_timezone: student?.timezone || "",
+          tutor_timezone: tutor?.timezone || "",
+        };
+      }).sort((a, b) => +new Date(a.scheduled_at) - +new Date(b.scheduled_at)));
       setLoading(false);
     }
     load();
@@ -80,7 +85,10 @@ export default function TutorClassesPage() {
   });
 
   const isToday = (d: Date) => d.toDateString() === new Date().toDateString();
-  const sessForDay = (d: Date) => sessions.filter(s => new Date(s.scheduled_at).toDateString() === d.toDateString());
+  const sessForDay = (d: Date) =>
+    sessions
+      .filter(s => new Date(s.scheduled_at).toDateString() === d.toDateString())
+      .sort((a, b) => +new Date(a.scheduled_at) - +new Date(b.scheduled_at));
 
   const labelDate = view === "day"
     ? baseDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })

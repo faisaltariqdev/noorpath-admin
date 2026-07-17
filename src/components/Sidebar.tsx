@@ -40,6 +40,7 @@ const ADMIN_LINKS: NavSection[] = [
     { href: "/admin/messages",      label: "Messages",          icon: MessageSquare },
   ]},
   { section: "System", items: [
+    { href: "/admin/permissions",   label: "Permissions",       icon: ClipboardList },
     { href: "/admin/settings",      label: "Settings",          icon: Settings },
   ]},
 ];
@@ -98,10 +99,19 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState(userName);
+  const [qaidaEnabled, setQaidaEnabled] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const sections = LINKS[role];
   const { label, badgeClass } = ROLE_CONFIG[role];
+  const sections = LINKS[role]
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        if (role === "parent" && item.href === "/parent/qaida" && !qaidaEnabled) return false;
+        return true;
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
 
   useEffect(() => { setOpen(false); }, [pathname]);
 
@@ -132,13 +142,14 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       if (!user?.id) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, qaida_enabled, role")
         .eq("id", user.id)
         .single();
       if (profile?.full_name) setDisplayName(profile.full_name);
+      if (role === "parent") setQaidaEnabled(Boolean(profile?.qaida_enabled));
     }
     loadProfile();
-  }, []);
+  }, [role]);
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
