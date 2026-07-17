@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { getSessionSubject } from "@/lib/portal";
 import { formatTimePair } from "@/lib/timezones";
-import { Calendar, Plus, X, Video, Search } from "lucide-react";
+import { Calendar, Plus, X, Video, Search, Pencil, Trash2 } from "lucide-react";
 
 interface SessionRow {
   id: string;
@@ -49,6 +49,7 @@ const emptyForm = {
   duration_minutes: "30",
   meeting_link: "",
   notes: "",
+  status: "scheduled",
   schedule_mode: "once" as "once" | "weekly",
   weekdays: [] as number[],
   weeks_count: "8",
@@ -56,6 +57,12 @@ const emptyForm = {
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
+}
+
+function toLocalInput(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** Build local datetime strings (YYYY-MM-DDTHH:mm) for weekly recurrence. */
@@ -81,7 +88,6 @@ function buildWeeklyOccurrences(startLocal: string, weekdays: number[], weeksCou
 }
 
 function toIsoFromLocal(local: string) {
-  // datetime-local is wall-clock; store as ISO via Date which uses local TZ of browser
   return new Date(local).toISOString();
 }
 
@@ -91,6 +97,9 @@ export default function SessionsPage() {
   const [tutors, setTutors] = useState<{ id: string; full_name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingGroupKey, setEditingGroupKey] = useState<string | null>(null);
+  const [editingMemberIds, setEditingMemberIds] = useState<string[]>([]);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [filterTutor, setFilterTutor] = useState("all");
@@ -166,11 +175,12 @@ export default function SessionsPage() {
   const tutorNames = Array.from(new Set(sessions.map(s => s.tutor_name || "Unassigned"))).sort();
 
   const previewCount = useMemo(() => {
+    if (editingGroupKey) return form.student_ids.length;
     if (!form.student_ids.length || !form.scheduled_at) return 0;
     if (form.schedule_mode === "once") return form.student_ids.length;
     const occ = buildWeeklyOccurrences(form.scheduled_at, form.weekdays, Math.max(1, parseInt(form.weeks_count) || 8));
     return occ.length * form.student_ids.length;
-  }, [form]);
+  }, [form, editingGroupKey]);
 
   function toggleStudent(id: string) {
     setForm(p => ({
@@ -190,19 +200,89 @@ export default function SessionsPage() {
     }));
   }
 
-  async function addSession(e: React.FormEvent) {
+  function openCreateForm() {
+    setEditingGroupKey(null);
+    setEditingMemberIds([]);
+    setEditingGroupId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }
+
+  function openEditForm(row: SessionRow) {
+    setEditingGroupKey(row.session_group_id || row.id);
+    setEditingMemberIds(row.member_ids);
+    setEditingGroupId(row.session_group_id || null);
+    setForm({
+      ...emptyForm,
+      student_ids: [...row.student_ids],
+      tutor_id: row.tutor_id || "",
+      scheduled_at: toLocalInput(row.scheduled_at),
+      duration_minutes: String(row.duration || 30),
+      meeting_link: row.meeting_link || "",
+      notes: row.notes || "",
+      status: row.status || "scheduled",
+      schedule_mode: "once",
+    });
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    setEditingGroupKey(null);
+    setEditingMemberIds([]);
+    setEditingGroupId(null);
+    setForm(emptyForm);
+  }
+
+  async function saveSession(e: React.FormEvent) {
     e.preventDefault();
     if (!form.student_ids.length) {
       setMsg("Error: Select at least one student.");
       return;
     }
-    if (form.schedule_mode === "weekly" && !form.weekdays.length) {
+    if (!editingGroupKey && form.schedule_mode === "weekly" && !form.weekdays.length) {
       setMsg("Error: Select at least one weekday for recurring classes.");
       return;
     }
 
     setSaving(true);
     setMsg("");
+
+    if (editingGroupKey) {
+      const groupId = editingGroupId || crypto.randomUUID();
+      const scheduled_at = toIsoFromLocal(form.scheduled_at);
+      const rows = form.student_ids.map(student_id => ({
+        student_id,
+        tutor_id: form.tutor_id || null,
+        scheduled_at,
+        duration_minutes: parseInt(form.duration_minutes),
+        meeting_link: form.meeting_link || null,
+        status: form.status || "scheduled",
+        notes: form.notes || null,
+        session_group_id: groupId,
+      }));
+
+      if (editingMemberIds.length) {
+        const { error: delError } = await supabase.from("class_sessions").delete().in("id", editingMemberIds);
+        if (delError) {
+          setMsg("Error: " + delError.message);
+          setSaving(false);
+          return;
+        }
+      }
+
+      const { error } = await supabase.from("class_sessions").insert(rows);
+      if (error) {
+        setMsg("Error: " + error.message);
+      } else {
+        setMsg("Class updated successfully.");
+        closeForm();
+        await load();
+      }
+      setSaving(false);
+      setTimeout(() => setMsg(""), 4000);
+      return;
+    }
 
     const occurrenceLocals = form.schedule_mode === "once"
       ? [form.scheduled_at]
@@ -234,8 +314,7 @@ export default function SessionsPage() {
       setMsg("Error: " + error.message);
     } else {
       setMsg(`Scheduled ${rows.length} class slot(s) successfully.`);
-      setShowForm(false);
-      setForm(emptyForm);
+      closeForm();
       await load();
     }
     setSaving(false);
@@ -249,7 +328,21 @@ export default function SessionsPage() {
       setMsg("Error: " + error.message);
       return;
     }
-    setSessions(p => p.map(s => (s.id === row.id || s.session_group_id === row.session_group_id) ? { ...s, status } : s));
+    setSessions(p => p.map(s => (s.id === row.id || (row.session_group_id && s.session_group_id === row.session_group_id)) ? { ...s, status } : s));
+  }
+
+  async function deleteSession(row: SessionRow) {
+    const label = row.student_name;
+    if (!window.confirm(`Delete class for ${label}? This cannot be undone.`)) return;
+    const ids = row.member_ids.length ? row.member_ids : [row.id];
+    const { error } = await supabase.from("class_sessions").delete().in("id", ids);
+    if (error) {
+      setMsg("Error: " + error.message);
+      return;
+    }
+    setMsg("Class deleted.");
+    setSessions(p => p.filter(s => s.id !== row.id && !(row.session_group_id && s.session_group_id === row.session_group_id)));
+    setTimeout(() => setMsg(""), 3000);
   }
 
   return (
@@ -258,7 +351,7 @@ export default function SessionsPage() {
       <div className="page-header" style={{ paddingTop: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div><h1 className="page-title">Live Classes</h1><p className="page-subtitle">{sessions.length} class groups</p></div>
-          <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setShowForm(true); }}><Plus size={15} /> Schedule Class</button>
+          <button className="btn btn-primary" onClick={openCreateForm}><Plus size={15} /> Schedule Class</button>
         </div>
       </div>
       <div className="page-body">
@@ -314,10 +407,12 @@ export default function SessionsPage() {
                       <td style={{ color: "#64748b" }}>{s.duration} min</td>
                       <td><span className={STATUS_BADGE[s.status] || "badge badge-gray"}>{s.status}</span></td>
                       <td>
-                        <div style={{ display: "flex", gap: 5, flexWrap: "nowrap" }}>
+                        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                          <button type="button" onClick={() => openEditForm(s)} className="btn btn-xs btn-ghost"><Pencil size={11} /> Edit</button>
                           {s.meeting_link && <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-primary"><Video size={11} /></a>}
                           {s.status === "scheduled" && <button onClick={() => updateStatus(s, "completed")} className="btn btn-xs btn-ghost">Done</button>}
                           {s.status === "scheduled" && <button onClick={() => updateStatus(s, "cancelled")} className="btn btn-xs btn-danger">Cancel</button>}
+                          <button type="button" onClick={() => deleteSession(s)} className="btn btn-xs btn-danger"><Trash2 size={11} /> Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -332,10 +427,12 @@ export default function SessionsPage() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }}>
             <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 520, overflow: "hidden", margin: "auto", maxHeight: "92vh", display: "flex", flexDirection: "column" }}>
               <div style={{ background: "linear-gradient(135deg, #0f172a, #1b5e42)", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-                <h2 style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1rem", fontWeight: 700, margin: 0 }}>Schedule New Class</h2>
-                <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}><X size={20} /></button>
+                <h2 style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1rem", fontWeight: 700, margin: 0 }}>
+                  {editingGroupKey ? "Edit Class" : "Schedule New Class"}
+                </h2>
+                <button onClick={closeForm} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}><X size={20} /></button>
               </div>
-              <form onSubmit={addSession} style={{ padding: 24, overflowY: "auto" }}>
+              <form onSubmit={saveSession} style={{ padding: 24, overflowY: "auto" }}>
                 <div className="form-group">
                   <label className="form-label">Students * (select one or more)</label>
                   <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, maxHeight: 160, overflowY: "auto", padding: 10 }}>
@@ -367,32 +464,34 @@ export default function SessionsPage() {
                   </select>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Schedule type</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <button
-                      type="button"
-                      className={`btn ${form.schedule_mode === "once" ? "btn-primary" : "btn-ghost"}`}
-                      onClick={() => setForm(p => ({ ...p, schedule_mode: "once" }))}
-                      style={{ justifyContent: "center" }}
-                    >
-                      One-time
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn ${form.schedule_mode === "weekly" ? "btn-primary" : "btn-ghost"}`}
-                      onClick={() => setForm(p => ({ ...p, schedule_mode: "weekly" }))}
-                      style={{ justifyContent: "center" }}
-                    >
-                      Weekly recurring
-                    </button>
+                {!editingGroupKey && (
+                  <div className="form-group">
+                    <label className="form-label">Schedule type</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <button
+                        type="button"
+                        className={`btn ${form.schedule_mode === "once" ? "btn-primary" : "btn-ghost"}`}
+                        onClick={() => setForm(p => ({ ...p, schedule_mode: "once" }))}
+                        style={{ justifyContent: "center" }}
+                      >
+                        One-time
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn ${form.schedule_mode === "weekly" ? "btn-primary" : "btn-ghost"}`}
+                        onClick={() => setForm(p => ({ ...p, schedule_mode: "weekly" }))}
+                        style={{ justifyContent: "center" }}
+                      >
+                        Weekly recurring
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                   <div className="form-group">
                     <label className="form-label">
-                      {form.schedule_mode === "once" ? "Date & Time *" : "Start date & time *"}
+                      {editingGroupKey || form.schedule_mode === "once" ? "Date & Time *" : "Start date & time *"}
                     </label>
                     <input
                       type="datetime-local"
@@ -410,7 +509,18 @@ export default function SessionsPage() {
                   </div>
                 </div>
 
-                {form.schedule_mode === "weekly" && (
+                {editingGroupKey && (
+                  <div className="form-group">
+                    <label className="form-label">Status</label>
+                    <select className="form-input form-select" value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+                      {["scheduled", "completed", "cancelled", "no_show", "rescheduled"].map(status => (
+                        <option key={status} value={status}>{status.replace("_", " ")}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {!editingGroupKey && form.schedule_mode === "weekly" && (
                   <>
                     <div className="form-group">
                       <label className="form-label">Class days *</label>
@@ -452,7 +562,7 @@ export default function SessionsPage() {
                   <textarea className="form-input" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Optional: revision focus, surah, or teacher note..." rows={3} style={{ resize: "vertical" }} />
                 </div>
 
-                {previewCount > 0 && (
+                {previewCount > 0 && !editingGroupKey && (
                   <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 12px", marginBottom: 16, fontSize: "0.8rem", color: "#166534", fontWeight: 600 }}>
                     Will create {previewCount} session record{previewCount === 1 ? "" : "s"}
                     {form.schedule_mode === "weekly" ? " (students × recurring dates)" : form.student_ids.length > 1 ? " (group class)" : ""}.
@@ -460,9 +570,9 @@ export default function SessionsPage() {
                 )}
 
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setShowForm(false)} style={{ flex: 1 }}>Cancel</button>
+                  <button type="button" className="btn btn-ghost" onClick={closeForm} style={{ flex: 1 }}>Cancel</button>
                   <button type="submit" className="btn btn-primary" disabled={saving || !form.student_ids.length} style={{ flex: 1, justifyContent: "center" }}>
-                    {saving ? "Saving..." : "Schedule Class"}
+                    {saving ? "Saving..." : editingGroupKey ? "Save Changes" : "Schedule Class"}
                   </button>
                 </div>
               </form>

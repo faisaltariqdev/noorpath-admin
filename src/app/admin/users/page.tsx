@@ -15,7 +15,7 @@ import {
   minutesFromTime,
   timezoneForCountry,
 } from "@/lib/timezones";
-import { Users, Plus, X, Search, CheckCircle, XCircle, Mail, Phone, ShieldOff, ShieldCheck, Pencil, KeyRound, Clock, CalendarDays } from "lucide-react";
+import { Users, Plus, X, Search, CheckCircle, XCircle, Mail, Phone, ShieldOff, ShieldCheck, Pencil, KeyRound, Clock, CalendarDays, Trash2 } from "lucide-react";
 
 interface Tutor {
   id: string;
@@ -174,6 +174,28 @@ export default function UsersPage() {
       setMsg({ type: "error", text: error instanceof Error ? error.message : "Could not update account." });
     }
     setSaving(false);
+  }
+
+  async function deleteUser(user: Tutor) {
+    if (!window.confirm(`Permanently delete ${user.full_name} (${user.email})? This removes login access and cannot be undone.`)) {
+      return;
+    }
+    setMsg({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/admin/delete-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user.id }),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Could not delete user");
+      setMsg({ type: "success", text: `Deleted ${user.full_name}.` });
+      setTutors(prev => prev.filter(t => t.id !== user.id));
+      if (showEditForm && editForm.id === user.id) setShowEditForm(false);
+    } catch (error) {
+      setMsg({ type: "error", text: error instanceof Error ? error.message : "Could not delete user." });
+    }
+    setTimeout(() => setMsg({ type: "", text: "" }), 3500);
   }
 
   function handleCreateCountry(country: string) {
@@ -433,6 +455,9 @@ export default function UsersPage() {
                             ? <><ShieldOff size={12} /> Block</>
                             : <><ShieldCheck size={12} /> Activate</>
                           }
+                        </button>
+                        <button onClick={() => deleteUser(t)} className="btn btn-xs btn-danger">
+                          <Trash2 size={12} /> Delete
                         </button>
                       </div>
                     </td>
