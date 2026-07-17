@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
-import ParentQaidaDashboard from "@/features/noorani-qaida/screens/ParentDashboard";
-import { qaidaFontVariables } from "@/features/noorani-qaida/fonts";
+import QaidaLoader from "@/features/noorani-qaida/ui/QaidaLoader";
 import { supabase } from "@/lib/supabase";
-import TopBar from "@/components/TopBar";
+
+const QaidaShell = dynamic(() => import("@/features/noorani-qaida/layout/QaidaShell"), {
+  ssr: false,
+  loading: () => <QaidaLoader />,
+});
 
 export default function ParentQaidaPage() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
@@ -29,36 +33,28 @@ export default function ParentQaidaPage() {
   }, []);
 
   if (allowed === null) {
-    return (
-      <>
-        <TopBar title="Noorani Qaida" />
-        <div className="empty-state" style={{ marginTop: 80 }}>
-          <div style={{ width: 36, height: 36, border: "3px solid #e2e8f0", borderTopColor: "#1b5e42", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        </div>
-      </>
-    );
+    return <QaidaLoader />;
   }
 
   if (!allowed) {
     return (
-      <>
-        <TopBar title="Noorani Qaida" />
-        <div className="page-body">
-          <div className="empty-state" style={{ marginTop: 60 }}>
-            <BookOpen size={40} style={{ opacity: 0.2, margin: "0 auto" }} />
-            <h3>Noorani Qaida is not enabled</h3>
-            <p>Ask the academy admin to allow Qaida access for your account.</p>
-            <Link href="/parent" className="btn btn-primary" style={{ marginTop: 12 }}>Back to dashboard</Link>
-          </div>
+      <div className="flex h-[100dvh] min-h-[100svh] items-center justify-center bg-emerald-50 p-6">
+        <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow-sm">
+          <BookOpen size={40} style={{ opacity: 0.25, margin: "0 auto 12px" }} />
+          <h1 className="text-xl font-black text-slate-900">Noorani Qaida is not enabled</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Ask the academy admin to allow Qaida access for your account in Permissions.
+          </p>
+          <Link
+            href="/parent"
+            className="mt-5 inline-flex rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white"
+          >
+            Back to parent portal
+          </Link>
         </div>
-      </>
+      </div>
     );
   }
 
-  return (
-    <div className={qaidaFontVariables}>
-      <ParentQaidaDashboard />
-    </div>
-  );
+  return <QaidaShell />;
 }

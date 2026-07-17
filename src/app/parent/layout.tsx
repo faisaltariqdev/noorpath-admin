@@ -1,4 +1,4 @@
-import Sidebar from "@/components/Sidebar";
+import RoleChrome from "@/components/RoleChrome";
 import { authorizeRole } from "@/lib/server-auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -18,9 +18,8 @@ export default async function ParentLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="admin-layout">
-      <Sidebar role="parent" userName={auth.fullName} />
-      <div className="page-wrapper">{children}</div>
-    </div>
+    <RoleChrome role="parent" userName={auth.fullName}>
+      {children}
+    </RoleChrome>
   );
 }
