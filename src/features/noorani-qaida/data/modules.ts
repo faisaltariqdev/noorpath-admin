@@ -6,6 +6,7 @@ import type {
   TopicLesson,
 } from "../types";
 import { LETTERS } from "./curriculum";
+import { ALIF_PRONUNCIATION, QAIDA_PRONUNCIATIONS } from "./pronunciation";
 
 const pending = "pending-qari-review" as const;
 
@@ -29,15 +30,6 @@ function lesson(
   };
 }
 
-// Shared Ba→Ya letter table for every mark / Madd drill page.
-const DRILL_LETTERS: ReadonlyArray<readonly [arabic: string, translit: string]> = [
-  ["ب", "b"], ["ت", "t"], ["ث", "th"], ["ج", "j"], ["ح", "ḥ"], ["خ", "kh"],
-  ["د", "d"], ["ذ", "dh"], ["ر", "r"], ["ز", "z"], ["س", "s"], ["ش", "sh"],
-  ["ص", "ṣ"], ["ض", "ḍ"], ["ط", "ṭ"], ["ظ", "ẓ"], ["ع", "ʿ"], ["غ", "gh"],
-  ["ف", "f"], ["ق", "q"], ["ك", "k"], ["ل", "l"], ["م", "m"], ["ن", "n"],
-  ["ه", "h"], ["و", "w"], ["ي", "y"],
-];
-
 const FATHA = "\u064E";
 const KASRA = "\u0650";
 const DAMMA = "\u064F";
@@ -48,16 +40,19 @@ const SUKOON = "\u0652";
 const SHADDAH = "\u0651";
 
 const SHORT_SIGN = { fatha: FATHA, kasra: KASRA, damma: DAMMA } as const;
-const SHORT_VOWEL = { fatha: "a", kasra: "i", damma: "u" } as const;
 const SHORT_ALIF = { fatha: "أَ", kasra: "إِ", damma: "أُ" } as const;
+const SHORT_ALIF_PRON = {
+  fatha: ALIF_PRONUNCIATION.fatha,
+  kasra: ALIF_PRONUNCIATION.kasra,
+  damma: ALIF_PRONUNCIATION.damma,
+} as const;
 
 function harakaatDrill(mark: keyof typeof SHORT_SIGN): InteractiveExample[] {
   const sign = SHORT_SIGN[mark];
-  const vowel = SHORT_VOWEL[mark];
   return [
-    example(`${mark}-alif`, SHORT_ALIF[mark], vowel),
-    ...DRILL_LETTERS.map(([arabic, translit]) =>
-      example(`${mark}-${translit}`, `${arabic}${sign}`, `${translit}${vowel}`),
+    example(`${mark}-alif`, SHORT_ALIF[mark], SHORT_ALIF_PRON[mark]),
+    ...QAIDA_PRONUNCIATIONS.map((letter) =>
+      example(`${mark}-${letter.id}`, `${letter.arabic}${sign}`, letter[mark]),
     ),
   ];
 }
@@ -66,83 +61,83 @@ function harakaatDrill(mark: keyof typeof SHORT_SIGN): InteractiveExample[] {
 function tanweenDrill(mark: "fathatain" | "kasratain" | "dammatain"): InteractiveExample[] {
   if (mark === "fathatain") {
     return [
-      example("fathatain-alif", "أً", "an"),
-      ...DRILL_LETTERS.map(([arabic, translit]) =>
-        example(`fathatain-${translit}`, `${arabic}${FATHATAIN}ا`, `${translit}an`),
+      example("fathatain-alif", "أً", ALIF_PRONUNCIATION.fathatain),
+      ...QAIDA_PRONUNCIATIONS.map((letter) =>
+        example(`fathatain-${letter.id}`, `${letter.arabic}${FATHATAIN}ا`, letter.fathatain),
       ),
     ];
   }
   if (mark === "kasratain") {
     return [
-      example("kasratain-alif", "إٍ", "in"),
-      ...DRILL_LETTERS.map(([arabic, translit]) =>
-        example(`kasratain-${translit}`, `${arabic}${KASRATAIN}`, `${translit}in`),
+      example("kasratain-alif", "إٍ", ALIF_PRONUNCIATION.kasratain),
+      ...QAIDA_PRONUNCIATIONS.map((letter) =>
+        example(`kasratain-${letter.id}`, `${letter.arabic}${KASRATAIN}`, letter.kasratain),
       ),
     ];
   }
   return [
-    example("dammatain-alif", "أٌ", "un"),
-    ...DRILL_LETTERS.map(([arabic, translit]) =>
-      example(`dammatain-${translit}`, `${arabic}${DAMMATAIN}`, `${translit}un`),
+    example("dammatain-alif", "أٌ", ALIF_PRONUNCIATION.dammatain),
+    ...QAIDA_PRONUNCIATIONS.map((letter) =>
+      example(`dammatain-${letter.id}`, `${letter.arabic}${DAMMATAIN}`, letter.dammatain),
     ),
   ];
 }
 
-/** Classic Qaida Sukoon row: أَ + letter + ْ from Ba to Ya, plus a few familiar words. */
+/** Classic Qaida Sukoon row: أَ + letter + ْ from Baa to Yaa, plus a few familiar words. */
 function sukoonDrill(): InteractiveExample[] {
   return [
-    ...DRILL_LETTERS.map(([arabic, translit]) =>
-      example(`sukoon-a${translit}`, `أَ${arabic}${SUKOON}`, `a${translit}`, undefined, ["أَ", `${arabic}${SUKOON}`]),
+    ...QAIDA_PRONUNCIATIONS.map((letter) =>
+      example(`sukoon-${letter.id}`, `أَ${letter.arabic}${SUKOON}`, letter.sukoon, undefined, ["أَ", `${letter.arabic}${SUKOON}`]),
     ),
-    example("sukoon-min", "مِنْ", "min", "from", ["مِ", "نْ"]),
-    example("sukoon-qul", "قُلْ", "qul", "say", ["قُ", "لْ"]),
+    example("sukoon-min", "مِنْ", "Min", "from", ["مِ", "نْ"]),
+    example("sukoon-qul", "قُلْ", "Qul", "say", ["قُ", "لْ"]),
   ];
 }
 
-/** Shaddah + Fatha drill from Ba to Ya, plus two familiar words. */
+/** Shaddah + Fatha drill from Baa to Yaa, plus two familiar words. */
 function shaddahDrill(): InteractiveExample[] {
   return [
-    ...DRILL_LETTERS.map(([arabic, translit]) =>
+    ...QAIDA_PRONUNCIATIONS.map((letter) =>
       example(
-        `shaddah-${translit}`,
-        `${arabic}${SHADDAH}${FATHA}`,
-        `${translit}${translit}a`,
+        `shaddah-${letter.id}`,
+        `${letter.arabic}${SHADDAH}${FATHA}`,
+        letter.shaddah,
         undefined,
-        [`${arabic}${SUKOON}`, `${arabic}${FATHA}`],
+        [`${letter.arabic}${SUKOON}`, `${letter.arabic}${FATHA}`],
       ),
     ),
-    example("shaddah-rabba", "رَبَّ", "rabba", undefined, ["رَ", "بْ", "بَ"]),
-    example("shaddah-inna", "إِنَّ", "inna", "indeed", ["إِ", "نْ", "نَ"]),
+    example("shaddah-rabba", "رَبَّ", "Rabba", undefined, ["رَ", "بْ", "بَ"]),
+    example("shaddah-inna", "إِنَّ", "Inna", "indeed", ["إِ", "نْ", "نَ"]),
   ];
 }
 
 function maddAlifDrill(): InteractiveExample[] {
   return [
-    example("madd-alif-alif", "آ", "ā"),
-    ...DRILL_LETTERS.map(([arabic, translit]) =>
-      example(`madd-alif-${translit}`, `${arabic}${FATHA}ا`, `${translit}ā`),
+    example("madd-alif-alif", "آ", ALIF_PRONUNCIATION.maddAlif),
+    ...QAIDA_PRONUNCIATIONS.map((letter) =>
+      example(`madd-alif-${letter.id}`, `${letter.arabic}${FATHA}ا`, letter.maddAlif),
     ),
-    example("madd-alif-qaala", "قَالَ", "qāla", "he said", ["قَا", "لَ"]),
+    example("madd-alif-qaala", "قَالَ", "Qaala", "he said", ["قَا", "لَ"]),
   ];
 }
 
 function maddWawDrill(): InteractiveExample[] {
   return [
-    example("madd-waw-alif", "أُو", "ū"),
-    ...DRILL_LETTERS.map(([arabic, translit]) =>
-      example(`madd-waw-${translit}`, `${arabic}${DAMMA}و`, `${translit}ū`),
+    example("madd-waw-alif", "أُو", ALIF_PRONUNCIATION.maddWaw),
+    ...QAIDA_PRONUNCIATIONS.map((letter) =>
+      example(`madd-waw-${letter.id}`, `${letter.arabic}${DAMMA}و`, letter.maddWaw),
     ),
-    example("madd-waw-nur", "نُور", "nūr", "light", ["نُو", "رْ"]),
+    example("madd-waw-nur", "نُور", "Noor", "light", ["نُو", "رْ"]),
   ];
 }
 
 function maddYaDrill(): InteractiveExample[] {
   return [
-    example("madd-ya-alif", "إِي", "ī"),
-    ...DRILL_LETTERS.map(([arabic, translit]) =>
-      example(`madd-ya-${translit}`, `${arabic}${KASRA}ي`, `${translit}ī`),
+    example("madd-ya-alif", "إِي", ALIF_PRONUNCIATION.maddYa),
+    ...QAIDA_PRONUNCIATIONS.map((letter) =>
+      example(`madd-ya-${letter.id}`, `${letter.arabic}${KASRA}ي`, letter.maddYa),
     ),
-    example("madd-ya-fil", "فِيل", "fīl", "elephant", ["فِي", "لْ"]),
+    example("madd-ya-fil", "فِيل", "Feel", "elephant", ["فِي", "لْ"]),
   ];
 }
 
@@ -150,34 +145,34 @@ export const TOPIC_LESSONS: TopicLesson[] = [
   lesson({
     id: "fatha", moduleId: "harakaat", kind: "mark", title: "Zabar (Fatha)", arabicTitle: "فَتْحَة",
     summary: "A small mark above a letter that gives a short ‘a’ sound.",
-    childExplanation: "Fatha sits above a letter like a tiny smile. It makes a quick ‘a’ sound. Read every letter from Alif to Ya: a, ba, ta, tha …",
+    childExplanation: "Fatha sits above a letter like a tiny smile. It makes a quick ‘a’ sound. Read every letter from Alif to Yaa: Aa, Baa, Taa, Thaa …",
     teacherTip: "Keep the vowel short. Contrast بَ with an elongated بَا so the child hears that Fatha is not Madd.",
-    parentTip: "Tap a few letters at a time from Alif to Ya, then let your child copy the short sound without stretching it.",
+    parentTip: "Tap a few letters at a time from Alif to Yaa, then let your child copy the short sound without stretching it.",
     mouthPosition: "Open the mouth gently for a brief ‘a’ sound.", writingHint: "Place the short diagonal mark above the letter.",
     traceValue: "بَ", examples: harakaatDrill("fatha"),
   }),
   lesson({
     id: "kasra", moduleId: "harakaat", kind: "mark", title: "Zer (Kasra)", arabicTitle: "كَسْرَة",
     summary: "A small mark below a letter that gives a short ‘i’ sound.",
-    childExplanation: "Kasra rests below the letter. It makes a quick ‘i’ sound. Read every letter from Alif to Ya: i, bi, ti, thi …",
+    childExplanation: "Kasra rests below the letter. It makes a quick ‘i’ sound. Read every letter from Alif to Yaa: Ee, Bee, Tee, Thee …",
     teacherTip: "Avoid turning Kasra into a long English ‘ee’. Keep the jaw relaxed and the sound brief.",
-    parentTip: "Point below each letter from Alif to Ya as your child says the short ‘i’ sound.",
+    parentTip: "Point below each letter from Alif to Yaa as your child says the short ‘i’ sound.",
     mouthPosition: "Relax the jaw and slightly spread the lips for a brief ‘i’.", writingHint: "Place the short diagonal mark below the letter.",
     traceValue: "بِ", examples: harakaatDrill("kasra"),
   }),
   lesson({
     id: "damma", moduleId: "harakaat", kind: "mark", title: "Pesh (Damma)", arabicTitle: "ضَمَّة",
     summary: "A small curl above a letter that gives a short ‘u’ sound.",
-    childExplanation: "Damma looks like a tiny curl above the letter. Round your lips for a quick ‘u’. Read every letter from Alif to Ya: u, bu, tu, thu …",
-    teacherTip: "Model rounded lips without lengthening the sound into Waw Madd.",
-    parentTip: "Use a mirror and make a small round-lip shape together for each letter from Alif to Ya.",
+    childExplanation: "Damma looks like a tiny curl above the letter. Round your lips for a quick ‘u’. Read every letter from Alif to Yaa: Oo, Boo, Too, Thoo …",
+    teacherTip: "Model rounded lips without lengthening the sound into Waaw Madd.",
+    parentTip: "Use a mirror and make a small round-lip shape together for each letter from Alif to Yaa.",
     mouthPosition: "Round the lips briefly while keeping the sound short.", writingHint: "Draw the small Damma curl above the letter.",
     traceValue: "بُ", examples: harakaatDrill("damma"),
   }),
   lesson({
     id: "fathatain", moduleId: "double-harakaat", kind: "mark", title: "Two Zabar (Fathatain)", arabicTitle: "فَتْحَتَان",
     summary: "Two Fatha marks add a light ‘an’ ending.",
-    childExplanation: "Two marks make a tiny ‘n’ sound at the end. Read every letter from Alif to Ya: an, ban, tan, than …",
+    childExplanation: "Two marks make a tiny ‘n’ sound at the end. Read every letter from Alif to Yaa: Aan, Baan, Taan, Thaan …",
     teacherTip: "Demonstrate the audible noon sound without adding a written Noon. Fathatain often sits with a following Alif in practice rows.",
     parentTip: "Clap once for the letter sound and once softly for the ‘n’ ending as you move across the row.",
     mouthPosition: "Open briefly for ‘a’, then finish with a light nasal ‘n’.", writingHint: "Place two parallel Fatha marks above, then the practice Alif where shown.",
@@ -186,16 +181,16 @@ export const TOPIC_LESSONS: TopicLesson[] = [
   lesson({
     id: "kasratain", moduleId: "double-harakaat", kind: "mark", title: "Two Zer (Kasratain)", arabicTitle: "كَسْرَتَان",
     summary: "Two Kasra marks add a light ‘in’ ending.",
-    childExplanation: "Two marks below make ‘in’. Read every letter from Alif to Ya: in, bin, tin, thin …",
+    childExplanation: "Two marks below make ‘in’. Read every letter from Alif to Yaa: Een, Been, Teen, Theen …",
     teacherTip: "Keep the Kasra short and make the final noon light.",
-    parentTip: "Point below each letter from Alif to Ya and repeat slowly, then normally.",
+    parentTip: "Point below each letter from Alif to Yaa and repeat slowly, then normally.",
     mouthPosition: "Use a brief ‘i’ and finish with a light nasal ‘n’.", writingHint: "Place two parallel Kasra marks below.",
     traceValue: "بٍ", examples: tanweenDrill("kasratain"),
   }),
   lesson({
     id: "dammatain", moduleId: "double-harakaat", kind: "mark", title: "Two Pesh (Dammatain)", arabicTitle: "ضَمَّتَان",
     summary: "Two Damma marks add a light ‘un’ ending.",
-    childExplanation: "Two curls make ‘un’. Read every letter from Alif to Ya: un, bun, tun, thun …",
+    childExplanation: "Two curls make ‘un’. Read every letter from Alif to Yaa: Oon, Boon, Toon, Thoon …",
     teacherTip: "Keep lip rounding brief and preserve the final noon sound.",
     parentTip: "Use the slow button first, then copy the normal speed across a few letters at a time.",
     mouthPosition: "Round briefly for ‘u’, then finish with a light nasal ‘n’.", writingHint: "Place the double Damma sign above.",
@@ -204,7 +199,7 @@ export const TOPIC_LESSONS: TopicLesson[] = [
   lesson({
     id: "sukoon", moduleId: "sukoon", kind: "mark", title: "Sukoon", arabicTitle: "سُكُون",
     summary: "Sukoon means the letter has no vowel after it.",
-    childExplanation: "The little circle tells the letter to stop. Practise the full row: ab, at, ath … ay, then a few familiar words.",
+    childExplanation: "The little circle tells the letter to stop. Practise the full row: Ab, At, Ath … Ay, then a few familiar words.",
     teacherTip: "Join the sakin letter to the vowel before it; do not pronounce it as an isolated alphabet name.",
     parentTip: "Tap the two parts slowly (أَ + بْ), then blend them into one smooth sound.",
     mouthPosition: "Move to the letter’s articulation point and stop airflow cleanly.", writingHint: "Place the small circle above the still letter.",
@@ -213,7 +208,7 @@ export const TOPIC_LESSONS: TopicLesson[] = [
   lesson({
     id: "shaddah", moduleId: "shaddah", kind: "mark", title: "Shaddah", arabicTitle: "شَدَّة",
     summary: "Shaddah makes one written letter sound like two joined letters.",
-    childExplanation: "Shaddah gives the letter a strong double beat: first stop, then open. Read bba, tta, ththa … then familiar words.",
+    childExplanation: "Shaddah gives the letter a strong double beat: first stop, then open. Read BBaa, TTaa, ThThaa … then familiar words.",
     teacherTip: "Teach the doubled structure as sakin + vowelled letter before blending.",
     parentTip: "Tap the table twice gently for each letter, then remove the taps once the child can blend.",
     mouthPosition: "Hold the articulation point for one beat, then release into the vowel.", writingHint: "Place the small Shaddah sign above the doubled letter.",
@@ -222,17 +217,17 @@ export const TOPIC_LESSONS: TopicLesson[] = [
   lesson({
     id: "madd-alif", moduleId: "madd", kind: "madd", title: "Madd Alif", arabicTitle: "مَدُّ الأَلِف",
     summary: "Fatha followed by Alif stretches ‘a’ for two counts.",
-    childExplanation: "Slide the short ‘a’ into a long ‘aa’ while two stars light up. Read every letter: ā, bā, tā, thā …",
+    childExplanation: "Slide the short ‘a’ into a long ‘aa’ while two stars light up. Read every letter: Aa, Baa, Taa, Thaa …",
     teacherTip: "Use two equal finger counts and avoid adding a breathy break.",
-    parentTip: "Move one finger across two dots while holding each long sound from Alif to Ya.",
+    parentTip: "Move one finger across two dots while holding each long sound from Alif to Yaa.",
     mouthPosition: "Keep the mouth gently open and the sound steady.", writingHint: "Read the Fatha letter together with the following Alif.",
     traceValue: "بَا", examples: maddAlifDrill(),
   }),
   lesson({
     id: "madd-waw", moduleId: "madd", kind: "madd", title: "Madd Waw", arabicTitle: "مَدُّ الوَاو",
     summary: "Damma followed by silent Waw stretches ‘u’ for two counts.",
-    childExplanation: "Round your lips and stretch ‘oo’ for two gentle counts. Read every letter: ū, bū, tū, thū …",
-    teacherTip: "Ensure Waw is preceded by Damma and carries no independent vowel.",
+    childExplanation: "Round your lips and stretch ‘oo’ for two gentle counts. Read every letter: Oo, Boo, Too, Thoo …",
+    teacherTip: "Ensure Waaw is preceded by Damma and carries no independent vowel.",
     parentTip: "Use two finger taps while keeping the lips rounded for each letter in the row.",
     mouthPosition: "Round the lips steadily without changing the sound.", writingHint: "Read the Damma letter together with the following Waw.",
     traceValue: "بُو", examples: maddWawDrill(),
@@ -240,9 +235,9 @@ export const TOPIC_LESSONS: TopicLesson[] = [
   lesson({
     id: "madd-ya", moduleId: "madd", kind: "madd", title: "Madd Ya", arabicTitle: "مَدُّ اليَاء",
     summary: "Kasra followed by silent Ya stretches ‘i’ for two counts.",
-    childExplanation: "Smile gently and stretch ‘ee’ for two counts. Read every letter: ī, bī, tī, thī …",
+    childExplanation: "Smile gently and stretch ‘ee’ for two counts. Read every letter: Ee, Bee, Tee, Thee …",
     teacherTip: "Keep the sound pure and avoid turning it into the English diphthong ‘ay’.",
-    parentTip: "Trace two stars while holding each long sound from Alif to Ya.",
+    parentTip: "Trace two stars while holding each long sound from Alif to Yaa.",
     mouthPosition: "Slightly spread the lips and keep the long sound even.", writingHint: "Read the Kasra letter together with the following Ya.",
     traceValue: "بِي", examples: maddYaDrill(),
   }),
@@ -256,10 +251,10 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     traceValue: "بـ ـبـ ـب", examples: LETTERS.map((item) => example(`forms-${item.id}`, item.forms.join("  "), item.name)),
   }),
   ...([
-    ["reading-2", "Two-Letter Words", "كَلِمَاتٌ مِنْ حَرْفَيْنِ", "Blend two letters without pausing.", [example("read-2-ab", "أَبْ", "ab"), example("read-2-min", "مِنْ", "min", "from", ["مِ", "نْ"]), example("read-2-hal", "هَلْ", "hal", "is/do", ["هَ", "لْ"]), example("read-2-qul", "قُلْ", "qul", "say", ["قُ", "لْ"]), example("read-2-man", "مَنْ", "man", "who", ["مَ", "نْ"]), example("read-2-bal", "بَلْ", "bal", "rather", ["بَ", "لْ"])]],
-    ["reading-3", "Three-Letter Words", "كَلِمَاتٌ مِنْ ثَلَاثَةِ أَحْرُفٍ", "Read three parts in one smooth voice.", [example("read-3-kataba", "كَتَبَ", "kataba", "he wrote", ["كَ", "تَ", "بَ"]), example("read-3-alima", "عَلِمَ", "alima", "he knew", ["عَ", "لِ", "مَ"]), example("read-3-qamar", "قَمَر", "qamar", "moon", ["قَ", "مَ", "رْ"]), example("read-3-walad", "وَلَد", "walad", "boy", ["وَ", "لَ", "دْ"]), example("read-3-kitab", "كِتَاب", "kitāb", "book", ["كِ", "تَا", "بْ"]), example("read-3-salam", "سَلَام", "salām", "peace", ["سَ", "لَا", "مْ"])]],
-    ["reading-4", "Four-Letter Words", "كَلِمَاتٌ مِنْ أَرْبَعَةِ أَحْرُفٍ", "Keep each vowel clear as words become longer.", [example("read-4-qamar", "قَمَرٌ", "qamarun", "moon", ["قَ", "مَ", "رٌ"]), example("read-4-kitab", "كِتَابٌ", "kitābun", "book", ["كِ", "تَا", "بٌ"]), example("read-4-masjid", "مَسْجِدٌ", "masjidun", "mosque", ["مَسْ", "جِ", "دٌ"]), example("read-4-nahr", "نَهَرٌ", "naharun", "river", ["نَ", "هَ", "رٌ"]), example("read-4-bab", "بَابٌ", "bābun", "door", ["بَا", "بٌ"]), example("read-4-nur", "نُورٌ", "nūrun", "light", ["نُو", "رٌ"])]],
-    ["reading-5", "Five-Letter Words", "كَلِمَاتٌ مِنْ خَمْسَةِ أَحْرُفٍ", "Use everything learned to read a longer word.", [example("read-5-rahmah", "رَحْمَةٌ", "raḥmatun", "mercy", ["رَ", "حْ", "مَ", "ةٌ"]), example("read-5-shajarah", "شَجَرَةٌ", "shajaratun", "tree", ["شَ", "جَ", "رَ", "ةٌ"]), example("read-5-madrasa", "مَدْرَسَةٌ", "madrasatun", "school", ["مَدْ", "رَ", "سَ", "ةٌ"]), example("read-5-samawat", "سَمَاوَاتٌ", "samāwātun", "heavens", ["سَ", "مَا", "وَا", "تٌ"]), example("read-5-jannat", "جَنَّاتٌ", "jannātun", "gardens", ["جَنْ", "نَا", "تٌ"]), example("read-5-salawat", "صَلَوَاتٌ", "ṣalawātun", "prayers", ["صَ", "لَ", "وَا", "تٌ"])]],
+    ["reading-2", "Two-Letter Words", "كَلِمَاتٌ مِنْ حَرْفَيْنِ", "Blend two letters without pausing.", [example("read-2-ab", "أَبْ", "Ab"), example("read-2-min", "مِنْ", "Min", "from", ["مِ", "نْ"]), example("read-2-hal", "هَلْ", "Hal", "is/do", ["هَ", "لْ"]), example("read-2-qul", "قُلْ", "Qul", "say", ["قُ", "لْ"]), example("read-2-man", "مَنْ", "Man", "who", ["مَ", "نْ"]), example("read-2-bal", "بَلْ", "Bal", "rather", ["بَ", "لْ"])]],
+    ["reading-3", "Three-Letter Words", "كَلِمَاتٌ مِنْ ثَلَاثَةِ أَحْرُفٍ", "Read three parts in one smooth voice.", [example("read-3-kataba", "كَتَبَ", "Kataba", "he wrote", ["كَ", "تَ", "بَ"]), example("read-3-alima", "عَلِمَ", "Alima", "he knew", ["عَ", "لِ", "مَ"]), example("read-3-qamar", "قَمَر", "Qamar", "moon", ["قَ", "مَ", "رْ"]), example("read-3-walad", "وَلَد", "Walad", "boy", ["وَ", "لَ", "دْ"]), example("read-3-kitab", "كِتَاب", "Kitaab", "book", ["كِ", "تَا", "بْ"]), example("read-3-salam", "سَلَام", "Salaam", "peace", ["سَ", "لَا", "مْ"])]],
+    ["reading-4", "Four-Letter Words", "كَلِمَاتٌ مِنْ أَرْبَعَةِ أَحْرُفٍ", "Keep each vowel clear as words become longer.", [example("read-4-qamar", "قَمَرٌ", "Qamarun", "moon", ["قَ", "مَ", "رٌ"]), example("read-4-kitab", "كِتَابٌ", "Kitaabun", "book", ["كِ", "تَا", "بٌ"]), example("read-4-masjid", "مَسْجِدٌ", "Masjidun", "mosque", ["مَسْ", "جِ", "دٌ"]), example("read-4-nahr", "نَهَرٌ", "Naharun", "river", ["نَ", "هَ", "رٌ"]), example("read-4-bab", "بَابٌ", "Baabun", "door", ["بَا", "بٌ"]), example("read-4-nur", "نُورٌ", "Noorun", "light", ["نُو", "رٌ"])]],
+    ["reading-5", "Five-Letter Words", "كَلِمَاتٌ مِنْ خَمْسَةِ أَحْرُفٍ", "Use everything learned to read a longer word.", [example("read-5-rahmah", "رَحْمَةٌ", "Rahmatun", "mercy", ["رَ", "حْ", "مَ", "ةٌ"]), example("read-5-shajarah", "شَجَرَةٌ", "Shajaratun", "tree", ["شَ", "جَ", "رَ", "ةٌ"]), example("read-5-madrasa", "مَدْرَسَةٌ", "Madrasatun", "school", ["مَدْ", "رَ", "سَ", "ةٌ"]), example("read-5-samawat", "سَمَاوَاتٌ", "Samaawaatun", "heavens", ["سَ", "مَا", "وَا", "تٌ"]), example("read-5-jannat", "جَنَّاتٌ", "Jannaatun", "gardens", ["جَنْ", "نَا", "تٌ"]), example("read-5-salawat", "صَلَوَاتٌ", "Salawaatun", "prayers", ["صَ", "لَ", "وَا", "تٌ"])]],
   ] as const).map(([id, title, arabicTitle, explanation, examples]) => lesson({
     id, moduleId: "word-reading", kind: "reading", title, arabicTitle,
     summary: explanation, childExplanation: explanation,
@@ -274,12 +269,12 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     teacherTip: "Treat these as recognition practice, not independent Tajweed certification. Correct from a reviewed recitation.",
     parentTip: "Play the reviewed recording when available and avoid guessing unfamiliar sounds.",
     examples: [
-      example("quran-rabb", "رَبّ", "rabb", "Lord", ["رَ", "بّ"]),
-      example("quran-qul", "قُلْ", "qul", "say", ["قُ", "لْ"]),
-      example("quran-nur", "نُور", "nūr", "light", ["نُو", "رْ"]),
-      example("quran-min", "مِنْ", "min", "from", ["مِ", "نْ"]),
-      example("quran-inna", "إِنَّ", "inna", "indeed", ["إِ", "نْ", "نَ"]),
-      example("quran-alladhina", "الَّذِينَ", "alladhīna", "those who", ["الْ", "لَذِي", "نَ"]),
+      example("quran-rabb", "رَبّ", "Rabb", "Lord", ["رَ", "بّ"]),
+      example("quran-qul", "قُلْ", "Qul", "say", ["قُ", "لْ"]),
+      example("quran-nur", "نُور", "Noor", "light", ["نُو", "رْ"]),
+      example("quran-min", "مِنْ", "Min", "from", ["مِ", "نْ"]),
+      example("quran-inna", "إِنَّ", "Inna", "indeed", ["إِ", "نْ", "نَ"]),
+      example("quran-alladhina", "الَّذِينَ", "Alladheena", "those who", ["الْ", "لَذِي", "نَ"]),
     ],
   }),
   lesson({
@@ -289,12 +284,12 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     teacherTip: "Ask the learner to name the sign before attempting the word.",
     parentTip: "Celebrate correct recognition even when pronunciation still needs help.",
     examples: [
-      example("recognition-huda", "هُدًى", "hudan", "guidance"),
-      example("recognition-rahim", "رَحِيم", "raḥīm", "merciful"),
-      example("recognition-allah", "اللّٰه", "Allāh"),
-      example("recognition-alhamd", "الْحَمْدُ", "al-ḥamdu", "all praise"),
-      example("recognition-maliki", "مَالِكِ", "māliki", "Owner"),
-      example("recognition-sirat", "صِرَاطَ", "ṣirāṭa", "path"),
+      example("recognition-huda", "هُدًى", "Hudan", "guidance"),
+      example("recognition-rahim", "رَحِيم", "Raheem", "merciful"),
+      example("recognition-allah", "اللّٰه", "Allah"),
+      example("recognition-alhamd", "الْحَمْدُ", "Alhamdu", "all praise"),
+      example("recognition-maliki", "مَالِكِ", "Maaliki", "Owner"),
+      example("recognition-sirat", "صِرَاطَ", "Siraata", "path"),
     ],
   }),
   lesson({
@@ -304,9 +299,9 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     teacherTip: "Use only Qari-reviewed audio and pause after each highlighted segment.",
     parentTip: "Listen alongside your child and leave correction to the teacher when unsure.",
     examples: [
-      example("guided-bism", "بِسْمِ اللّٰهِ", "bismi-llāh", "in the name of Allah", ["بِسْ", "مِ", "اللّٰهِ"]),
-      example("guided-alhamd", "الْحَمْدُ لِلّٰهِ", "al-ḥamdu li-llāh", "all praise is for Allah", ["الْحَمْ", "دُ", "لِلّٰهِ"]),
-      example("guided-rabb", "رَبِّ الْعَالَمِينَ", "rabbi-l-ʿālamīn", "Lord of the worlds", ["رَبِّ", "الْعَا", "لَمِينَ"]),
+      example("guided-bism", "بِسْمِ اللّٰهِ", "Bismillah", "in the name of Allah", ["بِسْ", "مِ", "اللّٰهِ"]),
+      example("guided-alhamd", "الْحَمْدُ لِلّٰهِ", "Alhamdu lillah", "all praise is for Allah", ["الْحَمْ", "دُ", "لِلّٰهِ"]),
+      example("guided-rabb", "رَبِّ الْعَالَمِينَ", "Rabbil aalameen", "Lord of the worlds", ["رَبِّ", "الْعَا", "لَمِينَ"]),
     ],
   }),
   lesson({
@@ -317,12 +312,12 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     parentTip: "Keep revision playful and stop before the child becomes tired.",
     examples: [
       ...harakaatDrill("fatha").slice(0, 7),
-      example("revision-bin", "بٍ", "bin"),
-      example("revision-bun", "بٌ", "bun"),
-      example("revision-ab", "أَبْ", "ab"),
-      example("revision-bba", "بَّ", "bba"),
-      example("revision-baa", "بَا", "bā"),
-      example("revision-nur", "نُور", "nūr", "light"),
+      example("revision-bin", "بٍ", "Been"),
+      example("revision-bun", "بٌ", "Boon"),
+      example("revision-ab", "أَبْ", "Ab"),
+      example("revision-bba", "بَّ", "BBaa"),
+      example("revision-baa", "بَا", "Baa"),
+      example("revision-nur", "نُور", "Noor", "light"),
     ],
   }),
   lesson({
@@ -332,13 +327,13 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     teacherTip: "Measure accuracy and confidence separately.",
     parentTip: "Let your child choose the first word to build confidence.",
     examples: [
-      example("rev-min", "مِنْ", "min"),
-      example("rev-qul", "قُلْ", "qul", "say"),
-      example("rev-kataba", "كَتَبَ", "kataba", "he wrote"),
-      example("rev-qamar", "قَمَرٌ", "qamarun", "moon"),
-      example("rev-kitab", "كِتَابٌ", "kitābun", "book"),
-      example("rev-rahmah", "رَحْمَةٌ", "raḥmatun", "mercy"),
-      example("rev-shajarah", "شَجَرَةٌ", "shajaratun", "tree"),
+      example("rev-min", "مِنْ", "Min"),
+      example("rev-qul", "قُلْ", "Qul", "say"),
+      example("rev-kataba", "كَتَبَ", "Kataba", "he wrote"),
+      example("rev-qamar", "قَمَرٌ", "Qamarun", "moon"),
+      example("rev-kitab", "كِتَابٌ", "Kitaabun", "book"),
+      example("rev-rahmah", "رَحْمَةٌ", "Rahmatun", "mercy"),
+      example("rev-shajarah", "شَجَرَةٌ", "Shajaratun", "tree"),
     ],
   }),
   lesson({
@@ -348,13 +343,13 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     teacherTip: "Use the score as a guide for review, not as a Tajweed certification.",
     parentTip: "Praise effort and progress regardless of the result.",
     examples: [
-      example("assessment-fatha", "تَ", "ta"),
-      example("assessment-kasra", "بِ", "bi"),
-      example("assessment-damma", "قُ", "qu"),
-      example("assessment-tanween", "كِتَابٌ", "kitābun", "book"),
-      example("assessment-sukoon", "قُلْ", "qul"),
-      example("assessment-shaddah", "إِنَّ", "inna"),
-      example("assessment-madd", "نُور", "nūr"),
+      example("assessment-fatha", "تَ", "Taa"),
+      example("assessment-kasra", "بِ", "Bee"),
+      example("assessment-damma", "قُ", "Qoo"),
+      example("assessment-tanween", "كِتَابٌ", "Kitaabun", "book"),
+      example("assessment-sukoon", "قُلْ", "Qul"),
+      example("assessment-shaddah", "إِنَّ", "Inna"),
+      example("assessment-madd", "نُور", "Noor"),
     ],
   }),
   lesson({
@@ -364,25 +359,25 @@ export const TOPIC_LESSONS: TopicLesson[] = [
     teacherTip: "Verify Makharij and recitation against approved references before marking mastery.",
     parentTip: "Ask the teacher which two skills to practise next.",
     examples: [
-      example("teacher-review-rabb", "رَبّ", "rabb"),
-      example("teacher-review-rahim", "رَحِيم", "raḥīm"),
-      example("teacher-review-bism", "بِسْمِ", "bismi"),
-      example("teacher-review-qamar", "قَمَرٌ", "qamarun", "moon"),
+      example("teacher-review-rabb", "رَبّ", "Rabb"),
+      example("teacher-review-rahim", "رَحِيم", "Raheem"),
+      example("teacher-review-bism", "بِسْمِ", "Bismi"),
+      example("teacher-review-qamar", "قَمَرٌ", "Qamarun", "moon"),
     ],
   }),
   lesson({
     id: "parent-practice", moduleId: "final-review", kind: "assessment", title: "Parent Practice", arabicTitle: "تَدْرِيبٌ مَعَ الأُسْرَة",
     summary: "A short home routine using familiar sounds and words.",
-    childExplanation: "Choose favourite cards from Alif to Ya and teach them to your family.",
+    childExplanation: "Choose favourite cards from Alif to Yaa and teach them to your family.",
     teacherTip: "Send only reviewed items for home practice.",
     parentTip: "Listen, praise, and replay the approved audio instead of modelling uncertain pronunciation.",
     examples: [
-      example("parent-ba", "بَ", "ba"),
-      example("parent-ta", "تَ", "ta"),
-      example("parent-ab", "أَبْ", "ab"),
-      example("parent-baa", "بَا", "bā"),
-      example("parent-nur", "نُور", "nūr", "light"),
-      example("parent-qamar", "قَمَرٌ", "qamarun", "moon"),
+      example("parent-ba", "بَ", "Baa"),
+      example("parent-ta", "تَ", "Taa"),
+      example("parent-ab", "أَبْ", "Ab"),
+      example("parent-baa", "بَا", "Baa"),
+      example("parent-nur", "نُور", "Noor", "light"),
+      example("parent-qamar", "قَمَرٌ", "Qamarun", "moon"),
     ],
   }),
 ];
@@ -396,7 +391,7 @@ export const CURRICULUM_MODULES: QaidaModule[] = [
   { id: "double-harakaat", order: 3, title: "Double Harakaat", arabicTitle: "التَّنْوِين", description: "Add the gentle n-ending of Tanween.", icon: "بً", accent: "from-violet-500 to-purple-600", prerequisite: "harakaat", screenIds: screens("double-harakaat"), reviewStatus: pending },
   { id: "sukoon", order: 4, title: "Sukoon", arabicTitle: "السُّكُون", description: "Learn how a letter stops without a vowel.", icon: "بْ", accent: "from-cyan-500 to-teal-600", prerequisite: "double-harakaat", screenIds: screens("sukoon"), reviewStatus: pending },
   { id: "shaddah", order: 5, title: "Shaddah", arabicTitle: "الشَّدَّة", description: "Hear and read doubled letters.", icon: "بّ", accent: "from-rose-500 to-pink-600", prerequisite: "sukoon", screenIds: screens("shaddah"), reviewStatus: pending },
-  { id: "madd", order: 6, title: "Madd", arabicTitle: "المَدّ", description: "Stretch Alif, Waw, and Ya for two counts.", icon: "بَا", accent: "from-amber-500 to-orange-600", prerequisite: "shaddah", screenIds: screens("madd"), reviewStatus: pending },
+  { id: "madd", order: 6, title: "Madd", arabicTitle: "المَدّ", description: "Stretch Alif, Waaw, and Yaa for two counts.", icon: "بَا", accent: "from-amber-500 to-orange-600", prerequisite: "shaddah", screenIds: screens("madd"), reviewStatus: pending },
   { id: "joining", order: 7, title: "Letter Joining", arabicTitle: "وَصْلُ الحُرُوف", description: "Explore isolated, initial, medial, and final forms.", icon: "بـ", accent: "from-indigo-500 to-blue-600", prerequisite: "madd", screenIds: screens("joining"), reviewStatus: pending },
   { id: "word-reading", order: 8, title: "Word Reading", arabicTitle: "قِرَاءَةُ الكَلِمَات", description: "Progress from two-letter to five-letter words.", icon: "كَلِمَة", accent: "from-fuchsia-500 to-violet-600", prerequisite: "joining", screenIds: screens("word-reading"), reviewStatus: pending },
   { id: "quranic-practice", order: 9, title: "Quranic Practice", arabicTitle: "تَدْرِيبٌ قُرْآنِيّ", description: "Recognise and read short Quranic words carefully.", icon: "قُرْآن", accent: "from-emerald-600 to-green-700", prerequisite: "word-reading", screenIds: screens("quranic-practice"), reviewStatus: pending },
