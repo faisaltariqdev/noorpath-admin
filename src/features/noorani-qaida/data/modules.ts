@@ -6,6 +6,8 @@ import type {
   TopicLesson,
 } from "../types";
 import { LETTERS } from "./curriculum";
+import { DAILY_DUAS_LESSONS } from "./dailyDuas";
+import { NAMAZ_LESSONS } from "./namaz";
 import { ALIF_PRONUNCIATION, QAIDA_PRONUNCIATIONS } from "./pronunciation";
 
 const pending = "pending-qari-review" as const;
@@ -380,6 +382,9 @@ export const TOPIC_LESSONS: TopicLesson[] = [
       example("parent-qamar", "قَمَرٌ", "Qamarun", "moon"),
     ],
   }),
+  // Additive modules — existing Qaida lessons above stay unchanged
+  ...DAILY_DUAS_LESSONS,
+  ...NAMAZ_LESSONS,
 ];
 
 const screens = (moduleId: ModuleId) =>
@@ -397,6 +402,8 @@ export const CURRICULUM_MODULES: QaidaModule[] = [
   { id: "quranic-practice", order: 9, title: "Quranic Practice", arabicTitle: "تَدْرِيبٌ قُرْآنِيّ", description: "Recognise and read short Quranic words carefully.", icon: "قُرْآن", accent: "from-emerald-600 to-green-700", prerequisite: "word-reading", screenIds: screens("quranic-practice"), reviewStatus: pending },
   { id: "revision", order: 10, title: "Revision", arabicTitle: "المُرَاجَعَة", description: "Mix letters, marks, joining, and reading.", icon: "↻", accent: "from-blue-500 to-indigo-600", prerequisite: "quranic-practice", screenIds: screens("revision"), reviewStatus: pending },
   { id: "final-review", order: 11, title: "Final Review", arabicTitle: "المُرَاجَعَةُ النِّهَائِيَّة", description: "Complete the assessment with teacher and parent review.", icon: "🏆", accent: "from-amber-500 to-yellow-600", prerequisite: "revision", screenIds: [...screens("final-review"), "certificate"], reviewStatus: pending },
+  { id: "daily-duas", order: 12, title: "Daily Duas", arabicTitle: "الأَدْعِيَةُ اليَوْمِيَّة", description: "Learn everyday duas — eating, home, travel, sleep, and more — with English meaning.", icon: "دُعَا", accent: "from-teal-500 to-cyan-600", prerequisite: "final-review", screenIds: screens("daily-duas"), reviewStatus: pending },
+  { id: "namaz", order: 13, title: "Namaz", arabicTitle: "الصَّلَاة", description: "Learn wudu and salah step by step with visual postures and English translation.", icon: "صَلاة", accent: "from-green-600 to-emerald-800", prerequisite: "daily-duas", screenIds: screens("namaz"), reviewStatus: pending },
 ];
 
 export const TOPIC_LESSON_BY_ID = Object.fromEntries(

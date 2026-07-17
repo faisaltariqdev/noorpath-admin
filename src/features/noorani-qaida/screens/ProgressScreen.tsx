@@ -16,7 +16,7 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
   const earnedBadges = progress.badges.filter((b) => b.earned);
 
   const stats = [
-    { icon: "📖", label: "Curriculum", value: `${modulesDone}/11`, sub: "modules completed" },
+    { icon: "📖", label: "Curriculum", value: `${modulesDone}/${CURRICULUM_MODULES.length}`, sub: "modules completed" },
     { icon: "⚡", label: "XP", value: progress.xp, sub: `Level ${progress.level}` },
     { icon: "🪙", label: "Coins", value: progress.coins, sub: "earned total" },
     { icon: "⭐", label: "Stars", value: progress.stars, sub: "star ratings" },

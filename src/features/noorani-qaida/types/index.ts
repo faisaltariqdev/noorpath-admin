@@ -29,7 +29,9 @@ export type ModuleId =
   | "word-reading"
   | "quranic-practice"
   | "revision"
-  | "final-review";
+  | "final-review"
+  | "daily-duas"
+  | "namaz";
 
 export type LessonKind =
   | "letter"
@@ -39,7 +41,41 @@ export type LessonKind =
   | "reading"
   | "quranic"
   | "revision"
-  | "assessment";
+  | "assessment"
+  | "dua"
+  | "salah";
+
+/** Visual posture used for Namaz / Wudu step illustration */
+export type SalahPosture =
+  | "overview"
+  | "standing"
+  | "takbir"
+  | "bowing"
+  | "rising"
+  | "prostration"
+  | "sitting"
+  | "salam"
+  | "wudu-hands"
+  | "wudu-mouth"
+  | "wudu-nose"
+  | "wudu-face"
+  | "wudu-arms"
+  | "wudu-head"
+  | "wudu-ears"
+  | "wudu-feet";
+
+export interface SalahStep {
+  id: string;
+  order: number;
+  title: string;
+  arabicTitle?: string;
+  arabic?: string;
+  transliteration?: string;
+  translation: string;
+  visualCue: string;
+  posture: SalahPosture;
+  teacherNote?: string;
+}
 
 export interface InteractiveExample {
   id: string;
@@ -65,6 +101,9 @@ export interface TopicLesson {
   traceValue?: string;
   audioKey: string;
   examples: InteractiveExample[];
+  /** Step-by-step guided flow for Namaz / Wudu lessons */
+  steps?: SalahStep[];
+  whenToSay?: string;
   reviewStatus: ReviewStatus;
 }
 

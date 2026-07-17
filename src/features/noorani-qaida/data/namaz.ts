@@ -1,0 +1,427 @@
+import type { InteractiveExample, SalahStep, TopicLesson } from "../types";
+
+const pending = "pending-qari-review" as const;
+
+function example(
+  id: string,
+  arabic: string,
+  transliteration: string,
+  meaning?: string,
+): InteractiveExample {
+  return { id, arabic, transliteration, meaning, audioKey: `example-${id}` };
+}
+
+function salah(
+  data: Omit<TopicLesson, "reviewStatus" | "audioKey" | "moduleId" | "kind"> & {
+    steps: SalahStep[];
+  },
+): TopicLesson {
+  return {
+    ...data,
+    moduleId: "namaz",
+    kind: "salah",
+    audioKey: `lesson-${data.id}`,
+    reviewStatus: pending,
+  };
+}
+
+/**
+ * Namaz (Salah) curriculum — separate module with step-by-step visual flow.
+ * Existing Qaida modules are not modified; this array is appended in modules.ts.
+ */
+export const NAMAZ_LESSONS: TopicLesson[] = [
+  salah({
+    id: "namaz-overview",
+    title: "What is Namaz?",
+    arabicTitle: "مَا هِيَ الصَّلَاة؟",
+    summary: "Namaz is the daily prayer — standing before Allah with body, tongue, and heart.",
+    childExplanation:
+      "Namaz means prayer. We wash (wudu), face the Qiblah, stand calmly, and speak to Allah with special words and movements.",
+    teacherTip:
+      "Keep the first lesson conceptual: purpose, five daily prayers, and why we prepare with wudu.",
+    parentTip: "Point out the prayer times at home so children see Namaz as a daily rhythm.",
+    examples: [
+      example("fajr", "صَلَاةُ الفَجْر", "Salat al-Fajr", "Dawn prayer"),
+      example("dhuhr", "صَلَاةُ الظُّهْر", "Salat adh-Dhuhr", "Midday prayer"),
+      example("asr", "صَلَاةُ العَصْر", "Salat al-‘Asr", "Afternoon prayer"),
+      example("maghrib", "صَلَاةُ المَغْرِب", "Salat al-Maghrib", "Sunset prayer"),
+      example("isha", "صَلَاةُ العِشَاء", "Salat al-‘Ishaa", "Night prayer"),
+    ],
+    steps: [
+      {
+        id: "ov-1",
+        order: 1,
+        title: "Prepare with Wudu",
+        translation: "Clean yourself with wudu before standing for prayer.",
+        visualCue: "Wash face, arms, head, and feet carefully.",
+        posture: "wudu-face",
+        teacherNote: "Wudu comes before every salah when needed.",
+      },
+      {
+        id: "ov-2",
+        order: 2,
+        title: "Face the Qiblah",
+        translation: "Stand facing the direction of the Ka‘bah in Makkah.",
+        visualCue: "Body upright, feet steady, eyes soft.",
+        posture: "standing",
+      },
+      {
+        id: "ov-3",
+        order: 3,
+        title: "Make Intention (Niyyah)",
+        translation: "Intend in your heart which prayer you are about to pray.",
+        visualCue: "Calm heart — intention does not need to be spoken aloud.",
+        posture: "standing",
+      },
+      {
+        id: "ov-4",
+        order: 4,
+        title: "Begin with Takbir",
+        arabic: "اللّٰهُ أَكْبَرُ",
+        transliteration: "Allahu Akbar",
+        translation: "Allah is the Greatest — raise the hands and start the prayer.",
+        visualCue: "Hands raised near the ears or shoulders, then fold.",
+        posture: "takbir",
+      },
+    ],
+  }),
+  salah({
+    id: "namaz-wudu",
+    title: "How to Make Wudu",
+    arabicTitle: "كَيْفِيَّةُ الوُضُوء",
+    summary: "Learn each step of wudu with clear English guidance.",
+    childExplanation:
+      "Wudu is washing before prayer. We wash in order, calmly, without wasting water.",
+    teacherTip: "Demonstrate once fully, then let the child mime each step while you narrate.",
+    parentTip: "Practise at the sink with real water when the child is ready.",
+    examples: [
+      example("wudu-niyyah", "نِيَّةُ الوُضُوء", "Niyyat al-wudu", "Intention for wudu in the heart"),
+      example("wudu-bismillah", "بِسْمِ اللّٰهِ", "Bismillah", "Begin wudu in the name of Allah"),
+    ],
+    steps: [
+      {
+        id: "w-1",
+        order: 1,
+        title: "Intention & Bismillah",
+        arabic: "بِسْمِ اللّٰهِ",
+        transliteration: "Bismillah",
+        translation: "Intend wudu in your heart and begin in the name of Allah.",
+        visualCue: "Stand at the sink, calm and focused.",
+        posture: "overview",
+      },
+      {
+        id: "w-2",
+        order: 2,
+        title: "Wash the Hands",
+        translation: "Wash both hands up to the wrists three times.",
+        visualCue: "Rub between the fingers carefully.",
+        posture: "wudu-hands",
+      },
+      {
+        id: "w-3",
+        order: 3,
+        title: "Rinse the Mouth",
+        translation: "Take water into the mouth and rinse three times.",
+        visualCue: "Swish gently, then spit out.",
+        posture: "wudu-mouth",
+      },
+      {
+        id: "w-4",
+        order: 4,
+        title: "Clean the Nose",
+        translation: "Sniff water lightly into the nose and blow it out three times.",
+        visualCue: "Be gentle — especially with young children.",
+        posture: "wudu-nose",
+      },
+      {
+        id: "w-5",
+        order: 5,
+        title: "Wash the Face",
+        translation: "Wash the whole face from forehead to chin and ear to ear three times.",
+        visualCue: "Cover the full face evenly.",
+        posture: "wudu-face",
+      },
+      {
+        id: "w-6",
+        order: 6,
+        title: "Wash the Arms",
+        translation: "Wash the right arm to the elbow three times, then the left arm.",
+        visualCue: "Include the elbows fully.",
+        posture: "wudu-arms",
+      },
+      {
+        id: "w-7",
+        order: 7,
+        title: "Wipe the Head",
+        translation: "Wipe the head with wet hands once from front to back.",
+        visualCue: "Light wipe — do not scrub hard.",
+        posture: "wudu-head",
+      },
+      {
+        id: "w-8",
+        order: 8,
+        title: "Wipe the Ears",
+        translation: "Wipe the inside and outside of both ears with wet fingers.",
+        visualCue: "Index finger inside, thumb outside.",
+        posture: "wudu-ears",
+      },
+      {
+        id: "w-9",
+        order: 9,
+        title: "Wash the Feet",
+        translation: "Wash the right foot to the ankle three times, then the left foot. Include between the toes.",
+        visualCue: "Ankles must be washed too.",
+        posture: "wudu-feet",
+      },
+      {
+        id: "w-10",
+        order: 10,
+        title: "Dua After Wudu",
+        arabic: "أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ وَحْدَهُ لَا شَرِيكَ لَهُ، وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
+        transliteration:
+          "Ashhadu an laa ilaaha illallahu wahdahu laa shareeka lah, wa ashhadu anna Muhammadan ‘abduhu wa rasooluh",
+        translation:
+          "I bear witness that there is no god but Allah alone, with no partner, and I bear witness that Muhammad is His servant and Messenger.",
+        visualCue: "Face forward, recite clearly after finishing wudu.",
+        posture: "standing",
+        teacherNote: "Optional short ending many families also teach: Allahumma ij‘alnee minat-tawwaabeen…",
+      },
+    ],
+  }),
+  salah({
+    id: "namaz-rakah-steps",
+    title: "One Rakah — Step by Step",
+    arabicTitle: "أَرْكَانُ الرَّكْعَة",
+    summary: "Learn one complete unit of prayer with Arabic, transliteration, and English.",
+    childExplanation:
+      "A rakah is one set of prayer movements. We stand, bow, stand again, prostrate, sit, and prostrate again.",
+    teacherTip: "Move slowly. Freeze at each posture so the child can copy the body shape.",
+    parentTip: "Practise one rakah barefoot on a prayer mat at home.",
+    examples: [
+      example("takbir", "اللّٰهُ أَكْبَرُ", "Allahu Akbar", "Allah is the Greatest"),
+      example("fatiha-label", "سُورَةُ الفَاتِحَة", "Surat al-Fatihah", "The Opening — recited while standing"),
+    ],
+    steps: [
+      {
+        id: "r-1",
+        order: 1,
+        title: "Takbiratul Ihram",
+        arabicTitle: "تَكْبِيرَةُ الإِحْرَام",
+        arabic: "اللّٰهُ أَكْبَرُ",
+        transliteration: "Allahu Akbar",
+        translation: "Allah is the Greatest. Raise both hands and begin the prayer.",
+        visualCue: "Hands raised, then placed on the chest or below the navel (per family madhhab).",
+        posture: "takbir",
+      },
+      {
+        id: "r-2",
+        order: 2,
+        title: "Standing Recitation",
+        arabicTitle: "القِيَام",
+        arabic: "سُورَةُ الفَاتِحَة + سُورَةٌ قَصِيرَة",
+        transliteration: "Surat al-Fatihah + a short surah",
+        translation: "While standing, recite Al-Fatihah, then a short portion of the Qur’an.",
+        visualCue: "Eyes soft, body still, voice clear and calm.",
+        posture: "standing",
+        teacherNote: "Use whatever short surah the child already knows (e.g. Al-Ikhlas).",
+      },
+      {
+        id: "r-3",
+        order: 3,
+        title: "Ruku (Bowing)",
+        arabicTitle: "الرُّكُوع",
+        arabic: "سُبْحَانَ رَبِّيَ الْعَظِيمِ",
+        transliteration: "Subhaana Rabbiyal-‘Azeem",
+        translation: "Glory be to my Lord, the Magnificent. (Usually said three times.)",
+        visualCue: "Back straight, hands on knees, head aligned with the back.",
+        posture: "bowing",
+      },
+      {
+        id: "r-4",
+        order: 4,
+        title: "Rising from Ruku",
+        arabicTitle: "الرَّفْعُ مِنَ الرُّكُوع",
+        arabic: "سَمِعَ اللّٰهُ لِمَنْ حَمِدَهُ · رَبَّنَا وَلَكَ الْحَمْدُ",
+        transliteration: "Sami‘allahu liman hamidah · Rabbanaa wa lakal-hamd",
+        translation: "Allah hears the one who praises Him. Our Lord, and to You is all praise.",
+        visualCue: "Stand upright again with calm balance.",
+        posture: "rising",
+      },
+      {
+        id: "r-5",
+        order: 5,
+        title: "First Sujood",
+        arabicTitle: "السُّجُود",
+        arabic: "سُبْحَانَ رَبِّيَ الْأَعْلَى",
+        transliteration: "Subhaana Rabbiyal-A‘laa",
+        translation: "Glory be to my Lord, the Most High. (Usually said three times.)",
+        visualCue: "Forehead, nose, palms, knees, and toes on the ground.",
+        posture: "prostration",
+      },
+      {
+        id: "r-6",
+        order: 6,
+        title: "Sitting Between Sujood",
+        arabicTitle: "الجُلُوسُ بَيْنَ السَّجْدَتَيْن",
+        arabic: "رَبِّ اغْفِرْ لِي",
+        transliteration: "Rabbighfir lee",
+        translation: "My Lord, forgive me.",
+        visualCue: "Sit calmly on the legs between the two prostrations.",
+        posture: "sitting",
+      },
+      {
+        id: "r-7",
+        order: 7,
+        title: "Second Sujood",
+        arabicTitle: "السَّجْدَةُ الثَّانِيَة",
+        arabic: "سُبْحَانَ رَبِّيَ الْأَعْلَى",
+        transliteration: "Subhaana Rabbiyal-A‘laa",
+        translation: "Glory be to my Lord, the Most High. Complete the second prostration.",
+        visualCue: "Same posture as the first sujood.",
+        posture: "prostration",
+      },
+    ],
+  }),
+  salah({
+    id: "namaz-tashahhud-salam",
+    title: "Tashahhud & Ending Salam",
+    arabicTitle: "التَّشَهُّدُ وَالتَّسْلِيم",
+    summary: "Learn the sitting testimony and how to end the prayer with salam.",
+    childExplanation:
+      "Near the end of prayer we sit, say the Tashahhud, send salawat on the Prophet ﷺ, then turn the head for salam.",
+    teacherTip: "Separate the sitting words from the final salam so children do not rush the ending.",
+    parentTip: "Practise the head turns slowly left and right with a smile.",
+    examples: [
+      example(
+        "tashahhud-short",
+        "التَّحِيَّاتُ لِلّٰهِ...",
+        "At-tahiyyaatu lillah…",
+        "All greetings are for Allah… (full Tashahhud)",
+      ),
+      example("salam", "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ", "Assalamu alaikum wa rahmatullah", "Peace be upon you and the mercy of Allah"),
+    ],
+    steps: [
+      {
+        id: "t-1",
+        order: 1,
+        title: "Sit for Tashahhud",
+        arabicTitle: "الجُلُوس",
+        translation: "Sit calmly after completing the required rak‘aat.",
+        visualCue: "Back upright, hands on thighs, gaze soft.",
+        posture: "sitting",
+      },
+      {
+        id: "t-2",
+        order: 2,
+        title: "Recite Tashahhud",
+        arabicTitle: "التَّشَهُّد",
+        arabic:
+          "التَّحِيَّاتُ لِلّٰهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ، السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللّٰهِ وَبَرَكَاتُهُ، السَّلَامُ عَلَيْنَا وَعَلَىٰ عِبَادِ اللّٰهِ الصَّالِحِينَ، أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
+        transliteration:
+          "At-tahiyyaatu lillahi was-salawaatu wat-tayyibaat. As-salaamu ‘alayka ayyuhan-nabiyyu wa rahmatullahi wa barakaatuh. As-salaamu ‘alaynaa wa ‘alaa ‘ibaadillahis-saaliheen. Ashhadu an laa ilaaha illallah, wa ashhadu anna Muhammadan ‘abduhu wa rasooluh.",
+        translation:
+          "All greetings, prayers, and pure words are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and Messenger.",
+        visualCue: "Raise the index finger gently during the shahadah as taught in your school.",
+        posture: "sitting",
+      },
+      {
+        id: "t-3",
+        order: 3,
+        title: "Salawat on the Prophet ﷺ",
+        arabicTitle: "الصَّلَاةُ عَلَى النَّبِيِّ",
+        arabic:
+          "اللّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ",
+        transliteration:
+          "Allahumma salli ‘alaa Muhammadin wa ‘alaa aali Muhammad, kamaa sallayta ‘alaa Ibraaheema wa ‘alaa aali Ibraaheem, innaka hameedun majeed.",
+        translation:
+          "O Allah, send prayers upon Muhammad and upon the family of Muhammad, as You sent prayers upon Ibrahim and upon the family of Ibrahim. Indeed You are Praiseworthy, Glorious.",
+        visualCue: "Remain seated; recite with love and clarity.",
+        posture: "sitting",
+      },
+      {
+        id: "t-4",
+        order: 4,
+        title: "Ending Salam (Right)",
+        arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ",
+        transliteration: "Assalamu alaikum wa rahmatullah",
+        translation: "Peace be upon you and the mercy of Allah — turn the head to the right.",
+        visualCue: "Turn face to the right shoulder.",
+        posture: "salam",
+      },
+      {
+        id: "t-5",
+        order: 5,
+        title: "Ending Salam (Left)",
+        arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ",
+        transliteration: "Assalamu alaikum wa rahmatullah",
+        translation: "Peace be upon you and the mercy of Allah — turn the head to the left. The prayer is complete.",
+        visualCue: "Turn face to the left shoulder.",
+        posture: "salam",
+      },
+    ],
+  }),
+  salah({
+    id: "namaz-five-prayers",
+    title: "The Five Daily Prayers",
+    arabicTitle: "الصَّلَوَاتُ الخَمْس",
+    summary: "Know each prayer’s name, time window, and typical rak‘aat count.",
+    childExplanation:
+      "Muslims pray five times every day. Each prayer has a special time and a set number of rak‘aat.",
+    teacherTip: "Use a simple daily timeline drawing so children see when each prayer fits.",
+    parentTip: "Hang a child-friendly salah timetable near the prayer area.",
+    examples: [
+      example("fajr-r", "الفَجْر · رَكْعَتَان", "Fajr · 2 rak‘aat", "Dawn — 2 units"),
+      example("dhuhr-r", "الظُّهْر · أَرْبَعُ رَكَعَات", "Dhuhr · 4 rak‘aat", "Midday — 4 units"),
+      example("asr-r", "العَصْر · أَرْبَعُ رَكَعَات", "‘Asr · 4 rak‘aat", "Afternoon — 4 units"),
+      example("maghrib-r", "المَغْرِب · ثَلَاثُ رَكَعَات", "Maghrib · 3 rak‘aat", "Sunset — 3 units"),
+      example("isha-r", "العِشَاء · أَرْبَعُ رَكَعَات", "‘Ishaa · 4 rak‘aat", "Night — 4 units"),
+    ],
+    steps: [
+      {
+        id: "p-1",
+        order: 1,
+        title: "Fajr",
+        arabicTitle: "الفَجْر",
+        translation: "Pray 2 rak‘aat at dawn, before sunrise.",
+        visualCue: "Quiet morning light — soft start to the day.",
+        posture: "standing",
+      },
+      {
+        id: "p-2",
+        order: 2,
+        title: "Dhuhr",
+        arabicTitle: "الظُّهْر",
+        translation: "Pray 4 rak‘aat after the sun passes its highest point.",
+        visualCue: "Midday pause — leave play or work briefly for Allah.",
+        posture: "standing",
+      },
+      {
+        id: "p-3",
+        order: 3,
+        title: "‘Asr",
+        arabicTitle: "العَصْر",
+        translation: "Pray 4 rak‘aat in the late afternoon.",
+        visualCue: "Afternoon light — stay mindful before Maghrib.",
+        posture: "standing",
+      },
+      {
+        id: "p-4",
+        order: 4,
+        title: "Maghrib",
+        arabicTitle: "المَغْرِب",
+        translation: "Pray 3 rak‘aat just after sunset.",
+        visualCue: "Sunset — family often prays close together.",
+        posture: "standing",
+      },
+      {
+        id: "p-5",
+        order: 5,
+        title: "‘Ishaa",
+        arabicTitle: "العِشَاء",
+        translation: "Pray 4 rak‘aat at night after the twilight disappears.",
+        visualCue: "Night calm — end the day with prayer.",
+        posture: "standing",
+      },
+    ],
+  }),
+];

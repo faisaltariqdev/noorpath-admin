@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { LETTERS } from "../data/curriculum";
+import { CURRICULUM_MODULES } from "../data/modules";
 import { createParentProgressSnapshot, type ParentProgressSnapshot } from "../data/progressAdapters";
 import { PROGRESS_STORAGE_KEY } from "../state/progress";
 
@@ -57,7 +58,7 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
         <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Verified progress summary">
           {[
             ["Curriculum progress", `${snapshot.overallCurriculumPercent}%`, "📖"],
-            ["Modules completed", `${snapshot.modulesCompleted}/11`, "🗺️"],
+            ["Modules completed", `${snapshot.modulesCompleted}/${CURRICULUM_MODULES.length}`, "🗺️"],
             ["Stored XP", progress.xp.toString(), "⭐"],
             ["Current streak", `${progress.streak} day${progress.streak === 1 ? "" : "s"}`, "🔥"],
             ["Practice recorded", formatPracticeTime(progress.totalPracticeSeconds), "⏱️"],

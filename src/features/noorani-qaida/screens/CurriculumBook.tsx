@@ -163,7 +163,7 @@ export default function CurriculumBook({
 
       <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-emerald-900/10 bg-white/90 p-4 shadow-sm">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Module {chapter.order} of 11</p>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Module {chapter.order} of {CURRICULUM_MODULES.length}</p>
           <h2 className="text-xl font-black text-slate-900">{chapter.title}</h2>
           <p className="text-sm text-slate-500">{chapter.description}</p>
         </div>

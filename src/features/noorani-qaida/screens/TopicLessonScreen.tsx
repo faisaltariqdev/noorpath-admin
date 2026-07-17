@@ -59,6 +59,7 @@ export default function TopicLessonScreen({
   }, [activeExample, audioEnabled]);
 
   const isJoining = lesson.kind === "joining";
+  const isDua = lesson.kind === "dua";
   const usesReadingTrack = ["reading", "quranic", "revision", "assessment"].includes(lesson.kind);
 
   return (
@@ -67,7 +68,9 @@ export default function TopicLessonScreen({
       <div className="relative z-10 mx-auto flex min-h-full w-full max-w-6xl flex-col gap-4 p-3 sm:p-5">
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm backdrop-blur">
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600">Interactive lesson</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600">
+              {isDua ? "Daily dua" : "Interactive lesson"}
+            </p>
             <h1 className="truncate text-lg font-black text-slate-900">{lesson.title}</h1>
           </div>
           <FullscreenButton targetRef={lessonRef} label={lesson.title} className="border border-emerald-900/10 bg-white text-emerald-800" />
@@ -102,6 +105,12 @@ export default function TopicLessonScreen({
                 {activeExample?.transliteration}
               </span>
             </motion.button>
+            {isDua && activeExample?.meaning ? (
+              <p className="mt-3 max-w-sm text-center text-xs font-semibold leading-relaxed text-slate-600" dir="ltr">
+                <span className="block text-[10px] font-black uppercase tracking-wide text-emerald-700">English translation</span>
+                {activeExample.meaning}
+              </p>
+            ) : null}
             {lesson.kind === "madd" && (
               <div className="mt-3 flex items-center gap-2" aria-label="Two-count stretch">
                 {[1, 2].map((count) => (
@@ -112,8 +121,15 @@ export default function TopicLessonScreen({
           </div>
 
           <div className="rounded-[1.75rem] border border-white/80 bg-white/90 p-5 shadow-lg backdrop-blur lg:col-span-4">
-            <p className="text-xs font-black uppercase tracking-wide text-emerald-600">What it means</p>
+            <p className="text-xs font-black uppercase tracking-wide text-emerald-600">
+              {isDua ? "When to say it" : "What it means"}
+            </p>
             <h2 className="mt-1 text-xl font-black text-slate-900">{lesson.title}</h2>
+            {isDua && lesson.whenToSay ? (
+              <p className="mt-2 rounded-2xl bg-teal-50 p-3 text-sm font-semibold leading-relaxed text-teal-950">
+                {lesson.whenToSay}
+              </p>
+            ) : null}
             <p className="mt-2 text-sm leading-relaxed text-slate-600">{lesson.childExplanation}</p>
             {lesson.mouthPosition && (
               <div className="mt-3 rounded-2xl bg-sky-50 p-3">
@@ -132,7 +148,9 @@ export default function TopicLessonScreen({
 
         <section className="rounded-[1.5rem] border border-white/80 bg-white/90 p-4 shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-base font-black text-slate-900">Listen and explore</h2>
+            <h2 className="text-base font-black text-slate-900">
+              {isDua ? "Arabic · transliteration · English" : "Listen and explore"}
+            </h2>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => speak("normal")} className="qaida-premium-button bg-emerald-700 px-4 py-2 text-sm font-black text-white">🔊 Normal</button>
               <button type="button" onClick={() => speak("slow")} className="qaida-premium-button border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-800">🐢 Slow</button>

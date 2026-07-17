@@ -99,7 +99,7 @@ assert.equal(motion.createMotionBudget(true, 1440).ambientParticles, 0);
 assert.equal(motion.createMotionBudget(false, 375).allowParallax, false);
 assert.equal(motion.createMotionBudget(false, 1440).ambientParticles <= 12, true);
 
-assert.equal(curriculum.CURRICULUM_MODULES.length, 11, "the complete curriculum must expose 11 modules");
+assert.equal(curriculum.CURRICULUM_MODULES.length, 13, "the complete curriculum must expose 13 modules (11 Qaida + Daily Duas + Namaz)");
 assert.equal(new Set(Array.from(curriculum.ALL_CURRICULUM_SCREEN_IDS)).size, curriculum.ALL_CURRICULUM_SCREEN_IDS.length, "screen ids must be unique");
 assert.equal(curriculumProgress.isModuleUnlocked(completedOnce, "harakaat"), true, "every module is freely accessible — nothing is locked");
 const allLetters = Array.from({ length: 28 }, (_, index) => `letter-${index + 1}`);

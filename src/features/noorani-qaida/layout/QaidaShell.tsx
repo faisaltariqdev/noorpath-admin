@@ -44,6 +44,10 @@ const TopicLessonScreen = dynamic(() => import("../screens/TopicLessonScreen"), 
   ssr: false,
   loading: () => <QaidaLoader />,
 });
+const SalahLessonScreen = dynamic(() => import("../screens/SalahLessonScreen"), {
+  ssr: false,
+  loading: () => <QaidaLoader />,
+});
 const ReviewAssessmentScreen = dynamic(() => import("../screens/ReviewAssessmentScreen"), {
   ssr: false,
   loading: () => <QaidaLoader />,
@@ -895,6 +899,13 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
                         handleTopicComplete(currentScreenId);
                       }
                     }}
+                  />
+                ) : TOPIC_LESSON_BY_ID[currentScreenId]?.kind === "salah" ? (
+                  <SalahLessonScreen
+                    lesson={TOPIC_LESSON_BY_ID[currentScreenId]}
+                    reducedMotion={motionBudget.reduced}
+                    audioEnabled={state.audioEnabled}
+                    onComplete={() => handleTopicComplete(currentScreenId)}
                   />
                 ) : TOPIC_LESSON_BY_ID[currentScreenId] ? (
                   <TopicLessonScreen
