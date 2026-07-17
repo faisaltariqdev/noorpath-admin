@@ -184,9 +184,10 @@ export default function StudentProgressHub({
     e.preventDefault();
     if (role !== "admin") return;
     setEditSaving(true);
+    const ageNum = Number.parseFloat(editForm.age);
     const { error } = await supabase.from("students").update({
       full_name: editForm.full_name.trim(),
-      age: parseInt(editForm.age) || null,
+      age: editForm.age.trim() === "" || Number.isNaN(ageNum) ? null : ageNum,
       gender: editForm.gender || null,
       country: editForm.country || null,
       level: editForm.level,
@@ -314,7 +315,7 @@ export default function StudentProgressHub({
             <div className="student-hub-info-card">
               <div className="avatar" style={{ width: 52, height: 52, fontSize: "1.1rem" }}>{student.full_name.charAt(0)}</div>
               <div className="student-hub-info-grid">
-                <div><span>Age</span><strong>{student.age || "—"}</strong></div>
+                <div><span>Age</span><strong>{student.age != null ? student.age : "—"}</strong></div>
                 <div><span>Gender</span><strong style={{ textTransform: "capitalize" }}>{student.gender || "—"}</strong></div>
                 <div><span>Country</span><strong>{student.country || "—"}</strong></div>
                 <div><span>Timezone</span><strong>{student.timezone || "—"}</strong></div>
@@ -480,7 +481,7 @@ export default function StudentProgressHub({
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 <div className="form-group">
                   <label className="form-label">Age</label>
-                  <input type="number" className="form-input" value={editForm.age} onChange={e => setEditForm(p => ({ ...p, age: e.target.value }))} min={3} max={60} />
+                  <input type="number" className="form-input" value={editForm.age} onChange={e => setEditForm(p => ({ ...p, age: e.target.value }))} min={3} max={60} step="0.1" placeholder="e.g. 4.5" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Gender</label>

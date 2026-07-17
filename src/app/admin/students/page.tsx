@@ -140,9 +140,10 @@ export default function StudentsPage() {
   async function saveStudent(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    const ageNum = Number.parseFloat(form.age);
     const payload = {
       full_name: form.full_name.trim(),
-      age: parseInt(form.age) || null,
+      age: form.age.trim() === "" || Number.isNaN(ageNum) ? null : ageNum,
       gender: form.gender || null,
       country: form.country || null,
       level: form.level,
@@ -232,7 +233,7 @@ export default function StudentsPage() {
                 {filtered.map(s => (
                   <tr key={s.id} onClick={() => router.push(`/admin/students/${s.id}`)} style={{ cursor: "pointer" }}>
                     <td><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div className="avatar">{s.full_name.charAt(0)}</div><span style={{ fontWeight: 600 }}>{s.full_name}</span></div></td>
-                    <td style={{ color: "#64748b" }}>{s.age || "—"}</td>
+                    <td style={{ color: "#64748b" }}>{s.age != null ? s.age : "—"}</td>
                     <td style={{ color: "#64748b", textTransform: "capitalize" }}>{s.gender || "—"}</td>
                     <td style={{ color: "#64748b" }}>{s.country || "—"}</td>
                         <td><span className="badge badge-blue">{formatStudentLevel(s.level)}</span></td>
@@ -281,7 +282,7 @@ export default function StudentsPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                   <div className="form-group">
                     <label className="form-label">Age</label>
-                    <input type="number" className="form-input" value={form.age} onChange={e => setForm(p => ({ ...p, age: e.target.value }))} placeholder="e.g. 8" min={3} max={60} />
+                    <input type="number" className="form-input" value={form.age} onChange={e => setForm(p => ({ ...p, age: e.target.value }))} placeholder="e.g. 4.5" min={3} max={60} step="0.1" />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Gender</label>

@@ -65,6 +65,7 @@ export interface ClassSession {
   status: SessionStatus;
   meeting_link?: string;
   notes?: string;
+  session_group_id?: string;
   created_at: string;
   student?: Student;
   tutor?: Profile;
