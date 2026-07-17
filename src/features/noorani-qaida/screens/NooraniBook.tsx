@@ -224,7 +224,7 @@ export default function NooraniBook({
                   whileTap={isUnlocked ? { scale: 0.95 } : undefined}
                   aria-disabled={!isUnlocked}
                   aria-label={`${letter.name}${isCompleted ? ", completed" : isUnlocked ? ", tap to learn" : ", locked"}`}
-                  className={`group relative flex min-h-[132px] flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border-2 p-3 text-center shadow-[0_12px_28px_-20px_rgba(6,78,59,0.6)] transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                  className={`group relative flex min-h-[148px] flex-col items-center rounded-[1.25rem] border-2 px-3 pb-3 pt-4 text-center shadow-[0_12px_28px_-20px_rgba(6,78,59,0.6)] transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
                     isCurrent
                       ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400 ring-offset-2"
                       : isCompleted
@@ -246,24 +246,29 @@ export default function NooraniBook({
                   ) : null}
 
                   <span className="text-[10px] font-bold text-slate-400">{lid}</span>
-                  <motion.span
-                    className={`qaida-arabic text-4xl font-black leading-none ${
-                      !isUnlocked ? "text-slate-300" : isCompleted ? "text-amber-600" : "text-emerald-800"
-                    }`}
-                    lang="ar"
-                    dir="rtl"
-                    animate={
-                      reducedMotion || tappedId !== lid
-                        ? undefined
-                        : { scale: [1, 1.25, 1] }
-                    }
-                    transition={{ duration: 0.5 }}
-                  >
-                    {letter.letter}
-                  </motion.span>
-                  <span className={`text-xs font-bold ${!isUnlocked ? "text-slate-400" : "text-slate-700"}`}>{letter.name}</span>
+                  <span className="flex h-14 w-full items-center justify-center" aria-hidden="true">
+                    <motion.span
+                      className={`qaida-arabic block text-4xl font-black leading-[1.4] ${
+                        !isUnlocked ? "text-slate-300" : isCompleted ? "text-amber-600" : "text-emerald-800"
+                      }`}
+                      lang="ar"
+                      dir="rtl"
+                      animate={
+                        reducedMotion || tappedId !== lid
+                          ? undefined
+                          : { scale: [1, 1.25, 1] }
+                      }
+                      transition={{ duration: 0.5 }}
+                    >
+                      {letter.letter}
+                    </motion.span>
+                  </span>
+                  <span className={`mt-1 flex w-full flex-col items-center gap-0.5 border-t border-slate-100 pt-1.5 ${!isUnlocked ? "text-slate-400" : "text-slate-700"}`}>
+                    <span className="text-xs font-bold leading-tight">{letter.name}</span>
+                    <span className="text-[10px] font-semibold leading-tight text-slate-500" dir="ltr">“{letter.sound}”</span>
+                  </span>
                   {isCompleted && (
-                    <span className="text-[10px] leading-none text-amber-500" aria-hidden="true">{"★".repeat(Math.max(1, Math.min(3, stars)))}</span>
+                    <span className="mt-0.5 text-[10px] leading-none text-amber-500" aria-hidden="true">{"★".repeat(Math.max(1, Math.min(3, stars)))}</span>
                   )}
                 </motion.button>
               );

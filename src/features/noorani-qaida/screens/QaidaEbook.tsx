@@ -84,8 +84,8 @@ export default function QaidaEbook({
                 transition={{ delay: reducedMotion ? 0 : Math.min(0.5, idx * 0.02), type: "spring", stiffness: 300, damping: 22 }}
                 whileHover={reducedMotion ? undefined : { y: -3, scale: 1.05 }}
                 whileTap={{ scale: 0.94 }}
-                aria-label={`${letter.name}, tap to hear pronunciation`}
-                className={`group relative flex min-h-[92px] flex-col items-center justify-center gap-1 rounded-xl border px-1.5 pb-2 pt-3 transition-colors sm:min-h-[108px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                aria-label={`${letter.name}, pronunciation ${letter.sound}, tap to hear`}
+                className={`group relative flex min-h-[118px] flex-col items-center rounded-xl border px-1.5 pb-2.5 pt-4 transition-colors sm:min-h-[132px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
                   isActive
                     ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]"
                     : isCurrent
@@ -97,19 +97,27 @@ export default function QaidaEbook({
                 {completed && (
                   <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
                 )}
-                <motion.span
-                  className={`qaida-arabic text-4xl font-black leading-none sm:text-5xl ${completed ? "text-emerald-800" : "text-slate-800"}`}
-                  lang="ar"
-                  dir="rtl"
-                  animate={pulseId === letter.id && !reducedMotion ? { scale: [1, 1.35, 1] } : undefined}
-                  transition={{ duration: 0.5 }}
-                >
-                  {letter.letter}
-                </motion.span>
-                <span className={`max-w-full truncate text-[11px] font-black tracking-wide sm:text-xs ${
+                {/* Dedicated glyph zone so descenders (ج ح خ ع غ) never cover the English label */}
+                <span className="flex h-[3.25rem] w-full items-center justify-center sm:h-[3.75rem]" aria-hidden="true">
+                  <motion.span
+                    className={`qaida-arabic block text-4xl font-black leading-[1.4] sm:text-5xl ${completed ? "text-emerald-800" : "text-slate-800"}`}
+                    lang="ar"
+                    dir="rtl"
+                    animate={pulseId === letter.id && !reducedMotion ? { scale: [1, 1.28, 1] } : undefined}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {letter.letter}
+                  </motion.span>
+                </span>
+                <span className={`mt-1 flex w-full flex-col items-center gap-0.5 border-t border-amber-100/80 pt-1.5 ${
                   isActive || isCurrent ? "text-emerald-700" : "text-slate-600"
                 }`}>
-                  {letter.name}
+                  <span className="max-w-full truncate text-[11px] font-black leading-tight tracking-wide sm:text-xs">
+                    {letter.name}
+                  </span>
+                  <span className="max-w-full truncate text-[10px] font-semibold leading-tight text-slate-500 sm:text-[11px]" dir="ltr">
+                    “{letter.sound}”
+                  </span>
                 </span>
               </motion.button>
             );
@@ -137,9 +145,11 @@ export default function QaidaEbook({
             <span className="qaida-arabic flex h-14 w-14 flex-none items-center justify-center rounded-xl bg-emerald-50 text-4xl font-black text-emerald-800" lang="ar" dir="rtl">
               {activeLetter.letter}
             </span>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1" dir="ltr">
               <p className="text-base font-black text-slate-900">{activeLetter.name}</p>
-              <p className="truncate text-xs text-slate-500">Sound “{activeLetter.sound}” · as in {activeLetter.example}</p>
+              <p className="truncate text-xs text-slate-500">
+                Pronounce “{activeLetter.sound}” · as in {activeLetter.example} ({activeLetter.meaning})
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button

@@ -138,8 +138,11 @@ export default function LetterCard({
         <StarBurst active={starBurst} count={6} size="sm" />
       </motion.button>
 
-      {/* Letter name */}
-      <div className={`font-bold text-green-900 ${s.name}`}>{letter.name}</div>
+      {/* Letter name + pronunciation — kept outside the glyph so descenders never cover it */}
+      <div className={`flex flex-col items-center gap-0.5 text-center ${s.name}`}>
+        <span className="font-bold leading-tight text-green-900">{letter.name}</span>
+        <span className="text-xs font-semibold leading-tight text-green-700/80" dir="ltr">“{letter.sound}”</span>
+      </div>
 
       {/* Letter forms */}
       <AnimatePresence>
