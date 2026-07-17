@@ -139,7 +139,7 @@ export default function TopicLessonScreen({
               <button type="button" onClick={() => speak("normal", 2)} className="qaida-premium-button border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-800">↻ Repeat ×2</button>
             </div>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div dir="rtl" className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {lesson.examples.map((item) => (
               <ExampleTile
                 key={item.id}

@@ -202,7 +202,7 @@ export default function NooraniBook({
             <span className="text-xs font-semibold text-slate-400">{group.subtitle}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+          <div dir="rtl" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
             {group.ids.map((lid, idx) => {
               const letter = LETTERS[lid - 1];
               if (!letter) return null;

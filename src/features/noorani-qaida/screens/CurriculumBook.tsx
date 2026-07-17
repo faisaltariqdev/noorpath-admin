@@ -41,7 +41,7 @@ function TopicPage({
           <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">{lesson.childExplanation}</p>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div dir="rtl" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {lesson.examples.map((item) => (
             <ExampleTile
               key={item.id}

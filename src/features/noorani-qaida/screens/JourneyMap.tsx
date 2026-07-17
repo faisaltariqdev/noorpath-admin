@@ -77,7 +77,7 @@ export default function JourneyMap({ progress, onSelectLetter }: JourneyMapProps
           <div className="relative">
             <div className="absolute left-10 top-10 h-[calc(100%-40px)] w-1 rounded-full bg-gradient-to-b from-green-200 to-gray-100" />
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+            <div dir="rtl" className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
               {group.letters.map((lid, idx) => {
                 const letter = LETTERS[lid - 1];
                 if (!letter) return null;
