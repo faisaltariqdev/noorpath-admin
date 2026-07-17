@@ -35,6 +35,7 @@ export default function AdminReportsPage() {
   const [filterRating, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [filterTutor, setFilterTutor] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     async function load() {
@@ -58,6 +59,9 @@ export default function AdminReportsPage() {
     const matchesRating = filterRating === "all" || r.overall_rating === filterRating;
     const matchesTutor = filterTutor === "all" || r.tutor_name === filterTutor;
     return matchesSearch && matchesRating && matchesTutor;
+  }).sort((a, b) => {
+    const diff = +new Date(a.created_at) - +new Date(b.created_at);
+    return sortOrder === "asc" ? diff : -diff;
   });
   const avgScore = reports.length ? (reports.reduce((s, r) => s + (r.tajweed_stars || 0), 0) / reports.length).toFixed(1) : "0";
   const tutorNames = Array.from(new Set(reports.map(r => r.tutor_name || "Unassigned"))).sort();
@@ -102,6 +106,10 @@ export default function AdminReportsPage() {
           <select className="filter-select" value={filterRating} onChange={e => setFilter(e.target.value)}>
             <option value="all">All ratings</option>
             {["excellent", "good", "average", "needs_improvement"].map(rating => <option key={rating} value={rating}>{rating.replace("_", " ")}</option>)}
+          </select>
+          <select className="filter-select" value={sortOrder} onChange={e => setSortOrder(e.target.value as "asc" | "desc")}>
+            <option value="desc">Newest first (descending)</option>
+            <option value="asc">Oldest first (ascending)</option>
           </select>
         </div>
 

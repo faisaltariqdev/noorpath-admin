@@ -63,6 +63,7 @@ export default function UsersPage() {
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [checkCountry, setCheckCountry] = useState("United States Eastern");
   const [checkTimezone, setCheckTimezone] = useState("America/New_York");
   const [checkDay, setCheckDay] = useState(1);
@@ -103,7 +104,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFiltered(tutors.filter(t => {
+    const list = tutors.filter(t => {
       const matchesSearch = !q
         || t.full_name?.toLowerCase().includes(q)
         || t.email?.toLowerCase().includes(q)
@@ -113,8 +114,13 @@ export default function UsersPage() {
         || (statusFilter === "active" && t.is_active !== false)
         || (statusFilter === "blocked" && t.is_active === false);
       return matchesSearch && matchesRole && matchesStatus;
-    }));
-  }, [search, roleFilter, statusFilter, tutors]);
+    });
+    list.sort((a, b) => {
+      const diff = +new Date(a.created_at) - +new Date(b.created_at);
+      return sortOrder === "asc" ? diff : -diff;
+    });
+    setFiltered(list);
+  }, [search, roleFilter, statusFilter, sortOrder, tutors]);
 
   async function createTutor(e: React.FormEvent) {
     e.preventDefault();
@@ -331,6 +337,10 @@ export default function UsersPage() {
             <option value="all">All status</option>
             <option value="active">Active</option>
             <option value="blocked">Blocked</option>
+          </select>
+          <select className="filter-select" value={sortOrder} onChange={e => setSortOrder(e.target.value as "asc" | "desc")}>
+            <option value="desc">Newest first (descending)</option>
+            <option value="asc">Oldest first (ascending)</option>
           </select>
         </div>
 

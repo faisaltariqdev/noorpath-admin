@@ -103,6 +103,7 @@ export default function SessionsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [filterTutor, setFilterTutor] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState(emptyForm);
@@ -153,7 +154,7 @@ export default function SessionsPage() {
       });
     }
 
-    setSessions(Array.from(grouped.values()).sort((a, b) => +new Date(b.scheduled_at) - +new Date(a.scheduled_at)));
+    setSessions(Array.from(grouped.values()));
     setStudents(studs || []);
     setTutors(profs || []);
     setLoading(false);
@@ -161,17 +162,23 @@ export default function SessionsPage() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = sessions.filter(s => {
-    const q = search.trim().toLowerCase();
-    const matchesSearch = !q
-      || s.student_name.toLowerCase().includes(q)
-      || s.tutor_name.toLowerCase().includes(q)
-      || s.course?.toLowerCase().includes(q)
-      || s.notes?.toLowerCase().includes(q);
-    const matchesStatus = filterStatus === "all" || s.status === filterStatus;
-    const matchesTutor = filterTutor === "all" || s.tutor_name === filterTutor;
-    return matchesSearch && matchesStatus && matchesTutor;
-  });
+  const filtered = useMemo(() => {
+    const list = sessions.filter(s => {
+      const q = search.trim().toLowerCase();
+      const matchesSearch = !q
+        || s.student_name.toLowerCase().includes(q)
+        || s.tutor_name.toLowerCase().includes(q)
+        || s.course?.toLowerCase().includes(q)
+        || s.notes?.toLowerCase().includes(q);
+      const matchesStatus = filterStatus === "all" || s.status === filterStatus;
+      const matchesTutor = filterTutor === "all" || s.tutor_name === filterTutor;
+      return matchesSearch && matchesStatus && matchesTutor;
+    });
+    return list.sort((a, b) => {
+      const diff = +new Date(a.scheduled_at) - +new Date(b.scheduled_at);
+      return sortOrder === "asc" ? diff : -diff;
+    });
+  }, [sessions, search, filterStatus, filterTutor, sortOrder]);
   const tutorNames = Array.from(new Set(sessions.map(s => s.tutor_name || "Unassigned"))).sort();
 
   const previewCount = useMemo(() => {
@@ -373,6 +380,10 @@ export default function SessionsPage() {
             <option value="all">All status</option>
             {["scheduled", "completed", "cancelled", "no_show"].map(status => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
           </select>
+          <select className="filter-select" value={sortOrder} onChange={e => setSortOrder(e.target.value as "asc" | "desc")}>
+            <option value="desc">Newest first (descending)</option>
+            <option value="asc">Oldest first (ascending)</option>
+          </select>
         </div>
         <div className="card">
           {loading ? <div className="empty-state"><div style={{ width: 36, height: 36, border: "3px solid #e2e8f0", borderTopColor: "#1b5e42", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
@@ -547,7 +558,9 @@ export default function SessionsPage() {
                     <div className="form-group">
                       <label className="form-label">Repeat for (weeks)</label>
                       <select className="form-input form-select" value={form.weeks_count} onChange={e => setForm(p => ({ ...p, weeks_count: e.target.value }))}>
-                        {["4", "6", "8", "12", "16", "24"].map(w => <option key={w} value={w}>{w} weeks</option>)}
+                        {["1", "2", "4", "6", "8", "12", "16", "24"].map(w => (
+                          <option key={w} value={w}>{w} week{w === "1" ? "" : "s"}</option>
+                        ))}
                       </select>
                     </div>
                   </>

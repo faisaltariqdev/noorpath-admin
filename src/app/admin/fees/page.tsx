@@ -36,6 +36,7 @@ export default function FeesPage() {
   const [search, setSearch] = useState("");
   const [filterCurrency, setFilterCurrency] = useState("all");
   const [filterCountry, setFilterCountry] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [form, setForm] = useState({
     student_id: "",
     amount: "",
@@ -79,6 +80,9 @@ export default function FeesPage() {
     const matchesCurrency = filterCurrency === "all" || f.currency === filterCurrency;
     const matchesCountry = filterCountry === "all" || (f.country || "Unknown") === filterCountry;
     return matchesSearch && matchesStatus && matchesCurrency && matchesCountry;
+  }).sort((a, b) => {
+    const diff = +new Date(a.created_at) - +new Date(b.created_at);
+    return sortOrder === "asc" ? diff : -diff;
   });
   const totalPaid = fees.filter(f => f.status === "paid").reduce((s, f) => s + f.amount, 0);
   const totalPending = fees.filter(f => f.status === "pending").reduce((s, f) => s + f.amount, 0);
@@ -155,6 +159,10 @@ export default function FeesPage() {
           <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="all">All status</option>
             {["paid", "pending", "overdue", "waived"].map(status => <option key={status} value={status}>{status}</option>)}
+          </select>
+          <select className="filter-select" value={sortOrder} onChange={e => setSortOrder(e.target.value as "asc" | "desc")}>
+            <option value="desc">Newest first (descending)</option>
+            <option value="asc">Oldest first (ascending)</option>
           </select>
         </div>
 

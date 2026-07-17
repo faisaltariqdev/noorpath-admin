@@ -49,6 +49,7 @@ export default function CoursesPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [form, setForm] = useState(emptyCourseForm);
 
   async function load() {
@@ -68,7 +69,7 @@ export default function CoursesPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return courses.filter(course => {
+    const list = courses.filter(course => {
       const matchesSearch = !q
         || course.title.toLowerCase().includes(q)
         || course.description?.toLowerCase().includes(q)
@@ -80,7 +81,11 @@ export default function CoursesPage() {
         || (statusFilter === "inactive" && !course.is_active);
       return matchesSearch && matchesCategory && matchesLevel && matchesStatus;
     });
-  }, [courses, search, categoryFilter, levelFilter, statusFilter]);
+    return list.sort((a, b) => {
+      const diff = +new Date(a.created_at) - +new Date(b.created_at);
+      return sortOrder === "asc" ? diff : -diff;
+    });
+  }, [courses, search, categoryFilter, levelFilter, statusFilter, sortOrder]);
 
   const activeCount = courses.filter(c => c.is_active).length;
   const avgPrice = courses.length
@@ -213,6 +218,10 @@ export default function CoursesPage() {
             <option value="all">All status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
+          </select>
+          <select className="filter-select" value={sortOrder} onChange={e => setSortOrder(e.target.value as "asc" | "desc")}>
+            <option value="desc">Newest first (descending)</option>
+            <option value="asc">Oldest first (ascending)</option>
           </select>
         </div>
 

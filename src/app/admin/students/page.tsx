@@ -62,6 +62,7 @@ export default function StudentsPage() {
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const [filterCountry, setFilterCountry] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -105,8 +106,12 @@ export default function StudentsPage() {
       || s.parent_name?.toLowerCase().includes(q)
       || s.tutor_name?.toLowerCase().includes(q)
     );
+    list = [...list].sort((a, b) => {
+      const diff = +new Date(a.created_at) - +new Date(b.created_at);
+      return sortOrder === "asc" ? diff : -diff;
+    });
     setFiltered(list);
-  }, [search, filterActive, filterCountry, filterLevel, students]);
+  }, [search, filterActive, filterCountry, filterLevel, sortOrder, students]);
 
   function openCreateForm() {
     setEditingId(null);
@@ -217,6 +222,10 @@ export default function StudentsPage() {
             <option value="all">All status</option>
             <option value="active">Active only</option>
             <option value="inactive">Inactive only</option>
+          </select>
+          <select className="filter-select" value={sortOrder} onChange={e => setSortOrder(e.target.value as "asc" | "desc")}>
+            <option value="desc">Newest first (descending)</option>
+            <option value="asc">Oldest first (ascending)</option>
           </select>
         </div>
 
