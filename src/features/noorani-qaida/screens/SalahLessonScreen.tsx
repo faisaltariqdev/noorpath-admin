@@ -278,7 +278,7 @@ export default function SalahLessonScreen({
                   aria-label={step.transliteration ? `Hear ${step.transliteration}` : "Hear Arabic"}
                 >
                   <motion.p
-                    className="qaida-arabic text-3xl font-black leading-[1.55] text-emerald-900 sm:text-4xl"
+                    className="qaida-arabic w-full text-2xl font-black leading-[1.85] text-emerald-900 sm:text-3xl"
                     lang="ar"
                     dir="rtl"
                     animate={isPlaying && !reducedMotion ? { scale: [1, 1.03, 1] } : undefined}
@@ -286,7 +286,7 @@ export default function SalahLessonScreen({
                     {step.arabic}
                   </motion.p>
                   {step.transliteration ? (
-                    <p className="mt-3 border-t border-amber-200/80 pt-3 text-sm font-black text-slate-700" dir="ltr">
+                    <p className="mt-3 whitespace-normal border-t border-amber-200/80 pt-3 text-left text-sm font-black leading-relaxed text-slate-700" dir="ltr">
                       {step.transliteration}
                     </p>
                   ) : null}
@@ -297,7 +297,7 @@ export default function SalahLessonScreen({
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
                   English translation
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-800" dir="ltr">
+                <p className="mt-2 whitespace-normal text-sm leading-relaxed text-slate-800" dir="ltr">
                   {step.translation}
                 </p>
               </div>

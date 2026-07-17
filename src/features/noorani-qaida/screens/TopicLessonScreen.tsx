@@ -90,24 +90,33 @@ export default function TopicLessonScreen({
             <motion.button
               type="button"
               onClick={() => speak()}
-              className="mt-3 flex min-h-28 flex-col items-center justify-center rounded-3xl px-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
+              className={`mt-3 flex w-full flex-col items-center justify-center rounded-3xl px-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                isDua ? "min-h-36 gap-2 py-3" : "min-h-28 px-6"
+              }`}
               animate={isPlaying && !reducedMotion ? { scale: [1, 1.06, 1] } : undefined}
               aria-label={`Hear ${activeExample?.transliteration}`}
             >
               <span
-                className="qaida-arabic block text-6xl font-black leading-[1.4] text-emerald-900"
+                className={`qaida-arabic block w-full font-black text-emerald-900 ${
+                  isDua ? "text-center text-2xl leading-[1.85] sm:text-3xl" : "text-6xl leading-[1.4]"
+                }`}
                 lang="ar"
                 dir="rtl"
               >
                 {activeExample?.arabic}
               </span>
-              <span className="mt-2 border-t border-amber-200/80 pt-2 text-sm font-black leading-tight text-slate-700" dir="ltr">
+              <span
+                className={`mt-2 w-full border-t border-amber-200/80 pt-2 font-black text-slate-700 ${
+                  isDua ? "text-left text-sm leading-relaxed whitespace-normal" : "text-sm leading-tight"
+                }`}
+                dir="ltr"
+              >
                 {activeExample?.transliteration}
               </span>
             </motion.button>
             {isDua && activeExample?.meaning ? (
-              <p className="mt-3 max-w-sm text-center text-xs font-semibold leading-relaxed text-slate-600" dir="ltr">
-                <span className="block text-[10px] font-black uppercase tracking-wide text-emerald-700">English translation</span>
+              <p className="mt-3 w-full text-left text-xs font-semibold leading-relaxed text-slate-600 sm:text-sm" dir="ltr">
+                <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-emerald-700">English translation</span>
                 {activeExample.meaning}
               </p>
             ) : null}
@@ -157,11 +166,18 @@ export default function TopicLessonScreen({
               <button type="button" onClick={() => speak("normal", 2)} className="qaida-premium-button border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-800">↻ Repeat ×2</button>
             </div>
           </div>
-          <div dir="rtl" className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div
+            dir={isDua ? "ltr" : "rtl"}
+            className={`mt-4 grid gap-3 ${
+              isDua ? "grid-cols-1 lg:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            }`}
+          >
             {lesson.examples.map((item) => (
               <ExampleTile
                 key={item.id}
                 item={item}
+                fullText={isDua}
+                showSpeaker={isDua}
                 selected={activeExample?.id === item.id}
                 reducedMotion={reducedMotion}
                 className={activeExample?.id === item.id ? "" : "!border-slate-200 !bg-white"}

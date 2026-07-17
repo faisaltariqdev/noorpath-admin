@@ -9,14 +9,16 @@ type ExampleTileProps = {
   disabled?: boolean;
   reducedMotion?: boolean;
   showSpeaker?: boolean;
+  /** Full wrapping layout for long duas / translations (no ellipsis, flexible height). */
+  fullText?: boolean;
   className?: string;
   onClick?: () => void;
 };
 
 /**
  * Shared Arabic + English practice tile.
- * Keeps a dedicated glyph zone so Arabic descenders never cover transliteration
- * (Harakaat, Tanween, Sukoon, Shaddah, Madd, reading pages, etc.).
+ * Compact mode keeps a dedicated glyph zone for short Qaida drills.
+ * fullText mode expands for long duas so Arabic, transliteration, and English stay fully readable.
  */
 export default function ExampleTile({
   item,
@@ -24,6 +26,7 @@ export default function ExampleTile({
   disabled = false,
   reducedMotion = false,
   showSpeaker = false,
+  fullText = false,
   className = "",
   onClick,
 }: ExampleTileProps) {
@@ -32,9 +35,11 @@ export default function ExampleTile({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      whileHover={disabled || reducedMotion ? undefined : { y: -3, scale: 1.02 }}
-      whileTap={disabled ? undefined : { scale: 0.97 }}
-      className={`qaida-example-tile relative flex min-h-[8.5rem] flex-col items-center rounded-2xl border px-3 pb-3 pt-4 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-55 ${
+      whileHover={disabled || reducedMotion ? undefined : { y: -3, scale: 1.01 }}
+      whileTap={disabled ? undefined : { scale: 0.98 }}
+      className={`qaida-example-tile relative flex flex-col items-center rounded-2xl border px-3 pb-3 pt-4 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-55 ${
+        fullText ? "min-h-[10rem] gap-2 px-4 pb-4 pt-5 text-left sm:px-5" : "min-h-[8.5rem]"
+      } ${
         selected
           ? "border-emerald-500 bg-emerald-50"
           : "border-amber-200 bg-white/80 hover:border-emerald-300 hover:bg-white"
@@ -46,18 +51,47 @@ export default function ExampleTile({
         <span className="absolute right-2 top-2 text-sm" aria-hidden="true">🔊</span>
       )}
 
-      <span className="qaida-example-glyph flex h-[3.5rem] w-full items-center justify-center sm:h-[3.85rem]" aria-hidden="true">
-        <span className="qaida-arabic block text-4xl font-black leading-[1.45] text-emerald-900" lang="ar" dir="rtl">
+      <span
+        className={`qaida-example-glyph flex w-full items-center justify-center ${
+          fullText
+            ? "min-h-[4.5rem] py-2"
+            : "h-[3.5rem] sm:h-[3.85rem]"
+        }`}
+        aria-hidden="true"
+      >
+        <span
+          className={`qaida-arabic block font-black text-emerald-900 ${
+            fullText
+              ? "w-full text-center text-2xl leading-[1.85] sm:text-3xl"
+              : "text-4xl leading-[1.45]"
+          }`}
+          lang="ar"
+          dir="rtl"
+        >
           {item.arabic}
         </span>
       </span>
 
-      <span className="mt-1 flex w-full flex-col items-center gap-0.5 border-t border-amber-100/90 pt-2 text-center">
-        <span className="max-w-full truncate text-sm font-black leading-tight text-slate-700" dir="ltr">
+      <span
+        className={`mt-1 flex w-full flex-col border-t border-amber-100/90 pt-2 ${
+          fullText ? "items-stretch gap-1.5 text-left" : "items-center gap-0.5 text-center"
+        }`}
+      >
+        <span
+          className={`w-full font-black text-slate-700 ${
+            fullText ? "text-sm leading-relaxed whitespace-normal" : "max-w-full truncate text-sm leading-tight"
+          }`}
+          dir="ltr"
+        >
           {item.transliteration}
         </span>
         {item.meaning ? (
-          <span className="max-w-full truncate text-xs leading-tight text-slate-500" dir="ltr">
+          <span
+            className={`w-full text-slate-500 ${
+              fullText ? "text-xs leading-relaxed whitespace-normal sm:text-sm" : "max-w-full truncate text-xs leading-tight"
+            }`}
+            dir="ltr"
+          >
             {item.meaning}
           </span>
         ) : null}
