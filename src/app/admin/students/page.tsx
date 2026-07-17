@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { formatStudentLevel } from "@/lib/portal";
 import { TIMEZONE_OPTIONS, timezoneForCountry } from "@/lib/timezones";
-import { GraduationCap, Plus, Search, X, CheckCircle, XCircle, ClipboardList } from "lucide-react";
+import { GraduationCap, Pencil, Plus, Search, X, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 
 interface Student {
   id: string;
@@ -17,6 +17,10 @@ interface Student {
   course?: string;
   is_active: boolean;
   created_at: string;
+  tutor_id?: string | null;
+  parent_id?: string | null;
+  timezone?: string | null;
+  source?: string | null;
   tutor_name?: string;
   parent_name?: string;
   country?: string;
@@ -59,6 +63,7 @@ export default function StudentsPage() {
   const [filterCountry, setFilterCountry] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState(emptyStudentForm);
@@ -66,7 +71,7 @@ export default function StudentsPage() {
   async function load() {
     setLoading(true);
     const [{ data: studs }, { data: tutorProfiles }, { data: parentProfiles }, { data: courseRows }] = await Promise.all([
-      supabase.from("students").select("id, full_name, age, gender, level, course, is_active, created_at, country, tutor:profiles!students_tutor_id_fkey(full_name), parent:profiles!students_parent_id_fkey(full_name)").order("created_at", { ascending: false }),
+      supabase.from("students").select("id, full_name, age, gender, level, course, is_active, created_at, country, timezone, source, tutor_id, parent_id, tutor:profiles!students_tutor_id_fkey(full_name), parent:profiles!students_parent_id_fkey(full_name)").order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name").eq("role", "tutor"),
       supabase.from("profiles").select("id, full_name").eq("role", "parent"),
       supabase.from("courses").select("id, title, level, category, is_active").eq("is_active", true).order("sort_order"),
@@ -103,27 +108,63 @@ export default function StudentsPage() {
     setFiltered(list);
   }, [search, filterActive, filterCountry, filterLevel, students]);
 
-  async function addStudent(e: React.FormEvent) {
+  function openCreateForm() {
+    setEditingId(null);
+    setForm(emptyStudentForm);
+    setShowForm(true);
+  }
+
+  function openEditForm(student: Student) {
+    setEditingId(student.id);
+    setForm({
+      full_name: student.full_name || "",
+      age: student.age != null ? String(student.age) : "",
+      gender: student.gender || "",
+      country: student.country || "",
+      level: student.level || "beginner",
+      course: student.course || "",
+      tutor_id: student.tutor_id || "",
+      parent_id: student.parent_id || "",
+      timezone: student.timezone || "",
+      source: student.source || "organic",
+    });
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyStudentForm);
+  }
+
+  async function saveStudent(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const { error } = await supabase.from("students").insert({
-      full_name: form.full_name, age: parseInt(form.age) || null,
+    const payload = {
+      full_name: form.full_name.trim(),
+      age: parseInt(form.age) || null,
       gender: form.gender || null,
-      country: form.country,
+      country: form.country || null,
       level: form.level,
       course: form.course || null,
       tutor_id: form.tutor_id || null,
       parent_id: form.parent_id || null,
       timezone: form.timezone || "UTC",
       source: form.source,
-      trial_status: "converted",
-      is_active: true,
-    });
+    };
+
+    const { error } = editingId
+      ? await supabase.from("students").update(payload).eq("id", editingId)
+      : await supabase.from("students").insert({
+          ...payload,
+          trial_status: "converted",
+          is_active: true,
+        });
+
     if (error) setMsg("Error: " + error.message);
     else {
-      setMsg("Student added successfully!");
-      setShowForm(false);
-      setForm(emptyStudentForm);
+      setMsg(editingId ? "Student updated successfully!" : "Student added successfully!");
+      closeForm();
       await load();
     }
     setSaving(false);
@@ -151,7 +192,7 @@ export default function StudentsPage() {
             <h1 className="page-title">Students</h1>
             <p className="page-subtitle">{activeCount} active of {students.length} total</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={15} /> Add Student</button>
+          <button className="btn btn-primary" onClick={openCreateForm}><Plus size={15} /> Add Student</button>
         </div>
       </div>
       <div className="page-body">
@@ -186,7 +227,7 @@ export default function StudentsPage() {
           ) : (
               <div className="table-shell">
             <table className="data-table">
-                  <thead><tr><th>Student</th><th>Age</th><th>Gender</th><th>Country</th><th>Level</th><th>Course</th><th>Parent</th><th>Tutor</th><th>Status</th><th>Enrolled</th><th>Progress</th></tr></thead>
+                  <thead><tr><th>Student</th><th>Age</th><th>Gender</th><th>Country</th><th>Level</th><th>Course</th><th>Parent</th><th>Tutor</th><th>Status</th><th>Enrolled</th><th>Actions</th></tr></thead>
               <tbody>
                 {filtered.map(s => (
                   <tr key={s.id} onClick={() => router.push(`/admin/students/${s.id}`)} style={{ cursor: "pointer" }}>
@@ -205,9 +246,14 @@ export default function StudentsPage() {
                     </td>
                     <td style={{ color: "#94a3b8" }}>{new Date(s.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
                     <td>
-                      <button onClick={(e) => { e.stopPropagation(); router.push(`/admin/students/${s.id}`); }} className="btn btn-xs btn-ghost">
-                        <ClipboardList size={12} /> View
-                      </button>
+                      <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => openEditForm(s)} className="btn btn-xs btn-ghost">
+                          <Pencil size={12} /> Edit
+                        </button>
+                        <button type="button" onClick={() => router.push(`/admin/students/${s.id}`)} className="btn btn-xs btn-ghost">
+                          <ClipboardList size={12} /> View
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -217,15 +263,17 @@ export default function StudentsPage() {
           )}
         </div>
 
-        {/* Add Student Modal */}
+        {/* Add / Edit Student Modal */}
         {showForm && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }}>
             <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 460, overflow: "hidden", margin: "auto" }}>
               <div style={{ background: "linear-gradient(135deg, #0f172a, #1b5e42)", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <h2 style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1rem", fontWeight: 700, margin: 0 }}>Add New Student</h2>
-                <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}><X size={20} /></button>
+                <h2 style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1rem", fontWeight: 700, margin: 0 }}>
+                  {editingId ? "Edit Student" : "Add New Student"}
+                </h2>
+                <button onClick={closeForm} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}><X size={20} /></button>
               </div>
-              <form onSubmit={addStudent} style={{ padding: 24 }}>
+              <form onSubmit={saveStudent} style={{ padding: 24 }}>
                 <div className="form-group">
                   <label className="form-label">Full Name *</label>
                   <input className="form-input" value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Student's full name" required />
@@ -295,9 +343,9 @@ export default function StudentsPage() {
                   </datalist>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setShowForm(false)} style={{ flex: 1 }}>Cancel</button>
+                  <button type="button" className="btn btn-ghost" onClick={closeForm} style={{ flex: 1 }}>Cancel</button>
                   <button type="submit" className="btn btn-primary" disabled={saving} style={{ flex: 1, justifyContent: "center" }}>
-                    {saving ? "Saving..." : "Add Student"}
+                    {saving ? "Saving..." : editingId ? "Save Changes" : "Add Student"}
                   </button>
                 </div>
               </form>

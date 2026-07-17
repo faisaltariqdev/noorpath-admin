@@ -7,18 +7,23 @@ import TopBar from "@/components/TopBar";
 import { formatStudentLevel, getPeriodRange, isWithinPeriod, PROGRESS_PERIODS, ProgressPeriod } from "@/lib/portal";
 import {
   ArrowLeft, CheckCircle2, Circle, ListChecks, CalendarClock, Sparkles,
-  FileText, Star, Plus, BookOpen, Map, GraduationCap, Loader2,
+  FileText, Star, Plus, BookOpen, Map, GraduationCap, Loader2, Pencil, X,
 } from "lucide-react";
+import { TIMEZONE_OPTIONS, timezoneForCountry } from "@/lib/timezones";
 
 interface StudentDetail {
   id: string;
   full_name: string;
   age?: number;
+  gender?: string | null;
   country?: string;
   level: string;
   course?: string;
   timezone?: string;
+  source?: string | null;
   is_active: boolean;
+  tutor_id?: string | null;
+  parent_id?: string | null;
   tutor_name?: string;
   parent_name?: string;
 }
@@ -85,6 +90,24 @@ export default function StudentProgressHub({
   const [noteDate, setNoteDate] = useState(new Date().toISOString().split("T")[0]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [showEdit, setShowEdit] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [tutors, setTutors] = useState<{ id: string; full_name: string }[]>([]);
+  const [parents, setParents] = useState<{ id: string; full_name: string }[]>([]);
+  const [courses, setCourses] = useState<{ id: string; title: string; level: string }[]>([]);
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    age: "",
+    gender: "",
+    country: "",
+    level: "beginner",
+    course: "",
+    tutor_id: "",
+    parent_id: "",
+    timezone: "",
+    source: "organic",
+    is_active: true,
+  });
 
   async function load() {
     setLoading(true);
@@ -93,7 +116,7 @@ export default function StudentProgressHub({
 
     const [{ data: studentRow }, { data: noteRows }, { data: roadmapRows }, { data: reportRows }] = await Promise.all([
       supabase.from("students")
-        .select("id, full_name, age, country, level, course, timezone, is_active, tutor_id, tutor:profiles!students_tutor_id_fkey(full_name), parent:profiles!students_parent_id_fkey(full_name)")
+        .select("id, full_name, age, gender, country, level, course, timezone, source, is_active, tutor_id, parent_id, tutor:profiles!students_tutor_id_fkey(full_name), parent:profiles!students_parent_id_fkey(full_name)")
         .eq("id", studentId)
         .maybeSingle(),
       supabase.from("daily_work_notes").select("id, student_id, tutor_id, work_date, work_text, status, completed_at, created_at").eq("student_id", studentId).order("work_date", { ascending: false }),
@@ -107,11 +130,15 @@ export default function StudentProgressHub({
         id: s.id,
         full_name: s.full_name,
         age: s.age,
+        gender: s.gender,
         country: s.country,
         level: s.level,
         course: s.course,
         timezone: s.timezone,
+        source: s.source,
         is_active: s.is_active,
+        tutor_id: s.tutor_id,
+        parent_id: s.parent_id,
         tutor_name: s.tutor?.full_name || "Unassigned",
         parent_name: s.parent?.full_name || "Unlinked",
       });
@@ -124,6 +151,63 @@ export default function StudentProgressHub({
   }
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [studentId]);
+
+  async function openEditModal() {
+    if (!student) return;
+    if (role === "admin") {
+      const [{ data: tutorProfiles }, { data: parentProfiles }, { data: courseRows }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name").eq("role", "tutor"),
+        supabase.from("profiles").select("id, full_name").eq("role", "parent"),
+        supabase.from("courses").select("id, title, level").eq("is_active", true).order("sort_order"),
+      ]);
+      setTutors(tutorProfiles || []);
+      setParents(parentProfiles || []);
+      setCourses(courseRows || []);
+    }
+    setEditForm({
+      full_name: student.full_name || "",
+      age: student.age != null ? String(student.age) : "",
+      gender: student.gender || "",
+      country: student.country || "",
+      level: student.level || "beginner",
+      course: student.course || "",
+      tutor_id: student.tutor_id || "",
+      parent_id: student.parent_id || "",
+      timezone: student.timezone || "",
+      source: student.source || "organic",
+      is_active: student.is_active,
+    });
+    setShowEdit(true);
+  }
+
+  async function saveStudentInfo(e: React.FormEvent) {
+    e.preventDefault();
+    if (role !== "admin") return;
+    setEditSaving(true);
+    const { error } = await supabase.from("students").update({
+      full_name: editForm.full_name.trim(),
+      age: parseInt(editForm.age) || null,
+      gender: editForm.gender || null,
+      country: editForm.country || null,
+      level: editForm.level,
+      course: editForm.course || null,
+      tutor_id: editForm.tutor_id || null,
+      parent_id: editForm.parent_id || null,
+      timezone: editForm.timezone || "UTC",
+      source: editForm.source,
+      is_active: editForm.is_active,
+    }).eq("id", studentId);
+
+    if (error) {
+      setMsg("Error: " + error.message);
+    } else {
+      setMsg("Student info updated.");
+      setShowEdit(false);
+      await load();
+    }
+    setEditSaving(false);
+    setTimeout(() => setMsg(""), 3000);
+  }
 
   const pendingItems = useMemo(() => {
     const noteItems = notes
@@ -199,11 +283,18 @@ export default function StudentProgressHub({
               {student ? `${formatStudentLevel(student.level)}${student.course ? ` · ${student.course}` : ""}${student.country ? ` · ${student.country}` : ""}` : "Loading student details..."}
             </p>
           </div>
-          {role === "tutor" && (
-            <Link href={`/tutor/reports/new?student=${studentId}`} className="btn btn-outline btn-sm">
-              <FileText size={14} /> Submit Full Report
-            </Link>
-          )}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {role === "admin" && student && (
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => void openEditModal()}>
+                <Pencil size={14} /> Edit Info
+              </button>
+            )}
+            {role === "tutor" && (
+              <Link href={`/tutor/reports/new?student=${studentId}`} className="btn btn-outline btn-sm">
+                <FileText size={14} /> Submit Full Report
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -224,6 +315,7 @@ export default function StudentProgressHub({
               <div className="avatar" style={{ width: 52, height: 52, fontSize: "1.1rem" }}>{student.full_name.charAt(0)}</div>
               <div className="student-hub-info-grid">
                 <div><span>Age</span><strong>{student.age || "—"}</strong></div>
+                <div><span>Gender</span><strong style={{ textTransform: "capitalize" }}>{student.gender || "—"}</strong></div>
                 <div><span>Country</span><strong>{student.country || "—"}</strong></div>
                 <div><span>Timezone</span><strong>{student.timezone || "—"}</strong></div>
                 <div><span>Tutor</span><strong>{student.tutor_name}</strong></div>
@@ -372,6 +464,103 @@ export default function StudentProgressHub({
           </>
         )}
       </div>
+
+      {showEdit && role === "admin" && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }}>
+          <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 480, overflow: "hidden", margin: "auto", maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ background: "linear-gradient(135deg, #0f172a, #1b5e42)", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <h2 style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1rem", fontWeight: 700, margin: 0 }}>Edit Student Info</h2>
+              <button type="button" onClick={() => setShowEdit(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}><X size={20} /></button>
+            </div>
+            <form onSubmit={saveStudentInfo} style={{ padding: 24, overflowY: "auto" }}>
+              <div className="form-group">
+                <label className="form-label">Full Name *</label>
+                <input className="form-input" value={editForm.full_name} onChange={e => setEditForm(p => ({ ...p, full_name: e.target.value }))} required />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div className="form-group">
+                  <label className="form-label">Age</label>
+                  <input type="number" className="form-input" value={editForm.age} onChange={e => setEditForm(p => ({ ...p, age: e.target.value }))} min={3} max={60} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Gender</label>
+                  <select className="form-input form-select" value={editForm.gender} onChange={e => setEditForm(p => ({ ...p, gender: e.target.value }))}>
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Country</label>
+                <input
+                  className="form-input"
+                  list="hub-student-country"
+                  value={editForm.country}
+                  onChange={e => {
+                    const country = e.target.value;
+                    setEditForm(p => ({ ...p, country, timezone: timezoneForCountry(country) || p.timezone }));
+                  }}
+                />
+                <datalist id="hub-student-country">
+                  {TIMEZONE_OPTIONS.map(option => <option key={option.country} value={option.country}>{option.label}</option>)}
+                </datalist>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Level</label>
+                <select className="form-input form-select" value={editForm.level} onChange={e => setEditForm(p => ({ ...p, level: e.target.value }))}>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Course</label>
+                <select className="form-input form-select" value={editForm.course} onChange={e => setEditForm(p => ({ ...p, course: e.target.value }))}>
+                  <option value="">Select course</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.title}>{course.title} · {course.level}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Parent</label>
+                <select className="form-input form-select" value={editForm.parent_id} onChange={e => setEditForm(p => ({ ...p, parent_id: e.target.value }))}>
+                  <option value="">Unlinked</option>
+                  {parents.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tutor</label>
+                <select className="form-input form-select" value={editForm.tutor_id} onChange={e => setEditForm(p => ({ ...p, tutor_id: e.target.value }))}>
+                  <option value="">Unassigned</option>
+                  {tutors.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Timezone</label>
+                <input className="form-input" list="hub-student-tz" value={editForm.timezone} onChange={e => setEditForm(p => ({ ...p, timezone: e.target.value }))} />
+                <datalist id="hub-student-tz">
+                  {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+                </datalist>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select className="form-input form-select" value={editForm.is_active ? "active" : "inactive"} onChange={e => setEditForm(p => ({ ...p, is_active: e.target.value === "active" }))}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowEdit(false)} style={{ flex: 1 }}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={editSaving} style={{ flex: 1, justifyContent: "center" }}>
+                  {editSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
