@@ -69,7 +69,7 @@ export default function PageTurnViewer({
         {current.label}, page {page + 1} of {pages.length}
       </h2>
 
-      <div className="relative min-h-[420px] overflow-hidden">
+      <div className="relative min-h-[420px] overflow-x-hidden overflow-y-visible">
         <AnimatePresence mode="wait" custom={turnDirection}>
           <motion.div
             key={current.id}

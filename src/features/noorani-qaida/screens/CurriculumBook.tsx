@@ -31,6 +31,8 @@ function TopicPage({
   audioEnabled: boolean;
   reducedMotion: boolean;
 }) {
+  const isLongForm = lesson.kind === "dua" || lesson.kind === "salah";
+
   return (
     <article className="relative overflow-hidden rounded-[1.75rem] border-2 border-amber-200/70 bg-gradient-to-b from-[#fffaf0] via-[#fdf6e7] to-[#f6ead1] p-5 shadow-[0_26px_60px_-26px_rgba(120,80,20,0.5)] sm:p-8">
       <div className="pointer-events-none absolute inset-3 rounded-[1.35rem] border border-amber-300/45" aria-hidden="true" />
@@ -38,14 +40,27 @@ function TopicPage({
         <div className="text-center">
           <p className="qaida-arabic text-3xl font-black leading-[1.45] text-emerald-900 sm:text-4xl" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
           <h3 className="mt-1 text-xl font-black text-slate-900">{lesson.title}</h3>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">{lesson.childExplanation}</p>
+          {isLongForm && lesson.whenToSay ? (
+            <p className="mx-auto mt-2 max-w-2xl rounded-2xl bg-teal-50/90 px-4 py-2 text-sm font-semibold leading-relaxed text-teal-950">
+              {lesson.whenToSay}
+            </p>
+          ) : null}
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{lesson.childExplanation}</p>
         </div>
 
-        <div dir="rtl" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div
+          dir={isLongForm ? "ltr" : "rtl"}
+          className={`mt-6 grid gap-3 ${
+            isLongForm
+              ? "grid-cols-1"
+              : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          }`}
+        >
           {lesson.examples.map((item) => (
             <ExampleTile
               key={item.id}
               item={item}
+              fullText={isLongForm}
               disabled={!unlocked}
               reducedMotion={reducedMotion}
               showSpeaker
