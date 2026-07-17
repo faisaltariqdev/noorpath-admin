@@ -355,10 +355,13 @@ export default function LessonScreen({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-emerald-600">Letter {letter.id}</p>
-                    <h2 className="text-2xl font-black text-emerald-900 sm:text-3xl">
-                      {letter.name} <span className="font-serif text-emerald-700" dir="rtl">– {letter.letter}</span>
+                    <h2 className="text-2xl font-black leading-tight text-emerald-900 sm:text-3xl">
+                      {letter.name}{" "}
+                      <span className="qaida-arabic font-black text-emerald-700" lang="ar" dir="rtl">– {letter.letter}</span>
                     </h2>
-                    <p className="mt-1 text-sm font-semibold text-slate-700">Pronunciation: {letter.sound} (as in {letter.example})</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-700" dir="ltr">
+                      Pronounce “{letter.sound}” · as in {letter.example}
+                    </p>
                     <p className="text-sm text-slate-600">Makharij: {letter.makharij}</p>
                   </div>
                   <div className="hidden text-5xl sm:block" aria-hidden="true">📖</div>

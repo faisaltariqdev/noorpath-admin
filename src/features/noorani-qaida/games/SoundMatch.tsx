@@ -143,18 +143,23 @@ export default function SoundMatch({ letters, onComplete, onClose, focusLetter }
             return (
               <motion.button
                 key={letter.id}
-                className={`qaida-arabic min-h-24 rounded-[1.5rem] border-2 text-5xl font-bold shadow-lg ${
+                className={`flex min-h-28 flex-col items-center justify-center rounded-[1.5rem] border-2 px-2 pb-2.5 pt-3 shadow-lg ${
                   chosen ? (correct ? "border-emerald-500 bg-emerald-100 text-emerald-800" : "border-rose-400 bg-rose-50 text-rose-700") : "border-white bg-white text-indigo-950"
                 }`}
                 onClick={() => choose(letter)}
                 disabled={selected !== null}
                 whileHover={selected === null ? { y: -4, scale: 1.03 } : undefined}
                 whileTap={selected === null ? { scale: 0.96 } : undefined}
-                lang="ar"
-                dir="rtl"
-                aria-label={`Choose ${letter.name}`}
+                aria-label={`Choose ${letter.name}, pronounce ${letter.sound}`}
               >
-                {letter.letter}
+                <span className="flex h-14 w-full items-center justify-center" aria-hidden="true">
+                  <span className="qaida-arabic block text-5xl font-bold leading-[1.4]" lang="ar" dir="rtl">
+                    {letter.letter}
+                  </span>
+                </span>
+                <span className="mt-1 border-t border-black/5 pt-1 text-center text-[11px] font-black leading-tight" dir="ltr">
+                  {letter.name}
+                </span>
               </motion.button>
             );
           })}

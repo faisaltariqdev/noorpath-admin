@@ -88,7 +88,7 @@ export default function JourneyMap({ progress, onSelectLetter }: JourneyMapProps
                 return (
                   <motion.button
                     key={id}
-                    className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 shadow-md transition-all ${
+                    className={`relative flex min-h-[7.5rem] flex-col items-center rounded-2xl border-2 px-2 pb-2.5 pt-3 shadow-md transition-all ${
                       isCompleted
                         ? "border-yellow-300 bg-gradient-to-br from-yellow-50 to-amber-50"
                         : isUnlocked
@@ -102,7 +102,7 @@ export default function JourneyMap({ progress, onSelectLetter }: JourneyMapProps
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: gi * 0.1 + idx * 0.05 }}
                     disabled={!isUnlocked}
-                    aria-label={`${letter.name} - ${isCompleted ? "completed" : isUnlocked ? "available" : "locked"}`}
+                    aria-label={`${letter.name}, pronounce ${letter.sound} - ${isCompleted ? "completed" : isUnlocked ? "available" : "locked"}`}
                   >
                     {/* Status badge */}
                     {isCompleted && (
@@ -120,25 +120,27 @@ export default function JourneyMap({ progress, onSelectLetter }: JourneyMapProps
                       </div>
                     )}
 
-                    {/* Letter number */}
                     <div className="text-[10px] font-medium text-gray-400">{lid}</div>
 
-                    {/* Arabic letter */}
-                    <motion.div
-                      className={`text-3xl font-bold leading-none ${isCompleted ? "text-amber-600" : "text-green-800"}`}
-                      style={{ fontFamily: "serif", direction: "rtl" }}
-                      animate={isCompleted ? { scale: [1, 1.05, 1] } : isUnlocked ? { y: [0, -2, 0] } : {}}
-                      transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      {letter.letter}
-                    </motion.div>
+                    <span className="flex h-11 w-full items-center justify-center" aria-hidden="true">
+                      <motion.span
+                        className={`qaida-arabic block text-3xl font-bold leading-[1.4] ${isCompleted ? "text-amber-600" : "text-green-800"}`}
+                        lang="ar"
+                        dir="rtl"
+                        animate={isCompleted ? { scale: [1, 1.05, 1] } : isUnlocked ? { y: [0, -2, 0] } : {}}
+                        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        {letter.letter}
+                      </motion.span>
+                    </span>
 
-                    {/* Letter name */}
-                    <div className="text-[10px] font-semibold text-gray-600">{letter.name}</div>
+                    <span className="mt-1 flex w-full flex-col items-center gap-0.5 border-t border-gray-100 pt-1.5">
+                      <span className="text-[10px] font-semibold leading-tight text-gray-700">{letter.name}</span>
+                      <span className="text-[9px] font-semibold leading-tight text-gray-500" dir="ltr">“{letter.sound}”</span>
+                    </span>
 
-                    {/* Star rating */}
                     {isCompleted && (
-                      <div className="text-[10px] text-yellow-500">
+                      <div className="mt-0.5 text-[10px] text-yellow-500">
                         {"⭐".repeat(progress.ratings[id] ?? 3)}
                       </div>
                     )}

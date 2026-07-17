@@ -9,6 +9,7 @@ import type { TopicLesson } from "../types";
 import ScenicLearningBackground from "../animations/ScenicLearningBackground";
 import SparkleBurst from "../animations/SparkleBurst";
 import ZaydMascot, { type ZaydAction } from "../characters/ZaydMascot";
+import ExampleTile from "../ui/ExampleTile";
 import FullscreenButton from "../ui/FullscreenButton";
 import { useRef } from "react";
 
@@ -82,19 +83,25 @@ export default function TopicLessonScreen({
 
           <div className="relative flex min-h-56 flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-white to-yellow-100 p-5 shadow-xl lg:col-span-4">
             <SparkleBurst active={isPlaying} />
-            <p className="qaida-arabic text-3xl font-black text-emerald-800" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
+            <p className="qaida-arabic text-3xl font-black leading-[1.45] text-emerald-800" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
             <motion.button
               type="button"
               onClick={() => speak()}
-              className="qaida-arabic mt-3 min-h-24 rounded-3xl px-6 text-6xl font-black text-emerald-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
-              animate={isPlaying && !reducedMotion ? { scale: [1, 1.08, 1], textShadow: ["0 0 0 transparent", "0 0 24px rgba(16,185,129,.55)", "0 0 0 transparent"] } : undefined}
-              lang="ar"
-              dir="rtl"
+              className="mt-3 flex min-h-28 flex-col items-center justify-center rounded-3xl px-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
+              animate={isPlaying && !reducedMotion ? { scale: [1, 1.06, 1] } : undefined}
               aria-label={`Hear ${activeExample?.transliteration}`}
             >
-              {activeExample?.arabic}
+              <span
+                className="qaida-arabic block text-6xl font-black leading-[1.4] text-emerald-900"
+                lang="ar"
+                dir="rtl"
+              >
+                {activeExample?.arabic}
+              </span>
+              <span className="mt-2 border-t border-amber-200/80 pt-2 text-sm font-black leading-tight text-slate-700" dir="ltr">
+                {activeExample?.transliteration}
+              </span>
             </motion.button>
-            <p className="text-sm font-black text-slate-700">{activeExample?.transliteration}</p>
             {lesson.kind === "madd" && (
               <div className="mt-3 flex items-center gap-2" aria-label="Two-count stretch">
                 {[1, 2].map((count) => (
@@ -132,26 +139,20 @@ export default function TopicLessonScreen({
               <button type="button" onClick={() => speak("normal", 2)} className="qaida-premium-button border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-800">↻ Repeat ×2</button>
             </div>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {lesson.examples.map((item) => (
-              <motion.button
+              <ExampleTile
                 key={item.id}
-                type="button"
+                item={item}
+                selected={activeExample?.id === item.id}
+                reducedMotion={reducedMotion}
+                className={activeExample?.id === item.id ? "" : "!border-slate-200 !bg-white"}
                 onClick={() => {
                   setActiveExample(item);
                   setMessage(`Great choice! Tap again to hear ${item.transliteration}.`);
                   if (audioEnabled) void qaidaAudio.pronounce({ key: item.audioKey, fallbackText: item.arabic });
                 }}
-                whileHover={reducedMotion ? undefined : { y: -3 }}
-                whileTap={{ scale: 0.97 }}
-                className={`relative rounded-2xl border p-4 text-center shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
-                  activeExample?.id === item.id ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"
-                }`}
-              >
-                <span className="qaida-arabic block text-4xl font-black text-emerald-900" lang="ar" dir="rtl">{item.arabic}</span>
-                <span className="mt-1 block text-sm font-black text-slate-700">{item.transliteration}</span>
-                {item.meaning && <span className="block text-xs text-slate-500">{item.meaning}</span>}
-              </motion.button>
+              />
             ))}
           </div>
         </section>
@@ -162,8 +163,18 @@ export default function TopicLessonScreen({
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {LETTERS.map((letter) => (
                 <div key={letter.id} className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3">
-                  <div className="flex items-center justify-between"><span className="font-black text-slate-700">{letter.name}</span><span className="qaida-arabic text-2xl text-emerald-800">{letter.letter}</span></div>
-                  <div className="qaida-arabic mt-2 flex justify-between gap-1 text-xl font-bold text-slate-800" dir="rtl">{letter.forms.map((form, index) => <motion.span key={`${form}-${index}`} initial={reducedMotion ? false : { opacity: 0, x: 8 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.08 }}>{form}</motion.span>)}</div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="flex min-w-0 flex-col">
+                      <span className="font-black leading-tight text-slate-700">{letter.name}</span>
+                      <span className="text-xs font-semibold text-slate-500" dir="ltr">“{letter.sound}”</span>
+                    </span>
+                    <span className="qaida-arabic text-2xl leading-[1.4] text-emerald-800" lang="ar" dir="rtl">{letter.letter}</span>
+                  </div>
+                  <div className="qaida-arabic mt-2 flex justify-between gap-1 text-xl font-bold leading-[1.4] text-slate-800" dir="rtl" lang="ar">
+                    {letter.forms.map((form, index) => (
+                      <motion.span key={`${form}-${index}`} initial={reducedMotion ? false : { opacity: 0, x: 8 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.08 }}>{form}</motion.span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

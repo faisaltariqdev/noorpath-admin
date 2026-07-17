@@ -148,12 +148,13 @@ export default function MemoryMatch({ letters, onComplete, onClose }: MemoryMatc
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                   {card.type === "arabic" ? (
-                    <span className="qaida-arabic text-3xl font-black text-green-800" lang="ar" dir="rtl">
+                    <span className="qaida-arabic block text-3xl font-black leading-[1.4] text-green-800" lang="ar" dir="rtl">
                       {card.letter.letter}
                     </span>
                   ) : (
-                    <span className="text-center text-xs font-bold text-gray-700 px-1">
-                      {card.letter.name}
+                    <span className="flex flex-col items-center gap-0.5 px-1 text-center">
+                      <span className="text-xs font-bold leading-tight text-gray-700">{card.letter.name}</span>
+                      <span className="text-[10px] font-semibold leading-tight text-gray-500" dir="ltr">“{card.letter.sound}”</span>
                     </span>
                   )}
                   {card.matched && (

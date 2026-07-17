@@ -121,12 +121,12 @@ export default function ReviewAssessmentScreen({
           <button
             type="button"
             onClick={() => audioEnabled && void qaidaAudio.pronounce({ key: question.audioKey, fallbackText: question.arabic })}
-            className="qaida-arabic mx-auto mt-5 flex min-h-40 w-full max-w-md items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-amber-50 to-emerald-50 px-6 text-7xl font-black text-emerald-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
-            lang="ar"
-            dir="rtl"
+            className="mx-auto mt-5 flex min-h-40 w-full max-w-md items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-amber-50 to-emerald-50 px-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
             aria-label="Hear the question"
           >
-            {question.arabic}
+            <span className="qaida-arabic block text-7xl font-black leading-[1.4] text-emerald-900" lang="ar" dir="rtl">
+              {question.arabic}
+            </span>
           </button>
           <button type="button" onClick={() => audioEnabled && void qaidaAudio.pronounce({ key: question.audioKey, fallbackText: question.arabic, mode: "slow" })} className="mt-3 min-h-11 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-black text-indigo-800">🔊 Play slowly</button>
 

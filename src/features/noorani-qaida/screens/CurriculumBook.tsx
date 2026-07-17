@@ -1,12 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Lock, Play, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CURRICULUM_MODULES, TOPIC_LESSON_BY_ID } from "../data/modules";
 import { qaidaAudio } from "../audio/QaidaAudioService";
 import { getModuleProgress, isCurriculumScreenUnlocked } from "../state/curriculumProgress";
 import type { ModuleId, QaidaProgress, ScreenId, TopicLesson } from "../types";
+import ExampleTile from "../ui/ExampleTile";
 import PageTurnViewer from "../ui/PageTurnViewer";
 import QaidaEbook from "./QaidaEbook";
 
@@ -23,42 +23,37 @@ function TopicPage({
   unlocked,
   onOpen,
   audioEnabled,
+  reducedMotion,
 }: {
   lesson: TopicLesson;
   unlocked: boolean;
   onOpen: () => void;
   audioEnabled: boolean;
+  reducedMotion: boolean;
 }) {
   return (
     <article className="relative overflow-hidden rounded-[1.75rem] border-2 border-amber-200/70 bg-gradient-to-b from-[#fffaf0] via-[#fdf6e7] to-[#f6ead1] p-5 shadow-[0_26px_60px_-26px_rgba(120,80,20,0.5)] sm:p-8">
       <div className="pointer-events-none absolute inset-3 rounded-[1.35rem] border border-amber-300/45" aria-hidden="true" />
       <div className="relative z-10">
         <div className="text-center">
-          <p className="qaida-arabic text-3xl font-black text-emerald-900 sm:text-4xl" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
+          <p className="qaida-arabic text-3xl font-black leading-[1.45] text-emerald-900 sm:text-4xl" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
           <h3 className="mt-1 text-xl font-black text-slate-900">{lesson.title}</h3>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">{lesson.childExplanation}</p>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {lesson.examples.map((item) => (
-            <motion.button
+            <ExampleTile
               key={item.id}
-              type="button"
+              item={item}
               disabled={!unlocked}
+              reducedMotion={reducedMotion}
+              showSpeaker
               onClick={() => {
                 if (!audioEnabled) return;
                 void qaidaAudio.pronounce({ key: item.audioKey, fallbackText: item.arabic });
               }}
-              whileHover={unlocked ? { y: -3, scale: 1.02 } : undefined}
-              whileTap={unlocked ? { scale: 0.97 } : undefined}
-              className="relative flex min-h-32 flex-col items-center justify-center rounded-2xl border border-amber-200 bg-white/80 p-4 shadow-sm disabled:opacity-55 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
-              aria-label={`Hear ${item.transliteration}`}
-            >
-              <span className="qaida-arabic text-4xl font-black text-emerald-900" lang="ar" dir="rtl">{item.arabic}</span>
-              <span className="mt-2 text-sm font-black text-slate-700">{item.transliteration}</span>
-              {item.meaning && <span className="text-xs text-slate-500">{item.meaning}</span>}
-              <span className="absolute right-2 top-2 text-sm" aria-hidden="true">🔊</span>
-            </motion.button>
+            />
           ))}
         </div>
 
@@ -131,6 +126,7 @@ export default function CurriculumBook({
             unlocked={isCurriculumScreenUnlocked(progress, id)}
             onOpen={() => onOpenScreen(id)}
             audioEnabled={audioEnabled}
+            reducedMotion={reducedMotion}
           />
         ) : null,
       };

@@ -39,6 +39,15 @@
   font-family: var(--font-qaida-arabic), "Noto Naskh Arabic", serif;
 }
 
+/* Shared Arabic practice tiles: keep English below the glyph zone */
+.qaida-example-tile .qaida-example-glyph {
+  overflow: visible;
+}
+
+.qaida-example-tile .qaida-arabic {
+  line-height: 1.45;
+}
+
 .qaida-root button,
 .qaida-root a,
 .qaida-root input,

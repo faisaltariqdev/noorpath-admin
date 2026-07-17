@@ -107,16 +107,23 @@ export default function FindLetter({ letters, onComplete, onClose, focusLetter }
         key={`target-${round}`}
       >
         <div className="text-xs font-medium uppercase tracking-wider text-blue-500">Find this letter</div>
-        <motion.div
-          className="qaida-arabic mt-2 text-8xl font-black text-blue-800"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          key={target.id}
-        >
-          {target.letter}
-        </motion.div>
-        <div className="mt-1 text-lg font-bold text-blue-700">{target.name}</div>
+        <span className="mt-2 flex h-28 w-full items-center justify-center" aria-hidden="true">
+          <motion.span
+            className="qaida-arabic block text-8xl font-black leading-[1.35] text-blue-800"
+            lang="ar"
+            dir="rtl"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            key={target.id}
+          >
+            {target.letter}
+          </motion.span>
+        </span>
+        <div className="mt-1 flex flex-col items-center gap-0.5 border-t border-blue-200/70 pt-2">
+          <span className="text-lg font-bold leading-tight text-blue-700">{target.name}</span>
+          <span className="text-sm font-semibold text-blue-600/80" dir="ltr">“{target.sound}”</span>
+        </div>
         <button
           className="mt-2 flex items-center gap-1 rounded-full bg-blue-200 px-3 py-1 text-xs text-blue-700 hover:bg-blue-300"
           onClick={() => void qaidaAudio.pronounce({ key: `letter-${target.id}`, fallbackText: target.letter })}

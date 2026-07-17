@@ -108,7 +108,7 @@ export default function LetterCard({
         {/* Main letter */}
         <div className="flex h-full flex-col items-center justify-center">
           <motion.span
-            className={`qaida-arabic ${s.text} relative z-10 font-bold leading-none text-green-800`}
+            className={`qaida-arabic ${s.text} relative z-10 font-bold leading-[1.35] text-green-800`}
             lang="ar"
             dir="rtl"
             initial={reducedMotion ? false : { opacity: 0, scale: 0.72, filter: "blur(8px)" }}
