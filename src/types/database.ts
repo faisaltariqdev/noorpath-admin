@@ -299,6 +299,7 @@ export interface TutorEarning {
   status: EarningStatus;
   paid_date?: string;
   invoice_generated?: boolean;
+  notes?: string | null;
   created_at: string;
 }
 

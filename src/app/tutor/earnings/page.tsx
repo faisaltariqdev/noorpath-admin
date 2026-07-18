@@ -17,6 +17,7 @@ interface Transfer {
   paid_date: string;
   month: number | string;
   year: number;
+  notes?: string | null;
 }
 
 const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -38,7 +39,7 @@ export default function TutorEarningsPage() {
         supabase.from("profiles").select("country").eq("id", user.id).maybeSingle(),
         supabase
           .from("tutor_earnings")
-          .select("id, total_amount, currency, paid_date, month, year, status")
+          .select("id, total_amount, currency, paid_date, month, year, status, notes")
           .eq("tutor_id", user.id)
           .eq("status", "paid")
           .not("paid_date", "is", null)
@@ -56,6 +57,7 @@ export default function TutorEarningsPage() {
           paid_date: row.paid_date,
           month: row.month,
           year: row.year,
+          notes: row.notes,
         }))
       );
       setLoading(false);
@@ -68,7 +70,7 @@ export default function TutorEarningsPage() {
       <TopBar title="Payments" subtitle="Salary transfers from admin" />
       <div className="page-header" style={{ paddingTop: 24 }}>
         <h1 className="page-title">Payments</h1>
-        <p className="page-subtitle">Successful salary transfers only · amounts in your country currency</p>
+        <p className="page-subtitle">Successful salary transfers · amounts in your country currency</p>
       </div>
       <div className="page-body">
         {loading ? (
@@ -77,80 +79,65 @@ export default function TutorEarningsPage() {
           <EmptyState
             icon={DollarSign}
             title="No transfers yet"
-            description="When admin successfully transfers your salary, it will appear here with date and time."
+            description="When admin successfully transfers your salary, it will appear here."
           />
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 640 }}>
-            {transfers.map((transfer) => {
-              const paidAt = new Date(transfer.paid_date);
-              const monthNum = Number(transfer.month);
-              const currency = transfer.currency || displayCurrency;
-              return (
-                <article
-                  key={transfer.id}
-                  style={{
-                    border: "1px solid #bbf7d0",
-                    background: "#f0fdf4",
-                    borderRadius: 16,
-                    padding: "18px 20px",
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 12,
-                        background: "#dcfce7",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <CheckCircle2 size={20} color="#15803d" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, color: "#14532d", fontSize: "0.95rem" }}>
-                        Salary successfully transferred from admin
-                      </div>
-                      <div style={{ marginTop: 6, fontSize: "0.82rem", color: "#166534" }}>
-                        Date:{" "}
-                        {paidAt.toLocaleDateString("en-GB", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </div>
-                      <div style={{ marginTop: 2, fontSize: "0.82rem", color: "#166534" }}>
-                        Time:{" "}
-                        {paidAt.toLocaleTimeString("en-GB", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                      {(monthNum || transfer.year) && (
-                        <div style={{ marginTop: 2, fontSize: "0.78rem", color: "#64748b" }}>
-                          For: {MONTHS[monthNum] || monthNum} {transfer.year}
-                        </div>
-                      )}
-                      <div
-                        style={{
-                          marginTop: 12,
-                          fontWeight: 800,
-                          fontSize: "1.35rem",
-                          color: "#0f172a",
-                          fontFamily: "var(--font-playfair), Georgia, serif",
-                        }}
-                      >
-                        Total: {formatCurrency(transfer.total_amount, currency)}
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="card">
+            <div className="card-header" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <CheckCircle2 size={16} color="#15803d" />
+              <h3 className="card-title" style={{ margin: 0 }}>Transfer history</h3>
+            </div>
+            <div className="table-shell">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date & time</th>
+                    <th>Period</th>
+                    <th>Amount</th>
+                    <th>Note from admin</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transfers.map((transfer) => {
+                    const paidAt = new Date(transfer.paid_date);
+                    const monthNum = Number(transfer.month);
+                    const currency = transfer.currency || displayCurrency;
+                    return (
+                      <tr key={transfer.id}>
+                        <td data-label="Date & time">
+                          <div style={{ fontWeight: 600 }}>
+                            {paidAt.toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </div>
+                          <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                            {paidAt.toLocaleTimeString("en-GB", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                        </td>
+                        <td data-label="Period">
+                          {MONTHS[monthNum] || monthNum} {transfer.year}
+                        </td>
+                        <td data-label="Amount" style={{ fontWeight: 800, color: "#0f172a" }}>
+                          {formatCurrency(transfer.total_amount, currency)}
+                        </td>
+                        <td data-label="Note from admin" style={{ color: "#475569", maxWidth: 280 }}>
+                          {transfer.notes?.trim() || "—"}
+                        </td>
+                        <td data-label="Status">
+                          <span className="badge badge-green">Transferred</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
