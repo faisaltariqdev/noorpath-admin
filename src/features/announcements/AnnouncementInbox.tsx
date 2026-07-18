@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Download, Megaphone } from "lucide-react";
+import { AlertTriangle, Bell, DollarSign, Megaphone } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import { EmptyState, LoadingState, SectionCard } from "@/components/ui/PortalUI";
 import { supabase } from "@/lib/supabase";
@@ -10,10 +10,10 @@ interface InboxItem {
   id: string;
   title: string;
   message: string;
+  kind?: string | null;
   priority: string;
-  image_url?: string | null;
-  pdf_url?: string | null;
   published_at?: string | null;
+  expires_at?: string | null;
   created_at: string;
   is_read: boolean;
 }
@@ -22,9 +22,11 @@ export default function AnnouncementInbox({ roleLabel = "Announcements" }: { rol
   const [items, setItems] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function load() {
     setLoading(true);
+    setError("");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setLoading(false);
@@ -32,26 +34,32 @@ export default function AnnouncementInbox({ roleLabel = "Announcements" }: { rol
     }
     setUserId(user.id);
 
-    const [{ data: announcements }, { data: reads }] = await Promise.all([
+    const [{ data: announcements, error: annError }, { data: reads }] = await Promise.all([
       supabase
         .from("announcements")
-        .select("id, title, message, priority, image_url, pdf_url, published_at, created_at, expires_at, scheduled_at")
+        .select("id, title, message, kind, priority, published_at, created_at, expires_at")
         .not("published_at", "is", null)
         .order("published_at", { ascending: false })
         .limit(50),
       supabase.from("announcement_reads").select("announcement_id").eq("user_id", user.id),
     ]);
 
-    const readSet = new Set((reads || []).map((r: any) => r.announcement_id));
+    if (annError) {
+      setError(annError.message);
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
+    const readSet = new Set((reads || []).map((r: { announcement_id: string }) => r.announcement_id));
     const now = Date.now();
     setItems(
       (announcements || [])
-        .filter((a: any) => {
+        .filter((a) => {
           if (a.expires_at && new Date(a.expires_at).getTime() < now) return false;
-          if (a.scheduled_at && new Date(a.scheduled_at).getTime() > now) return false;
           return true;
         })
-        .map((a: any) => ({
+        .map((a) => ({
           ...a,
           is_read: readSet.has(a.id),
         }))
@@ -65,10 +73,14 @@ export default function AnnouncementInbox({ roleLabel = "Announcements" }: { rol
 
   async function markRead(id: string) {
     if (!userId) return;
-    await supabase.from("announcement_reads").upsert(
+    const { error: upsertError } = await supabase.from("announcement_reads").upsert(
       { announcement_id: id, user_id: userId, read_at: new Date().toISOString() },
       { onConflict: "announcement_id,user_id" }
     );
+    if (upsertError) {
+      setError(upsertError.message);
+      return;
+    }
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, is_read: true } : item)));
   }
 
@@ -76,57 +88,67 @@ export default function AnnouncementInbox({ roleLabel = "Announcements" }: { rol
 
   return (
     <>
-      <TopBar title={roleLabel} subtitle="Read-only academy notices" />
+      <TopBar title={roleLabel} subtitle="Academy notices — read only" />
       <div className="page-header" style={{ paddingTop: 24 }}>
         <h1 className="page-title">Announcements</h1>
-        <p className="page-subtitle">{unread} unread · no replies</p>
+        <p className="page-subtitle">
+          {unread > 0 ? `${unread} new` : "You're all caught up"} · no replies
+        </p>
       </div>
       <div className="page-body">
+        {error && (
+          <div className="card" style={{ marginBottom: 12, padding: 12, color: "#b91c1c", fontWeight: 600 }}>
+            {error}
+          </div>
+        )}
         <SectionCard title="Inbox" className="portal-section-card--full">
           {loading ? (
             <LoadingState />
           ) : items.length === 0 ? (
-            <EmptyState icon={Megaphone} title="No announcements" description="When admin publishes a notice, it appears here." />
+            <EmptyState icon={Megaphone} title="No announcements" description="When admin sends a notice, it appears here and on your home dashboard." />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {items.map((item) => (
-                <article
-                  key={item.id}
-                  style={{
-                    border: "1px solid #e2e8f0",
-                    borderRadius: 12,
-                    padding: 14,
-                    background: item.is_read ? "#fff" : "#f8fafc",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => void markRead(item.id)}
-                >
-                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                    <Bell size={16} color={item.is_read ? "#94a3b8" : "#1b5e42"} style={{ marginTop: 2 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: item.is_read ? 600 : 800 }}>{item.title}</div>
-                      <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: 2, textTransform: "capitalize" }}>
-                        {item.priority} · {new Date(item.published_at || item.created_at).toLocaleString("en-GB")}
-                      </div>
-                      <p style={{ fontSize: "0.85rem", color: "#475569", marginTop: 8, whiteSpace: "pre-wrap" }}>{item.message}</p>
-                      {(item.image_url || item.pdf_url) && (
-                        <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
-                          {item.image_url && (
-                            <a href={item.image_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-xs" onClick={(e) => e.stopPropagation()}>
-                              <Download size={12} /> Image
-                            </a>
-                          )}
-                          {item.pdf_url && (
-                            <a href={item.pdf_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-xs" onClick={(e) => e.stopPropagation()}>
-                              <Download size={12} /> PDF
-                            </a>
-                          )}
+              {items.map((item) => {
+                const isFee = item.kind === "fee_reminder";
+                const isAlert = item.kind === "alert" || item.priority === "urgent";
+                const Icon = isAlert ? AlertTriangle : isFee ? DollarSign : Bell;
+                return (
+                  <article
+                    key={item.id}
+                    style={{
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 12,
+                      padding: 14,
+                      background: item.is_read ? "#fff" : isAlert ? "#fef2f2" : isFee ? "#fffbeb" : "#f8fafc",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => void markRead(item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        void markRead(item.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${item.is_read ? "Read" : "Unread"}: ${item.title}`}
+                  >
+                    <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <Icon size={16} color={item.is_read ? "#94a3b8" : "#1b5e42"} style={{ marginTop: 2 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: item.is_read ? 600 : 800 }}>{item.title}</div>
+                        <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: 2, textTransform: "capitalize" }}>
+                          {(item.kind || "general").replace("_", " ")}
+                          {" · "}
+                          {new Date(item.published_at || item.created_at).toLocaleString("en-GB")}
+                          {!item.is_read ? " · New" : ""}
                         </div>
-                      )}
+                        <p style={{ fontSize: "0.85rem", color: "#475569", marginTop: 8, whiteSpace: "pre-wrap" }}>{item.message}</p>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </SectionCard>

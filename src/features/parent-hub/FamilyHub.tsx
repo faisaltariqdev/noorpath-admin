@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import { MetricCard, PortalGrid, SectionCard, LoadingState, EmptyState } from "@/components/ui/PortalUI";
+import DashboardAnnouncementBanner from "@/features/announcements/DashboardAnnouncementBanner";
 import { supabase } from "@/lib/supabase";
 import { formatStudentLevel } from "@/lib/portal";
 import { loadFamilyData } from "./loadFamilyData";
@@ -201,6 +202,8 @@ export default function FamilyHub() {
         subtitle={childFilter === "all" ? "All children" : children.find((c) => c.id === childFilter)?.full_name}
       />
       <div className="page-body" style={{ paddingTop: 20 }}>
+        <DashboardAnnouncementBanner inboxHref="/parent/messages" />
+
         {/* Child tabs */}
         <div
           role="tablist"

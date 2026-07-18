@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
+import DashboardAnnouncementBanner from "@/features/announcements/DashboardAnnouncementBanner";
 import { getSessionSubject } from "@/lib/portal";
 import { unwrapOne } from "@/lib/currency";
 import { Calendar, Clock, BookOpen, Users, Video, CheckCircle, ArrowUpRight, Star, FileText } from "lucide-react";
@@ -134,6 +135,7 @@ export default function TutorDashboard() {
         </div>
       </div>
       <div className="page-body">
+        <DashboardAnnouncementBanner inboxHref="/tutor/messages" />
         <div className="stats-grid">
           {statCards.map(c => (
             <div key={c.label} className="stat-card">

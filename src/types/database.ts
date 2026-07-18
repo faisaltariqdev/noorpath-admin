@@ -167,6 +167,7 @@ export interface Announcement {
   id: string;
   title: string;
   message: string;
+  kind?: "general" | "fee_reminder" | "alert";
   image_url?: string;
   pdf_url?: string;
   priority: string;
@@ -177,6 +178,7 @@ export interface Announcement {
   scheduled_at?: string;
   expires_at?: string;
   published_at?: string;
+  show_days?: number;
   send_push: boolean;
   send_email: boolean;
   send_dashboard: boolean;
