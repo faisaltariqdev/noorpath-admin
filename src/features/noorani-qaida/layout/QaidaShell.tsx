@@ -15,6 +15,8 @@ import { useMotionBudget } from "../motion/useMotionBudget";
 import { pageVariants } from "../motion/config";
 import QaidaLoader from "../ui/QaidaLoader";
 import { getOverallCurriculumProgress } from "../state/curriculumProgress";
+import { qaidaAudio } from "../audio/QaidaAudioService";
+import { supabase } from "@/lib/supabase";
 
 const LessonScreen = dynamic(() => import("../screens/LessonScreen"), {
   ssr: false,
@@ -351,12 +353,43 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
   const [showCoinRain, setShowCoinRain] = useState(false);
   const [gameCompletionCount, setGameCompletionCount] = useState(0);
   const [showEnrolPrompt, setShowEnrolPrompt] = useState(false);
+  const [userName, setUserName] = useState(preview ? "Guest" : "Learner");
 
   const currentLetter = activeScreenId?.startsWith("letter-")
     ? LETTERS.find((l) => `letter-${l.id}` === activeScreenId) ?? LETTERS[0]
     : LETTERS.find((l) => `letter-${l.id}` === state.currentLesson) ?? LETTERS[0];
   const currentScreenId = activeScreenId ?? state.currentCurriculumScreen;
   const focusWindow = letterWindow(currentLetter.id);
+
+  useEffect(() => {
+    if (preview) {
+      setUserName("Guest");
+      return;
+    }
+    let cancelled = false;
+    async function loadProfileName() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled && data?.full_name) setUserName(data.full_name);
+    }
+    void loadProfileName();
+    return () => { cancelled = true; };
+  }, [preview]);
+
+  useEffect(() => {
+    const unlock = () => qaidaAudio.unlock();
+    window.addEventListener("pointerdown", unlock, { once: true, capture: true });
+    window.addEventListener("keydown", unlock, { once: true, capture: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock, true);
+      window.removeEventListener("keydown", unlock, true);
+    };
+  }, []);
 
   useEffect(() => {
     contentRef.current?.focus({ preventScroll: true });
@@ -571,7 +604,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
         <QaidaSidebar
           activeView={activeView}
           onNavigate={handleNavigate}
-          userName={preview ? "Guest" : "Ali Raza"}
+          userName={userName}
           xp={state.progress.xp}
           level={state.progress.level}
           xpMax={state.progress.xpMax}
@@ -613,7 +646,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
               <QaidaSidebar
                 activeView={activeView}
                 onNavigate={handleNavigate}
-                userName={preview ? "Guest" : "Ali Raza"}
+                userName={userName}
                 xp={state.progress.xp}
                 level={state.progress.level}
                 xpMax={state.progress.xpMax}

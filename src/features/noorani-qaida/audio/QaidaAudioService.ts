@@ -1,4 +1,4 @@
-import { cancelSpeech, speakArabic, speakEnglish } from "./speech";
+import { cancelSpeech, speakArabic, speakEnglish, unlockSpeechAudio } from "./speech";
 
 export type PronunciationMode = "normal" | "slow";
 export type QaidaSoundEffect = "tap" | "correct" | "retry" | "coin" | "reward" | "level-up";
@@ -22,9 +22,17 @@ class QaidaAudioService {
   private enabled = true;
   private activeAudio: HTMLAudioElement | null = null;
   private requestId = 0;
+  private unlocked = false;
 
   configure(assets: QaidaAudioAssets) {
     this.assets = assets;
+  }
+
+  /** Must run inside a user gesture on Windows/Chrome for TTS + HTMLAudio. */
+  unlock() {
+    if (this.unlocked) return;
+    this.unlocked = true;
+    unlockSpeechAudio();
   }
 
   setEnabled(enabled: boolean) {
@@ -55,6 +63,7 @@ class QaidaAudioService {
     onEnd,
   }: PronunciationRequest): Promise<void> {
     if (!this.enabled) return;
+    this.unlock();
     this.stop();
     const requestId = this.requestId;
     const source = this.assets.pronunciations?.[key]?.[mode];
@@ -77,31 +86,48 @@ class QaidaAudioService {
 
   feedback(message: string, language: "ar" | "en" = "en") {
     if (!this.enabled) return;
-    if (language === "ar") speakArabic(message, 0.78, 1.05);
-    else speakEnglish(message);
+    this.unlock();
+    if (language === "ar") void speakArabic(message, 0.78, 1.05);
+    else void speakEnglish(message);
   }
 
   async effect(effect: QaidaSoundEffect) {
     if (!this.enabled) return;
+    this.unlock();
     const source = this.assets.effects?.[effect];
-    if (source) await this.playFile(source);
+    if (source) {
+      await this.playFile(source);
+      return;
+    }
+    // Soft click fallback when effect files are missing (Windows browsers still hear feedback).
+    if (effect === "tap" || effect === "correct" || effect === "retry") {
+      this.playTone(effect === "correct" ? 880 : effect === "retry" ? 220 : 520, 0.07);
+    }
   }
 
-  private playSpeech(text: string, rate: number) {
-    return new Promise<void>((resolve) => {
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-        resolve();
-        return;
-      }
+  private async playSpeech(text: string, rate: number) {
+    await speakArabic(text, rate, 1.02);
+  }
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ar-SA";
-      utterance.rate = rate;
-      utterance.pitch = 1.02;
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      window.speechSynthesis.speak(utterance);
-    });
+  private playTone(frequency: number, durationSec: number) {
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = frequency;
+      gain.gain.value = 0.08;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durationSec);
+      osc.stop(ctx.currentTime + durationSec);
+      window.setTimeout(() => void ctx.close(), Math.ceil(durationSec * 1000) + 50);
+    } catch {
+      /* ignore */
+    }
   }
 
   private playFile(source: string) {

@@ -45,7 +45,7 @@ const NAV_ITEMS: NavItem[] = [
 export default function QaidaSidebar({
   activeView,
   onNavigate,
-  userName = "Ali Raza",
+  userName = "Learner",
   xp = 150,
   level = 1,
   xpMax = 300,

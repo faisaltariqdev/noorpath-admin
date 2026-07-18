@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 import SparkleBurst from "../animations/SparkleBurst";
 import StarBurst from "../animations/StarBurst";
-import { speakArabic } from "../audio/speech";
+import { qaidaAudio } from "../audio/QaidaAudioService";
 import type { Letter } from "../types";
 
 interface LetterCardProps {
@@ -47,7 +47,7 @@ export default function LetterCard({
     setTapped(true);
     setSparkle(true);
     if (onTap) onTap();
-    else speakArabic(letter.letter);
+    else void qaidaAudio.pronounce({ key: `letter-${letter.id}`, fallbackText: letter.letter });
     setTimeout(() => setTapped(false), 600);
     setTimeout(() => setSparkle(false), 900);
     if (completed) {
