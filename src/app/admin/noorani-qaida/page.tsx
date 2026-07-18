@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import QaidaLoader from "@/features/noorani-qaida/ui/QaidaLoader";
+import QaidaErrorBoundary from "@/features/noorani-qaida/ui/QaidaErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Noorani Qaida — NoorPath Admin",
@@ -14,5 +15,9 @@ const QaidaShell = dynamic(() => import("@/features/noorani-qaida/layout/QaidaSh
 });
 
 export default function NooraniQaidaPage() {
-  return <QaidaShell />;
+  return (
+    <QaidaErrorBoundary>
+      <QaidaShell />
+    </QaidaErrorBoundary>
+  );
 }

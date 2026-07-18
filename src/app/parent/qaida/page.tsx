@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import QaidaLoader from "@/features/noorani-qaida/ui/QaidaLoader";
+import QaidaErrorBoundary from "@/features/noorani-qaida/ui/QaidaErrorBoundary";
 import { supabase } from "@/lib/supabase";
 
 const QaidaShell = dynamic(() => import("@/features/noorani-qaida/layout/QaidaShell"), {
@@ -56,5 +57,9 @@ export default function ParentQaidaPage() {
     );
   }
 
-  return <QaidaShell />;
+  return (
+    <QaidaErrorBoundary>
+      <QaidaShell />
+    </QaidaErrorBoundary>
+  );
 }

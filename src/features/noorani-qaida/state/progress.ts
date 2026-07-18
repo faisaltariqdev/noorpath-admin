@@ -109,7 +109,9 @@ export function progressReducer(state: QaidaProgress, action: QaidaAction): Qaid
         reviewSummaries: Array.isArray(action.value.reviewSummaries) ? action.value.reviewSummaries : [],
         settings: {
           ...DEFAULT_PROGRESS.settings,
-          ...(action.value.settings ?? {}),
+          ...(action.value.settings && typeof action.value.settings === "object"
+            ? action.value.settings
+            : {}),
         },
       });
     }

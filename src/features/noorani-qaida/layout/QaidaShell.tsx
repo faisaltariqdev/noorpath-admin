@@ -148,18 +148,20 @@ function WelcomeDashboard({
   particleCount: number;
   reducedMotion: boolean;
 }) {
-  const completedCount = LETTERS.filter((l) => progress.completed.includes(`letter-${l.id}`)).length;
+  const completed = Array.isArray(progress.completed) ? progress.completed : [];
+  const badges = Array.isArray(progress.badges) ? progress.badges : [];
+  const completedCount = LETTERS.filter((l) => completed.includes(`letter-${l.id}`)).length;
   const curriculumProgress = getOverallCurriculumProgress(progress);
   const pct = curriculumProgress.percent;
-  const earnedBadges = progress.badges.filter((b) => b.earned).length;
-  const nextLetter = LETTERS.find((l) => !progress.completed.includes(`letter-${l.id}`)) ?? null;
+  const earnedBadges = badges.filter((b) => b.earned).length;
+  const nextLetter = LETTERS.find((l) => !completed.includes(`letter-${l.id}`)) ?? null;
   const isNew = completedCount === 0;
 
   const stats = [
     { icon: "📖", label: "Letters Learned", value: `${completedCount}/28`, tint: "text-emerald-700", chip: "bg-emerald-100" },
     { icon: "⚡", label: "Total XP", value: progress.xp, tint: "text-amber-700", chip: "bg-amber-100" },
     { icon: "🪙", label: "Coins", value: progress.coins, tint: "text-orange-700", chip: "bg-orange-100" },
-    { icon: "🏆", label: "Badges", value: `${earnedBadges}/${progress.badges.length}`, tint: "text-violet-700", chip: "bg-violet-100" },
+    { icon: "🏆", label: "Badges", value: `${earnedBadges}/${badges.length}`, tint: "text-violet-700", chip: "bg-violet-100" },
   ];
 
   const quickActions: { view: ActiveView; icon: string; title: string; caption: string; ring: string }[] = [
@@ -311,10 +313,10 @@ function WelcomeDashboard({
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 id="qaida-badges" className="text-base font-black text-slate-900">Your Badges</h2>
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">{earnedBadges}/{progress.badges.length} earned</span>
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">{earnedBadges}/{badges.length} earned</span>
         </div>
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-6">
-          {progress.badges.map((badge) => (
+          {badges.map((badge) => (
             <motion.div
               key={badge.id}
               whileHover={reducedMotion || !badge.earned ? undefined : { y: -3, scale: 1.03 }}
@@ -346,7 +348,8 @@ interface QaidaShellProps {
 
 export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_URL }: QaidaShellProps = {}) {
   const state = useQaidaState();
-  const motionBudget = useMotionBudget(state.progress.settings.reducedMotion);
+  const settings = state.progress.settings ?? { previewMode: "child" as const, theme: "light" as const, audioEnabled: true, reducedMotion: false };
+  const motionBudget = useMotionBudget(settings.reducedMotion);
   const contentRef = useRef<HTMLDivElement>(null);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const [activeView, setActiveView] = useState<ActiveView>(preview ? "lessons" : "dashboard");
@@ -365,7 +368,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
     ? LETTERS.find((l) => `letter-${l.id}` === activeScreenId) ?? LETTERS[0]
     : LETTERS.find((l) => `letter-${l.id}` === state.currentLesson) ?? LETTERS[0];
   const currentScreenId = activeScreenId ?? state.currentCurriculumScreen;
-  const focusWindow = letterWindow(currentLetter.id);
+  const focusWindow = letterWindow(currentLetter?.id ?? 1);
 
   useEffect(() => {
     if (preview) {
@@ -590,7 +593,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
   };
 
   return (
-    <MotionConfig reducedMotion={state.progress.settings.reducedMotion ? "always" : "user"}>
+    <MotionConfig reducedMotion={settings.reducedMotion ? "always" : "user"}>
     <div className="flex h-full flex-col overflow-hidden">
       {preview && (
         <div className="flex flex-none flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gradient-to-r from-emerald-700 to-emerald-600 px-4 py-2 text-center text-xs font-semibold text-white sm:text-sm">
@@ -904,12 +907,12 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
                 exit="exit"
               >
                 <SettingsScreen
-                  settings={state.progress.settings}
-                  onUpdate={(settings) => {
-                    if (typeof settings.audioEnabled === "boolean") {
-                      state.setAudioEnabled(settings.audioEnabled);
+                  settings={settings}
+                  onUpdate={(next) => {
+                    if (typeof next.audioEnabled === "boolean") {
+                      state.setAudioEnabled(next.audioEnabled);
                     } else {
-                      state.dispatch({ type: "update_settings", settings });
+                      state.dispatch({ type: "update_settings", settings: next });
                     }
                   }}
                   onReset={() => state.dispatch({ type: "reset" })}

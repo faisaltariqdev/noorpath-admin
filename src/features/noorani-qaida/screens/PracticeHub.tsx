@@ -39,7 +39,10 @@ export default function PracticeHub({
   const [lastDrill, setLastDrill] = useState<string | null>(null);
 
   const enabledIds = useMemo(() => resolveEnabledGames(config), [config]);
-  const activeGames = useMemo(() => enabledIds.map((id) => GAME_BY_ID[id]), [enabledIds]);
+  const activeGames = useMemo(
+    () => enabledIds.map((id) => GAME_BY_ID[id]).filter((game): game is NonNullable<typeof game> => Boolean(game)),
+    [enabledIds],
+  );
 
   const pronounce = (mode: "normal" | "slow" = "normal") => {
     if (!audioEnabled) return;
