@@ -19,12 +19,13 @@ export default function PageTurnViewer({
   direction = "rtl",
   onPageChange,
 }: PageTurnViewerProps) {
-  const [page, setPage] = useState(Math.max(0, Math.min(initialPage, pages.length - 1)));
+  const [page, setPage] = useState(() => Math.max(0, Math.min(initialPage, Math.max(0, pages.length - 1))));
   const [turnDirection, setTurnDirection] = useState<1 | -1>(1);
   const [spread, setSpread] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const touchStart = useRef<number | null>(null);
   const pageStep = spread ? 2 : 1;
+  const safePage = pages.length ? Math.max(0, Math.min(page, pages.length - 1)) : 0;
 
   const goTo = useCallback((next: number) => {
     const bounded = Math.max(0, Math.min(next, pages.length - 1));
@@ -36,21 +37,27 @@ export default function PageTurnViewer({
   }, [onPageChange, page, pages.length]);
 
   useEffect(() => {
+    if (!pages.length) return;
+    if (page > pages.length - 1) setPage(pages.length - 1);
+  }, [page, pages.length]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Home") goTo(0);
       else if (event.key === "End") goTo(pages.length - 1);
-      else if (event.key === "ArrowLeft") goTo(page + (direction === "rtl" ? pageStep : -pageStep));
-      else if (event.key === "ArrowRight") goTo(page + (direction === "rtl" ? -pageStep : pageStep));
+      else if (event.key === "ArrowLeft") goTo(safePage + (direction === "rtl" ? pageStep : -pageStep));
+      else if (event.key === "ArrowRight") goTo(safePage + (direction === "rtl" ? -pageStep : pageStep));
       else return;
       event.preventDefault();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [direction, goTo, page, pageStep, pages.length]);
+  }, [direction, goTo, pageStep, pages.length, safePage]);
 
   if (!pages.length) return null;
-  const current = pages[page];
-  const visiblePages = spread ? pages.slice(page, page + 2) : [current];
+  const current = pages[safePage];
+  if (!current) return null;
+  const visiblePages = (spread ? pages.slice(safePage, safePage + 2) : [current]).filter(Boolean);
 
   return (
     <section
@@ -66,7 +73,7 @@ export default function PageTurnViewer({
       }}
     >
       <h2 ref={headingRef} tabIndex={-1} className="qaida-live-region">
-        {current.label}, page {page + 1} of {pages.length}
+        {current.label}, page {safePage + 1} of {pages.length}
       </h2>
 
       <div className="relative min-h-[420px] overflow-x-hidden overflow-y-visible">

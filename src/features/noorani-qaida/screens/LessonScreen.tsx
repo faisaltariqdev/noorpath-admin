@@ -562,7 +562,10 @@ export default function LessonScreen({
                 <div>
                   <p className="text-sm font-black text-slate-900">Your Badges</p>
                   <div className="mt-2 flex gap-1.5">
-                    {progress.badges.slice(0, 5).map((badge) => (
+                    {(Array.isArray(progress.badges) ? progress.badges : [])
+                      .filter((badge) => Boolean(badge && typeof badge.label === "string"))
+                      .slice(0, 5)
+                      .map((badge) => (
                       <span
                         key={badge.id}
                         className={`flex h-8 w-8 items-center justify-center rounded-xl text-sm shadow-sm ${badge.earned ? "bg-amber-200" : "bg-slate-200 grayscale"}`}

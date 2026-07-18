@@ -13,7 +13,10 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
   const overall = getOverallCurriculumProgress(progress);
   const moduleProgress = CURRICULUM_MODULES.map((module) => ({ module, state: getModuleProgress(progress, module.id) }));
   const modulesDone = moduleProgress.filter(({ state }) => state.complete).length;
-  const earnedBadges = progress.badges.filter((b) => b.earned);
+  const badges = (Array.isArray(progress.badges) ? progress.badges : []).filter(
+    (b): b is NonNullable<typeof b> => Boolean(b && typeof b === "object" && typeof b.label === "string"),
+  );
+  const earnedBadges = badges.filter((b) => b.earned);
 
   const stats = [
     { icon: "📖", label: "Curriculum", value: `${modulesDone}/${CURRICULUM_MODULES.length}`, sub: "modules completed" },
@@ -100,10 +103,10 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
         transition={{ delay: 0.5 }}
       >
         <h2 className="mb-4 text-lg font-bold text-gray-900">
-          Badges ({earnedBadges.length}/{progress.badges.length})
+          Badges ({earnedBadges.length}/{badges.length})
         </h2>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-6">
-          {progress.badges.map((badge) => (
+          {badges.map((badge) => (
             <motion.div
               key={badge.id}
               className={`flex flex-col items-center gap-1.5 rounded-2xl p-3 text-center ${

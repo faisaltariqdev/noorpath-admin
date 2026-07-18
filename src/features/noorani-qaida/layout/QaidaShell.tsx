@@ -149,7 +149,9 @@ function WelcomeDashboard({
   reducedMotion: boolean;
 }) {
   const completed = Array.isArray(progress.completed) ? progress.completed : [];
-  const badges = Array.isArray(progress.badges) ? progress.badges : [];
+  const badges = (Array.isArray(progress.badges) ? progress.badges : []).filter(
+    (b): b is NonNullable<typeof b> => Boolean(b && typeof b === "object" && typeof b.label === "string"),
+  );
   const completedCount = LETTERS.filter((l) => completed.includes(`letter-${l.id}`)).length;
   const curriculumProgress = getOverallCurriculumProgress(progress);
   const pct = curriculumProgress.percent;

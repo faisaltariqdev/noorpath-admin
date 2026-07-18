@@ -55,8 +55,28 @@ export const DEFAULT_PROGRESS: QaidaProgress = {
   },
 };
 
+/** Merge saved badge flags onto the canonical catalog — never trust stored shape. */
+function normalizeBadges(raw: unknown): Badge[] {
+  const stored = Array.isArray(raw)
+    ? raw.filter((badge): badge is Partial<Badge> & { id: string } =>
+        Boolean(badge) && typeof badge === "object" && typeof (badge as Badge).id === "string",
+      )
+    : [];
+
+  return ALL_BADGES.map((defaultBadge) => {
+    const saved = stored.find((badge) => badge.id === defaultBadge.id);
+    return {
+      ...defaultBadge,
+      earned: Boolean(saved?.earned),
+      earnedAt: typeof saved?.earnedAt === "string" ? saved.earnedAt : undefined,
+    };
+  });
+}
+
 function awardBadgesForState(progress: QaidaProgress): QaidaProgress {
-  const letterCompleted = progress.completed.filter((id) => id.startsWith("letter-")).length;
+  const completed = Array.isArray(progress.completed) ? progress.completed : [];
+  const attempts = Array.isArray(progress.assessmentAttempts) ? progress.assessmentAttempts : [];
+  const letterCompleted = completed.filter((id) => typeof id === "string" && id.startsWith("letter-")).length;
   const conditions: Record<string, boolean> = {
     "first-letter": letterCompleted >= 1,
     "five-letters": letterCompleted >= 5,
@@ -72,48 +92,61 @@ function awardBadgesForState(progress: QaidaProgress): QaidaProgress {
     "vowel-explorer": isModuleComplete(progress, "harakaat"),
     "word-reader": isModuleComplete(progress, "word-reading"),
     "quran-ready": isModuleComplete(progress, "quranic-practice"),
-    "qaida-graduate": progress.assessmentAttempts.some((attempt) => attempt.screenId === "final-assessment" && attempt.passed),
+    "qaida-graduate": attempts.some((attempt) => attempt?.screenId === "final-assessment" && attempt.passed),
   };
 
   const now = new Date().toISOString();
-  const badges = progress.badges.map((b) => {
+  const badges = normalizeBadges(progress.badges).map((b) => {
     if (!b.earned && conditions[b.id]) {
       return { ...b, earned: true, earnedAt: now };
     }
     return b;
   });
 
-  return { ...progress, badges };
+  return { ...progress, completed, assessmentAttempts: attempts, badges };
 }
 
 export function progressReducer(state: QaidaProgress, action: QaidaAction): QaidaProgress {
   switch (action.type) {
     case "hydrate": {
-      const storedBadges = Array.isArray(action.value.badges) ? action.value.badges : [];
-      const badges = ALL_BADGES.map((defaultBadge) => ({
-        ...defaultBadge,
-        ...storedBadges.find((badge) => badge.id === defaultBadge.id),
-      }));
-      return awardBadgesForState({
-        ...DEFAULT_PROGRESS,
-        ...action.value,
-        version: DEFAULT_PROGRESS.version,
-        hydrated: true,
-        completed: Array.isArray(action.value.completed) ? action.value.completed : [],
-        ratings: action.value.ratings && typeof action.value.ratings === "object" ? action.value.ratings : {},
-        badges,
-        currentScreenId: typeof action.value.currentScreenId === "string"
-          ? action.value.currentScreenId
-          : getCurrentCurriculumScreen({ ...DEFAULT_PROGRESS, ...action.value, badges } as QaidaProgress),
-        assessmentAttempts: Array.isArray(action.value.assessmentAttempts) ? action.value.assessmentAttempts : [],
-        reviewSummaries: Array.isArray(action.value.reviewSummaries) ? action.value.reviewSummaries : [],
-        settings: {
-          ...DEFAULT_PROGRESS.settings,
-          ...(action.value.settings && typeof action.value.settings === "object"
-            ? action.value.settings
-            : {}),
-        },
-      });
+      try {
+        const badges = normalizeBadges(action.value.badges);
+        const completed = Array.isArray(action.value.completed)
+          ? action.value.completed.filter((id): id is string => typeof id === "string")
+          : [];
+        return awardBadgesForState({
+          ...DEFAULT_PROGRESS,
+          ...action.value,
+          version: DEFAULT_PROGRESS.version,
+          hydrated: true,
+          completed,
+          ratings: action.value.ratings && typeof action.value.ratings === "object" ? action.value.ratings : {},
+          badges,
+          currentScreenId: typeof action.value.currentScreenId === "string"
+            ? action.value.currentScreenId
+            : getCurrentCurriculumScreen({ ...DEFAULT_PROGRESS, ...action.value, completed, badges } as QaidaProgress),
+          assessmentAttempts: Array.isArray(action.value.assessmentAttempts)
+            ? action.value.assessmentAttempts.filter((attempt) => Boolean(attempt) && typeof attempt === "object")
+            : [],
+          reviewSummaries: Array.isArray(action.value.reviewSummaries)
+            ? action.value.reviewSummaries.filter((summary) => Boolean(summary) && typeof summary === "object")
+            : [],
+          settings: {
+            ...DEFAULT_PROGRESS.settings,
+            ...(action.value.settings && typeof action.value.settings === "object"
+              ? action.value.settings
+              : {}),
+          },
+        });
+      } catch (error) {
+        console.error("[Noorani Qaida] Corrupt progress payload — using defaults", error);
+        return {
+          ...DEFAULT_PROGRESS,
+          hydrated: true,
+          badges: ALL_BADGES.map((b) => ({ ...b })),
+          settings: { ...DEFAULT_PROGRESS.settings },
+        };
+      }
     }
 
     case "complete_screen": {
@@ -181,7 +214,16 @@ export function progressReducer(state: QaidaProgress, action: QaidaAction): Qaid
     }
 
     case "reset": {
-      return { ...DEFAULT_PROGRESS, hydrated: true };
+      return {
+        ...DEFAULT_PROGRESS,
+        hydrated: true,
+        completed: [],
+        ratings: {},
+        badges: ALL_BADGES.map((b) => ({ ...b })),
+        assessmentAttempts: [],
+        reviewSummaries: [],
+        settings: { ...DEFAULT_PROGRESS.settings },
+      };
     }
 
     default:

@@ -46,7 +46,7 @@ export function createParentProgressSnapshot(raw: string | null): ParentProgress
     lettersCompleted,
     completionPercent: Math.round((lettersCompleted / LETTERS.length) * 100),
     nextLetterName: nextLetter?.name ?? null,
-    earnedBadges: progress.badges.filter((badge) => badge.earned).length,
+    earnedBadges: progress.badges.filter((badge) => badge?.earned).length,
     overallCurriculumPercent: overall.percent,
     currentModuleTitle: currentModule.title,
     modulesCompleted: moduleStates.filter(({ state }) => state.complete).length,

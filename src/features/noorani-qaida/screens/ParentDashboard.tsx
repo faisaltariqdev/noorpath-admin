@@ -159,8 +159,8 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
             <h2 id="earned-badges-title" className="text-lg font-black text-slate-950">Earned badges</h2>
             <p className="mt-1 text-sm text-slate-600">{snapshot.earnedBadges} verified on this device</p>
             <div className="mt-4 space-y-2">
-              {progress.badges.filter((badge) => badge.earned).length ? (
-                progress.badges.filter((badge) => badge.earned).map((badge) => (
+              {progress.badges.filter((badge) => badge?.earned && badge.label).length ? (
+                progress.badges.filter((badge) => badge?.earned && badge.label).map((badge) => (
                   <div key={badge.id} className="flex items-center gap-3 rounded-2xl bg-amber-50 p-3">
                     <span className="text-2xl" aria-hidden="true">{badge.icon}</span>
                     <div>

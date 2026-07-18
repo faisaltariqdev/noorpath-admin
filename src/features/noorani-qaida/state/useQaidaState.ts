@@ -26,11 +26,15 @@ export function useQaidaState() {
   // Hydrate from localStorage
   useEffect(() => {
     qaidaAudio.configure(manifestToAudioAssets(QAIDA_AUDIO_MANIFEST));
-    const current = localStorage.getItem(PROGRESS_STORAGE_KEY);
-    const legacy = LEGACY_PROGRESS_KEYS.map((k) => localStorage.getItem(k)).find(Boolean) ?? null;
-    dispatch({ type: "hydrate", value: parseProgress(current ?? legacy) });
-    // Update streak on load
-    dispatch({ type: "update_streak" });
+    try {
+      const current = localStorage.getItem(PROGRESS_STORAGE_KEY);
+      const legacy = LEGACY_PROGRESS_KEYS.map((k) => localStorage.getItem(k)).find(Boolean) ?? null;
+      dispatch({ type: "hydrate", value: parseProgress(current ?? legacy) });
+      dispatch({ type: "update_streak" });
+    } catch (error) {
+      console.error("[Noorani Qaida] Failed to hydrate progress — resetting local state", error);
+      dispatch({ type: "reset" });
+    }
   }, []);
 
   useEffect(() => {
