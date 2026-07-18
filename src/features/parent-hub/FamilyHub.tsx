@@ -517,45 +517,26 @@ export default function FamilyHub() {
             {scopedAttendance.length === 0 ? (
               <EmptyState icon={Clock} title="No attendance yet" description="Records appear after tutors mark class." />
             ) : (
-              <div className="table-shell" style={{ overflowX: "auto" }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      {childFilter === "all" && <th>Student</th>}
-                      <th>Class</th>
-                      <th>Course</th>
-                      <th>Teacher</th>
-                      <th>Scheduled</th>
-                      <th>Joined</th>
-                      <th>Duration</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scopedAttendance.slice(0, 40).map((row) => (
-                      <tr key={row.id}>
-                        <td>{row.session_date || (row.scheduled_at ? new Date(row.scheduled_at).toLocaleDateString("en-GB") : "—")}</td>
-                        {childFilter === "all" && <td>{row.student_name}</td>}
-                        <td>{row.class_label || "Class"}</td>
-                        <td>{row.course || "—"}</td>
-                        <td>{row.tutor_name || "—"}</td>
-                        <td>
-                          {row.scheduled_at
-                            ? new Date(row.scheduled_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                            : "—"}
-                        </td>
-                        <td>
-                          {row.actual_join_at
-                            ? new Date(row.actual_join_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                            : "—"}
-                        </td>
-                        <td>{row.actual_duration_minutes != null ? `${row.actual_duration_minutes}m` : "—"}</td>
-                        <td style={{ textTransform: "capitalize" }}>{row.status}{row.late_minutes ? ` (+${row.late_minutes}m)` : ""}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="list-stack">
+                {scopedAttendance.slice(0, 40).map((row) => (
+                  <article key={row.id} className="list-row list-row--compact">
+                    <div>
+                      <strong className="list-title" style={{ textTransform: "capitalize" }}>
+                        {row.status}{row.late_minutes ? ` (+${row.late_minutes}m)` : ""}
+                        {childFilter === "all" ? ` · ${row.student_name}` : ""}
+                      </strong>
+                      <p className="list-meta">
+                        {row.session_date || (row.scheduled_at ? new Date(row.scheduled_at).toLocaleDateString("en-GB") : "—")}
+                        {" · "}{row.class_label || row.course || "Class"}
+                        {" · "}{row.tutor_name || "—"}
+                        {row.scheduled_at
+                          ? ` · ${new Date(row.scheduled_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                          : ""}
+                        {row.actual_duration_minutes != null ? ` · ${row.actual_duration_minutes}m` : ""}
+                      </p>
+                    </div>
+                  </article>
+                ))}
               </div>
             )}
           </SectionCard>

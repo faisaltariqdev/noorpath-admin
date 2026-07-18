@@ -167,18 +167,19 @@ export default function AdminDashboard() {
                 {data.classes.length === 0 ? (
                   <EmptyState icon={Calendar} title="No classes today" description="Newly scheduled classes will appear here." />
                 ) : (
-                  <div className="portal-table-scroll">
-                    <table className="data-table">
-                      <thead><tr><th>Time</th><th>Student</th><th>Teacher</th><th>Status</th></tr></thead>
-                      <tbody>{data.classes.map((item) => (
-                        <tr key={item.id}>
-                          <td>{new Date(item.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</td>
-                          <td><strong>{item.student_name}</strong></td>
-                          <td>{item.teacher_name}</td>
-                          <td><StatusBadge tone={item.status === "completed" ? "success" : item.status === "cancelled" ? "danger" : "info"}>{item.status}</StatusBadge></td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
+                  <div className="list-stack">
+                    {data.classes.map((item) => (
+                      <article key={item.id} className="list-row list-row--compact">
+                        <div>
+                          <strong className="list-title">{item.student_name}</strong>
+                          <p className="list-meta">
+                            {new Date(item.scheduled_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                            {" · "}{item.teacher_name}
+                          </p>
+                        </div>
+                        <StatusBadge tone={item.status === "completed" ? "success" : item.status === "cancelled" ? "danger" : "info"}>{item.status}</StatusBadge>
+                      </article>
+                    ))}
                   </div>
                 )}
               </SectionCard>
@@ -203,35 +204,40 @@ export default function AdminDashboard() {
             <PortalGrid className="mb-6">
               <SectionCard title="Recent enrollments" description="Newest student records">
                 {data.enrollments.length === 0 ? <EmptyState icon={GraduationCap} title="No enrollments" description="New students will appear here." /> : (
-                  <div className="portal-table-scroll">
-                    <table className="data-table">
-                      <thead><tr><th>Student</th><th>Course</th><th>Trial</th><th>Enrolled</th></tr></thead>
-                      <tbody>{data.enrollments.map((student) => (
-                        <tr key={student.id}>
-                          <td><strong>{student.full_name}</strong></td>
-                          <td>{student.course || "—"}</td>
-                          <td><StatusBadge tone={student.trial_status === "converted" ? "success" : "info"}>{student.trial_status || "—"}</StatusBadge></td>
-                          <td>{new Date(student.enrolled_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
+                  <div className="list-stack">
+                    {data.enrollments.map((student) => (
+                      <article key={student.id} className="list-row list-row--compact">
+                        <div>
+                          <strong className="list-title">{student.full_name}</strong>
+                          <p className="list-meta">
+                            {student.course || "No course"}
+                            {" · "}
+                            {new Date(student.enrolled_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                          </p>
+                        </div>
+                        <StatusBadge tone={student.trial_status === "converted" ? "success" : "info"}>{student.trial_status || "—"}</StatusBadge>
+                      </article>
+                    ))}
                   </div>
                 )}
               </SectionCard>
 
               <SectionCard title="Recent payments" description="Latest paid family invoices" action={<Link href="/admin/payments" className="card-link">View all →</Link>}>
                 {data.payments.length === 0 ? <EmptyState icon={ReceiptText} title="No recent payments" description="Paid invoices will appear here." /> : (
-                  <div className="portal-table-scroll">
-                    <table className="data-table">
-                      <thead><tr><th>Student</th><th>Amount</th><th>Paid</th></tr></thead>
-                      <tbody>{data.payments.map((payment) => (
-                        <tr key={payment.id}>
-                          <td><strong>{payment.student_name}</strong></td>
-                          <td>{payment.currency} {Number(payment.amount).toLocaleString()}</td>
-                          <td>{payment.paid_date ? new Date(payment.paid_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
+                  <div className="list-stack">
+                    {data.payments.map((payment) => (
+                      <article key={payment.id} className="list-row list-row--compact">
+                        <div>
+                          <strong className="list-title">{payment.student_name}</strong>
+                          <p className="list-meta">
+                            {payment.paid_date
+                              ? new Date(payment.paid_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+                              : "Paid"}
+                          </p>
+                        </div>
+                        <strong className="text-sm">{payment.currency} {Number(payment.amount).toLocaleString()}</strong>
+                      </article>
+                    ))}
                   </div>
                 )}
               </SectionCard>
@@ -255,18 +261,22 @@ export default function AdminDashboard() {
 
               <SectionCard title="Recent activity" description="Latest teacher progress reports" className="portal-section-card--wide" action={<Link href="/admin/reports" className="card-link">View reports →</Link>}>
                 {data.activity.length === 0 ? <EmptyState icon={ClipboardList} title="No recent activity" description="Progress reports will appear here." /> : (
-                  <div className="portal-table-scroll">
-                    <table className="data-table">
-                      <thead><tr><th>Student</th><th>Teacher</th><th>Rating</th><th>Date</th></tr></thead>
-                      <tbody>{data.activity.map((activity) => (
-                        <tr key={activity.id}>
-                          <td><strong>{activity.student_name}</strong></td>
-                          <td>{activity.teacher_name}</td>
-                          <td><StatusBadge tone={activity.rating === "excellent" ? "success" : "neutral"}>{activity.rating?.replace("_", " ") || "Not rated"}</StatusBadge></td>
-                          <td>{new Date(activity.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
+                  <div className="list-stack">
+                    {data.activity.map((activity) => (
+                      <article key={activity.id} className="list-row list-row--compact">
+                        <div>
+                          <strong className="list-title">{activity.student_name}</strong>
+                          <p className="list-meta">
+                            {activity.teacher_name}
+                            {" · "}
+                            {new Date(activity.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                          </p>
+                        </div>
+                        <StatusBadge tone={activity.rating === "excellent" ? "success" : "neutral"}>
+                          {activity.rating?.replace("_", " ") || "Not rated"}
+                        </StatusBadge>
+                      </article>
+                    ))}
                   </div>
                 )}
               </SectionCard>

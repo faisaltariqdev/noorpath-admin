@@ -95,38 +95,42 @@ export default function PaymentsPage() {
             {loading ? <LoadingState /> : fees.length === 0 ? (
               <EmptyState icon={ReceiptText} title="No invoices" description="Invoices will appear after they are created." />
             ) : (
-              <div className="portal-table-scroll">
-                <table className="data-table">
-                  <thead><tr><th>Student</th><th>Amount</th><th>Due</th><th>Status</th></tr></thead>
-                  <tbody>{fees.map((fee) => (
-                    <tr key={fee.id}>
-                      <td><strong>{fee.student_name}</strong></td>
-                      <td>{fee.currency} {Number(fee.amount).toLocaleString()}</td>
-                      <td>{new Date(fee.due_date).toLocaleDateString("en-GB")}</td>
-                      <td><StatusBadge tone={fee.status === "paid" ? "success" : fee.status === "overdue" ? "danger" : "warning"}>{fee.status}</StatusBadge></td>
-                    </tr>
-                  ))}</tbody>
-                </table>
+              <div className="list-stack">
+                {fees.map((fee) => (
+                  <article key={fee.id} className="list-row list-row--compact">
+                    <div>
+                      <strong className="list-title">{fee.student_name}</strong>
+                      <p className="list-meta">
+                        Due {new Date(fee.due_date).toLocaleDateString("en-GB")}
+                        {" · "}{fee.currency} {Number(fee.amount).toLocaleString()}
+                      </p>
+                    </div>
+                    <StatusBadge tone={fee.status === "paid" ? "success" : fee.status === "overdue" ? "danger" : "warning"}>{fee.status}</StatusBadge>
+                  </article>
+                ))}
               </div>
             )}
           </SectionCard>
 
-          <SectionCard title="Teacher payroll" description="Latest salary and earning records" action={<Link href="/admin/earnings" className="card-link">View all →</Link>}>
+          <SectionCard title="Teacher payroll" description="Latest salary transfers" action={<Link href="/admin/earnings" className="card-link">View all →</Link>}>
             {loading ? <LoadingState /> : earnings.length === 0 ? (
               <EmptyState icon={CreditCard} title="No payroll records" description="Teacher earnings will appear after they are created." />
             ) : (
-              <div className="portal-table-scroll">
-                <table className="data-table">
-                  <thead><tr><th>Teacher</th><th>Period</th><th>Amount</th><th>Status</th></tr></thead>
-                  <tbody>{earnings.map((earning) => (
-                    <tr key={earning.id}>
-                      <td><strong>{earning.tutor_name}</strong></td>
-                      <td>{earning.month}/{earning.year}</td>
-                      <td>{earning.currency} {Number(earning.total_amount).toLocaleString()}</td>
-                      <td><StatusBadge tone={earning.status === "paid" ? "success" : "warning"}>{earning.status}</StatusBadge></td>
-                    </tr>
-                  ))}</tbody>
-                </table>
+              <div className="list-stack">
+                {earnings.map((earning) => (
+                  <article key={earning.id} className="list-row list-row--compact">
+                    <div>
+                      <strong className="list-title">{earning.tutor_name}</strong>
+                      <p className="list-meta">
+                        {earning.month}/{earning.year}
+                        {" · "}{earning.currency} {Number(earning.total_amount).toLocaleString()}
+                      </p>
+                    </div>
+                    <StatusBadge tone={earning.status === "paid" ? "success" : "warning"}>
+                      {earning.status === "paid" ? "Transferred" : "Pending"}
+                    </StatusBadge>
+                  </article>
+                ))}
               </div>
             )}
           </SectionCard>

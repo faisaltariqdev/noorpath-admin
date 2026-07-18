@@ -247,45 +247,45 @@ export default function HomeworkPage() {
             <div className="card-header" style={{ padding: "14px 18px", borderBottom: "1px solid #f1f5f9" }}>
               <h2 style={{ margin: 0, fontSize: "0.95rem" }}>Assigned homework ({assigned.length})</h2>
             </div>
-            <div className="table-shell" style={{ overflowX: "auto" }}>
-            <table className="data-table">
-              <thead><tr><th>Student</th><th>Title</th><th>Type</th><th>Due</th><th>Status</th><th>Marks</th><th></th></tr></thead>
-              <tbody>
-                {assigned.map((row) => (
-                  <tr key={row.id}>
-                    <td style={{ fontWeight: 600 }}>{row.student_name}</td>
-                    <td>{row.title || row.homework_text?.slice(0, 48) || "—"}</td>
-                    <td style={{ textTransform: "capitalize" }}>{row.assignment_type || "homework"}</td>
-                    <td style={{ color: "#64748b" }}>{row.due_date ? new Date(row.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</td>
-                    <td>
+            <div className="list-stack">
+              {assigned.map((row) => (
+                <article key={row.id} className="list-row" style={{ gridTemplateColumns: "1fr", gap: 10 }}>
+                  <div>
+                    <div className="list-title">{row.title || row.homework_text?.slice(0, 64) || "Assignment"}</div>
+                    <div className="list-meta">
+                      {row.student_name}
+                      {" · "}
+                      <span style={{ textTransform: "capitalize" }}>{row.assignment_type || "homework"}</span>
+                      {row.due_date ? ` · Due ${new Date(row.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : ""}
+                      {row.marks != null ? ` · Marks ${row.marks}${row.max_marks != null ? `/${row.max_marks}` : ""}` : ""}
+                    </div>
+                    <div style={{ marginTop: 6 }}>
                       <span className={`badge ${row.archived_at ? "badge-gray" : row.is_completed ? "badge-green" : row.is_published === false ? "badge-yellow" : "badge-blue"}`}>
                         {row.archived_at ? "Archived" : row.is_completed ? "Done" : row.is_published === false ? "Draft" : (row.status || "Pending")}
                       </span>
-                    </td>
-                    <td>{row.marks != null ? `${row.marks}${row.max_marks != null ? `/${row.max_marks}` : ""}` : "—"}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <button type="button" className="btn btn-outline btn-xs" onClick={() => {
-                        setEditId(row.id);
-                        setEditForm({
-                          title: row.title || "",
-                          homework_text: row.homework_text || "",
-                          due_date: row.due_date || "",
-                          teacher_feedback: row.teacher_feedback || "",
-                          marks: row.marks != null ? String(row.marks) : "",
-                          max_marks: row.max_marks != null ? String(row.max_marks) : "",
-                          status: row.status || (row.is_completed ? "completed" : "pending"),
-                        });
-                      }}>Edit</button>{" "}
-                      <button type="button" className="btn btn-outline btn-xs" onClick={() => void duplicateAssigned(row)}>Duplicate</button>{" "}
-                      {row.is_published === false || row.archived_at
-                        ? <button type="button" className="btn btn-outline btn-xs" onClick={() => void publishAssigned(row.id)}>Publish</button>
-                        : <button type="button" className="btn btn-outline btn-xs" onClick={() => void archiveAssigned(row.id)}>Archive</button>}{" "}
-                      <button type="button" className="btn btn-outline btn-xs" onClick={() => void deleteAssigned(row.id)} aria-label="Delete assignment"><Trash2 size={13} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    <button type="button" className="btn btn-outline btn-xs" onClick={() => {
+                      setEditId(row.id);
+                      setEditForm({
+                        title: row.title || "",
+                        homework_text: row.homework_text || "",
+                        due_date: row.due_date || "",
+                        teacher_feedback: row.teacher_feedback || "",
+                        marks: row.marks != null ? String(row.marks) : "",
+                        max_marks: row.max_marks != null ? String(row.max_marks) : "",
+                        status: row.status || (row.is_completed ? "completed" : "pending"),
+                      });
+                    }}>Edit</button>
+                    <button type="button" className="btn btn-outline btn-xs" onClick={() => void duplicateAssigned(row)}>Duplicate</button>
+                    {row.is_published === false || row.archived_at
+                      ? <button type="button" className="btn btn-outline btn-xs" onClick={() => void publishAssigned(row.id)}>Publish</button>
+                      : <button type="button" className="btn btn-outline btn-xs" onClick={() => void archiveAssigned(row.id)}>Archive</button>}
+                    <button type="button" className="btn btn-outline btn-xs" onClick={() => void deleteAssigned(row.id)} aria-label="Delete assignment"><Trash2 size={13} /></button>
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
         )}
