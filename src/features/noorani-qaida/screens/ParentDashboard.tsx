@@ -55,7 +55,7 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
           </div>
         </header>
 
-        <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Verified progress summary">
+        <section className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-5" aria-label="Verified progress summary">
           {[
             ["Curriculum progress", `${snapshot.overallCurriculumPercent}%`, "📖"],
             ["Modules completed", `${snapshot.modulesCompleted}/${CURRICULUM_MODULES.length}`, "🗺️"],
@@ -65,7 +65,7 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
           ].map(([label, value, icon], index) => (
             <motion.article
               key={label}
-              className="qaida-panel p-4 sm:p-5"
+              className={`qaida-panel p-3 sm:p-5 ${index === 4 ? "col-span-2 lg:col-span-1" : ""}`}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
@@ -133,13 +133,13 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
               />
             </div>
 
-            <div className="mt-5 grid grid-cols-5 gap-2 sm:grid-cols-7 md:grid-cols-10">
+            <div className="mt-5 grid grid-cols-4 gap-1.5 min-[380px]:grid-cols-5 sm:grid-cols-7 sm:gap-2 md:grid-cols-10">
               {LETTERS.map((letter) => {
                 const complete = progress.completed.includes(`letter-${letter.id}`);
                 return (
                   <div
                     key={letter.id}
-                    className={`qaida-arabic flex aspect-square items-center justify-center rounded-xl border text-xl font-bold ${
+                    className={`qaida-arabic flex aspect-square min-h-11 items-center justify-center rounded-xl border text-lg font-bold sm:text-xl ${
                       complete
                         ? "border-emerald-300 bg-emerald-100 text-emerald-800"
                         : "border-slate-200 bg-slate-50 text-slate-400"

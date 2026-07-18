@@ -172,7 +172,7 @@ function WelcomeDashboard({
 
   return (
     <motion.div
-      className="qaida-scroll relative mx-auto flex h-full w-full max-w-6xl flex-col gap-4 overflow-y-auto p-4 sm:gap-5 sm:p-6"
+      className="qaida-scroll relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-x-hidden overflow-y-auto p-[var(--qaida-space-page)] sm:gap-5 sm:p-6"
       variants={DASHBOARD_CONTAINER_VARIANTS}
       initial="initial"
       animate="enter"
@@ -605,7 +605,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
             href={enrolUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="inline-flex min-h-9 items-center rounded-full bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             Enrol now →
           </a>
@@ -674,7 +674,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
               />
               <button
                 type="button"
-                className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl text-white hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
+                className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-xl text-white hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close navigation"
               >

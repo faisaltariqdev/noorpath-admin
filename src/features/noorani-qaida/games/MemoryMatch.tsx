@@ -117,18 +117,18 @@ export default function MemoryMatch({ letters, onComplete, onClose }: MemoryMatc
       paused={paused}
       onPauseToggle={() => setPaused((value) => !value)}
     >
-      <div className="h-full min-h-[320px] overflow-hidden">
-        <div className="grid grid-cols-4 gap-3 h-full">
+      <div className="qaida-game-field h-full min-h-0 overflow-hidden">
+        <div className="grid h-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           {cards.map((card) => (
             <motion.button
               key={card.id}
-              className="perspective-1000 relative"
+              className="perspective-1000 relative min-h-[5.5rem] sm:min-h-[7rem]"
               onClick={() => handleFlip(card.id)}
               whileTap={!card.flipped && !card.matched ? { scale: 0.97 } : {}}
               aria-label={card.flipped || card.matched ? `${card.letter.name} ${card.type === "arabic" ? "Arabic" : "name"}` : "Hidden card"}
             >
               <motion.div
-                className="relative h-full w-full"
+                className="relative h-full min-h-[5.5rem] w-full sm:min-h-[7rem]"
                 animate={{ rotateY: card.flipped || card.matched ? 180 : 0 }}
                 transition={{ duration: 0.4, type: "tween" }}
                 style={{ transformStyle: "preserve-3d" }}

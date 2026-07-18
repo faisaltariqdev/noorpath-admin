@@ -101,15 +101,15 @@ export default function FindLetter({ letters, onComplete, onClose, focusLetter }
     >
       {/* Target letter */}
       <motion.div
-        className="mx-4 mb-4 flex flex-col items-center rounded-3xl bg-gradient-to-br from-sky-50 to-blue-100 p-6 shadow-md"
+        className="mx-1 mb-3 flex flex-col items-center rounded-3xl bg-gradient-to-br from-sky-50 to-blue-100 p-4 shadow-md sm:mx-4 sm:mb-4 sm:p-6"
         animate={{ scale: [1, 1.02, 1] }}
         transition={{ duration: 2, repeat: Infinity }}
         key={`target-${round}`}
       >
         <div className="text-xs font-medium uppercase tracking-wider text-blue-500">Find this letter</div>
-        <span className="mt-2 flex h-28 w-full items-center justify-center" aria-hidden="true">
+        <span className="mt-2 flex h-20 w-full items-center justify-center sm:h-28" aria-hidden="true">
           <motion.span
-            className="qaida-arabic block text-8xl font-black leading-[1.35] text-blue-800"
+            className="qaida-arabic block text-6xl font-black leading-[1.35] text-blue-800 sm:text-8xl"
             lang="ar"
             dir="rtl"
             initial={{ scale: 0 }}
@@ -125,7 +125,7 @@ export default function FindLetter({ letters, onComplete, onClose, focusLetter }
           <span className="text-sm font-semibold text-blue-600/80" dir="ltr">“{target.sound}”</span>
         </div>
         <button
-          className="mt-2 flex items-center gap-1 rounded-full bg-blue-200 px-3 py-1 text-xs text-blue-700 hover:bg-blue-300"
+          className="mt-2 flex min-h-11 items-center gap-1 rounded-full bg-blue-200 px-4 py-2 text-xs font-bold text-blue-700 hover:bg-blue-300"
           onClick={() => void qaidaAudio.pronounce({ key: `letter-${target.id}`, fallbackText: target.letter })}
           aria-label="Hear pronunciation"
         >
@@ -134,8 +134,8 @@ export default function FindLetter({ letters, onComplete, onClose, focusLetter }
       </motion.div>
 
       {/* Options grid */}
-      <div className="min-h-[280px] flex-1 overflow-hidden pt-4">
-        <div className="grid grid-cols-2 gap-4 h-full">
+      <div className="qaida-game-field min-h-0 flex-1 overflow-hidden pt-2 sm:pt-4">
+        <div className="grid h-full grid-cols-2 gap-2.5 sm:gap-4">
           {options.map((opt) => {
             const isSelected = selected === opt.id;
             const isCorrect = opt.id === target.id;
@@ -149,14 +149,14 @@ export default function FindLetter({ letters, onComplete, onClose, focusLetter }
             return (
               <motion.button
                 key={opt.id}
-                className={`flex items-center justify-center rounded-2xl ${bg} shadow-md transition-colors`}
+                className={`relative flex min-h-[5.5rem] items-center justify-center rounded-2xl sm:min-h-[7rem] ${bg} shadow-md transition-colors`}
                 onClick={() => handleSelect(opt)}
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 animate={isSelected && feedback === "correct" ? { scale: [1, 1.1, 1] } : {}}
                 aria-label={`Select letter ${opt.name}`}
               >
-                <span className="qaida-arabic text-5xl font-black text-gray-800" lang="ar" dir="rtl">
+                <span className="qaida-arabic text-4xl font-black text-gray-800 sm:text-5xl" lang="ar" dir="rtl">
                   {opt.letter}
                 </span>
                 {isSelected && (

@@ -25,11 +25,11 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
   ];
 
   return (
-    <div className="relative p-6">
+    <div className="relative overflow-x-hidden p-[var(--qaida-space-page)] sm:p-6">
       <FloatingParticles count={10} />
 
       <motion.h1
-        className="mb-6 text-2xl font-black text-gray-900"
+        className="mb-4 text-xl font-black text-gray-900 sm:mb-6 sm:text-2xl"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
@@ -38,17 +38,17 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
 
       {/* Overall progress */}
       <motion.div
-        className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-green-500 to-emerald-700 p-6 text-white shadow-2xl"
+        className="mb-5 overflow-hidden rounded-3xl bg-gradient-to-br from-green-500 to-emerald-700 p-4 text-white shadow-2xl sm:mb-6 sm:p-6"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
       >
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <div className="text-sm text-emerald-200">Overall completion</div>
-            <div className="text-5xl font-black">{overall.percent}%</div>
-            <div className="text-emerald-200">{overall.completed} of {overall.total} curriculum lessons</div>
+            <div className="text-4xl font-black sm:text-5xl">{overall.percent}%</div>
+            <div className="text-sm text-emerald-200 sm:text-base">{overall.completed} of {overall.total} curriculum lessons</div>
           </div>
-          <div className="text-7xl opacity-30">📖</div>
+          <div className="hidden text-7xl opacity-30 sm:block" aria-hidden="true">📖</div>
         </div>
         <div className="mt-4 h-3 overflow-hidden rounded-full bg-emerald-900/50">
           <motion.div
@@ -75,11 +75,11 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
       </div>
 
       {/* Stats grid */}
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:mb-6 sm:grid-cols-3 sm:gap-4">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
-            className="rounded-2xl bg-white p-4 shadow-md"
+            className="rounded-2xl bg-white p-3 shadow-md sm:p-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
@@ -94,7 +94,7 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
 
       {/* Badges */}
       <motion.div
-        className="rounded-3xl bg-white p-6 shadow-lg"
+        className="rounded-3xl bg-white p-4 shadow-lg sm:p-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -102,7 +102,7 @@ export default function ProgressScreen({ progress }: ProgressScreenProps) {
         <h2 className="mb-4 text-lg font-bold text-gray-900">
           Badges ({earnedBadges.length}/{progress.badges.length})
         </h2>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-6">
           {progress.badges.map((badge) => (
             <motion.div
               key={badge.id}

@@ -69,7 +69,7 @@ export default function QaidaEbook({
         </div>
 
         {/* Letters grid — traditional right-to-left reading order */}
-        <div dir="rtl" className="relative z-10 mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-2.5 lg:grid-cols-7">
+        <div dir="rtl" className="relative z-10 mt-4 grid grid-cols-3 gap-1.5 min-[380px]:grid-cols-4 sm:grid-cols-6 sm:gap-2.5 lg:grid-cols-7">
           {LETTERS.map((letter, idx) => {
             const completed = progress.completed.includes(`letter-${letter.id}`);
             const isActive = activeId === letter.id;
@@ -85,7 +85,7 @@ export default function QaidaEbook({
                 whileHover={reducedMotion ? undefined : { y: -3, scale: 1.05 }}
                 whileTap={{ scale: 0.94 }}
                 aria-label={`${letter.name}, pronunciation ${letter.sound}, tap to hear`}
-                className={`group relative flex min-h-[118px] flex-col items-center rounded-xl border px-1.5 pb-2.5 pt-4 transition-colors sm:min-h-[132px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                className={`group relative flex min-h-[108px] flex-col items-center rounded-xl border px-1 pb-2 pt-3.5 transition-colors min-[380px]:min-h-[118px] sm:min-h-[132px] sm:px-1.5 sm:pb-2.5 sm:pt-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
                   isActive
                     ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]"
                     : isCurrent
@@ -98,9 +98,9 @@ export default function QaidaEbook({
                   <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
                 )}
                 {/* Dedicated glyph zone so descenders (ج ح خ ع غ) never cover the English label */}
-                <span className="flex h-[3.25rem] w-full items-center justify-center sm:h-[3.75rem]" aria-hidden="true">
+                <span className="flex h-[2.85rem] w-full items-center justify-center min-[380px]:h-[3.25rem] sm:h-[3.75rem]" aria-hidden="true">
                   <motion.span
-                    className={`qaida-arabic block text-4xl font-black leading-[1.4] sm:text-5xl ${completed ? "text-emerald-800" : "text-slate-800"}`}
+                    className={`qaida-arabic block text-3xl font-black leading-[1.4] min-[380px]:text-4xl sm:text-5xl ${completed ? "text-emerald-800" : "text-slate-800"}`}
                     lang="ar"
                     dir="rtl"
                     animate={pulseId === letter.id && !reducedMotion ? { scale: [1, 1.28, 1] } : undefined}
@@ -134,7 +134,7 @@ export default function QaidaEbook({
         {activeLetter && (
           <motion.div
             key="reading-bar"
-            className="sticky bottom-2 z-20 mx-auto flex w-full max-w-2xl flex-wrap items-center gap-3 rounded-2xl border border-emerald-900/10 bg-white/95 p-3 shadow-[0_18px_40px_-18px_rgba(6,78,59,0.5)] backdrop-blur-md"
+            className="sticky bottom-[max(0.5rem,var(--qaida-safe-bottom))] z-20 mx-auto flex w-full max-w-2xl flex-wrap items-center gap-2 rounded-2xl border border-emerald-900/10 bg-white/95 p-2.5 shadow-[0_18px_40px_-18px_rgba(6,78,59,0.5)] backdrop-blur-md sm:gap-3 sm:p-3"
             initial={reducedMotion ? { opacity: 0 } : { y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={reducedMotion ? { opacity: 0 } : { y: 40, opacity: 0 }}

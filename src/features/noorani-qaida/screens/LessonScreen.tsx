@@ -287,10 +287,10 @@ export default function LessonScreen({
       <main ref={lessonRef} className="relative min-h-full overflow-x-hidden bg-emerald-100 fullscreen:h-screen fullscreen:overflow-y-auto">
         <ScenicLearningBackground reducedMotion={motionBudget.reduced} />
 
-        <div className="relative z-10 mx-auto flex min-h-full w-full max-w-[1600px] flex-col gap-3 p-3 sm:p-4 xl:gap-4 xl:p-5">
+        <div className="relative z-10 mx-auto flex min-h-full w-full max-w-[1600px] flex-col gap-2.5 p-[var(--qaida-space-page)] sm:gap-3 xl:gap-4">
           <div className="flex items-center gap-2">
             <nav
-              className="qaida-panel flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto p-2 sm:justify-center"
+              className="qaida-panel flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto p-1.5 sm:justify-center sm:p-2"
               aria-label="Lesson adventure progress"
             >
               {LESSON_STEPS.filter((step) => FLOW_LABELS[step]).map((step, index) => {
@@ -300,7 +300,7 @@ export default function LessonScreen({
                   <div key={step} className="flex flex-none items-center gap-1.5">
                     {index > 0 && <span className="h-px w-3 bg-emerald-900/15 sm:w-6" aria-hidden="true" />}
                     <span
-                      className={`rounded-full px-3 py-1.5 text-xs font-black ${
+                      className={`inline-flex min-h-9 items-center rounded-full px-2.5 py-1.5 text-[11px] font-black sm:min-h-10 sm:px-3 sm:text-xs ${
                         current
                           ? "bg-emerald-700 text-white"
                           : complete
@@ -324,24 +324,24 @@ export default function LessonScreen({
 
           <section className="grid gap-3 lg:grid-cols-12 xl:gap-4">
             <motion.div
-              className="relative flex min-h-[280px] items-end justify-center overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/[0.16] px-3 pt-20 shadow-[0_18px_45px_rgba(13,71,47,0.2)] backdrop-blur-[2px] lg:col-span-4 xl:col-span-3"
+              className="qaida-lesson-stage relative flex min-h-[220px] items-end justify-center overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/[0.16] px-3 pt-16 shadow-[0_18px_45px_rgba(13,71,47,0.2)] backdrop-blur-[2px] sm:min-h-[260px] lg:col-span-4 lg:min-h-[280px] xl:col-span-3"
               initial={{ opacity: 0, x: -18 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <div className="absolute left-4 top-4 rounded-2xl border border-white/70 bg-amber-50/95 px-4 py-3 shadow-lg">
-                <p className="max-w-44 whitespace-pre-line text-xs font-bold leading-relaxed text-slate-700">{mascotSpeech}</p>
+              <div className="absolute left-2 top-2 z-10 max-w-[min(14rem,72%)] rounded-2xl border border-white/70 bg-amber-50/95 px-3 py-2 shadow-lg sm:left-4 sm:top-4 sm:px-4 sm:py-3">
+                <p className="whitespace-pre-line text-[11px] font-bold leading-relaxed text-slate-700 sm:text-xs">{mascotSpeech}</p>
               </div>
               <ZaydMascot
                 mood={mascotMood}
                 action={mascotAction}
                 lookAt={mascotAction === "point" ? "right" : "center"}
                 size={150}
-                className="translate-y-8"
+                className="translate-y-8 scale-90 sm:scale-100"
               />
             </motion.div>
 
             <motion.div
-              className="relative flex min-h-[280px] flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border-2 border-amber-300/90 bg-gradient-to-br from-amber-50/95 via-white/95 to-yellow-100/95 p-4 shadow-[0_18px_50px_rgba(161,98,7,0.26)] lg:col-span-4 xl:col-span-4"
+              className="qaida-lesson-stage relative flex min-h-[220px] flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border-2 border-amber-300/90 bg-gradient-to-br from-amber-50/95 via-white/95 to-yellow-100/95 p-3 shadow-[0_18px_50px_rgba(161,98,7,0.26)] sm:min-h-[260px] sm:p-4 lg:col-span-4 lg:min-h-[280px] xl:col-span-4"
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 24 }}
@@ -350,7 +350,7 @@ export default function LessonScreen({
               <button
                 type="button"
                 onClick={() => speak()}
-                className="absolute left-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg shadow-md transition hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
+                className="absolute left-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-lg shadow-md transition hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 sm:left-4 sm:top-4"
                 aria-label={`Hear pronunciation of ${letter.name}`}
               >
                 🔊
@@ -398,15 +398,15 @@ export default function LessonScreen({
             </motion.div>
 
             <motion.div
-              className="flex min-h-[280px] flex-col gap-3 lg:col-span-4 xl:col-span-5"
+              className="qaida-lesson-stage flex min-h-[220px] flex-col gap-3 sm:min-h-[260px] lg:col-span-4 lg:min-h-[280px] xl:col-span-5"
               initial={{ opacity: 0, x: 18 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <div className="flex-1 rounded-[1.75rem] border border-white/80 bg-[#fffaf0]/95 p-5 shadow-[0_16px_40px_rgba(15,62,41,0.17)] backdrop-blur-md">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+              <div className="flex-1 rounded-[1.75rem] border border-white/80 bg-[#fffaf0]/95 p-4 shadow-[0_16px_40px_rgba(15,62,41,0.17)] backdrop-blur-md sm:p-5">
+                <div className="flex items-start justify-between gap-3 sm:gap-4">
+                  <div className="min-w-0">
                     <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-emerald-600">Letter {letter.id}</p>
-                    <h2 className="text-2xl font-black leading-tight text-emerald-900 sm:text-3xl">
+                    <h2 className="text-xl font-black leading-tight text-emerald-900 sm:text-2xl md:text-3xl">
                       {letter.name}{" "}
                       <span className="qaida-arabic font-black text-emerald-700" lang="ar" dir="rtl">– {letter.letter}</span>
                     </h2>
@@ -434,7 +434,7 @@ export default function LessonScreen({
                   return (
                     <motion.button
                       key={action.id}
-                      className={`relative flex min-h-[78px] flex-col items-center justify-center rounded-2xl bg-gradient-to-br p-2 font-black shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${action.surface} ${selected ? "ring-2 ring-emerald-600 ring-offset-2" : ""}`}
+                      className={`relative flex min-h-14 flex-col items-center justify-center rounded-2xl bg-gradient-to-br p-2 font-black shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 sm:min-h-[78px] ${action.surface} ${selected ? "ring-2 ring-emerald-600 ring-offset-2" : ""}`}
                       onClick={() => {
                         setActiveTab(action.id);
                         flowDispatch({
@@ -487,7 +487,7 @@ export default function LessonScreen({
                 {GAME_CATALOG.map((game) => (
                   <motion.button
                     key={game.id}
-                    className="group w-[104px] flex-none overflow-hidden rounded-2xl border border-white/15 bg-white/10 text-left shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
+                    className="group w-[96px] flex-none overflow-hidden rounded-2xl border border-white/15 bg-white/10 text-left shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 sm:w-[104px]"
                     onClick={() => {
                       flowDispatch({ type: "go", step: "game" });
                       setMascotAction("point");
@@ -585,7 +585,7 @@ export default function LessonScreen({
             </div>
           </section>
 
-          <footer className="rounded-full bg-[#073e39]/[0.92] px-4 py-2 text-center text-[11px] font-bold tracking-wide text-emerald-50 shadow-lg">
+          <footer className="rounded-2xl bg-[#073e39]/[0.92] px-3 py-2.5 text-center text-[10px] font-bold tracking-wide text-emerald-50 shadow-lg sm:rounded-full sm:px-4 sm:text-[11px]">
             <span className="hidden sm:inline">❤️ Learn with Love&nbsp;&nbsp; • &nbsp;&nbsp;</span>
             🎮 Practice with Fun&nbsp;&nbsp; • &nbsp;&nbsp;📈 Progress with Imaan 🌙
           </footer>

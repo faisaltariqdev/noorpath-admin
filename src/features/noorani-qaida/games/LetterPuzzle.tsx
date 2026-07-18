@@ -101,12 +101,12 @@ export default function LetterPuzzle({ letters, onComplete, onClose }: LetterPuz
       paused={paused}
       onPauseToggle={() => setPaused((value) => !value)}
     >
-      <div className="flex h-full flex-col items-center justify-center gap-6 overflow-y-auto rounded-[1.5rem] bg-gradient-to-br from-indigo-100 to-amber-50 p-4">
-        <div className="flex items-center gap-3" aria-label="Letter sequence puzzle">
+      <div className="flex h-full flex-col items-center justify-center gap-4 overflow-x-hidden overflow-y-auto rounded-[1.5rem] bg-gradient-to-br from-indigo-100 to-amber-50 p-3 sm:gap-6 sm:p-4">
+        <div className="flex items-center gap-2 sm:gap-3" aria-label="Letter sequence puzzle">
           {[letters[targetIndex - 1], null, letters[targetIndex + 1]].map((letter, index) => (
             <motion.div
               key={letter?.id ?? "missing"}
-              className={`qaida-arabic flex h-24 w-24 items-center justify-center rounded-[1.5rem] border-4 text-5xl font-bold sm:h-28 sm:w-28 ${
+              className={`qaida-arabic flex h-20 w-20 items-center justify-center rounded-[1.5rem] border-4 text-4xl font-bold sm:h-28 sm:w-28 sm:text-5xl ${
                 letter ? "border-white bg-white text-indigo-900 shadow-lg" : "border-dashed border-amber-400 bg-amber-50 text-amber-700"
               }`}
               animate={!letter ? { scale: [1, 1.04, 1] } : undefined}
@@ -118,14 +118,14 @@ export default function LetterPuzzle({ letters, onComplete, onClose }: LetterPuz
           ))}
         </div>
 
-        <div className="grid w-full max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid w-full max-w-xl grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
           {options.map((letter) => {
             const chosen = selected === letter.id;
             const correct = letter.id === target.id;
             return (
               <motion.button
                 key={letter.id}
-                className={`qaida-arabic min-h-20 rounded-2xl border-2 text-4xl font-bold shadow-md ${
+                className={`qaida-arabic min-h-14 rounded-2xl border-2 text-3xl font-bold shadow-md sm:min-h-20 sm:text-4xl ${
                   chosen ? (correct ? "border-emerald-500 bg-emerald-100 text-emerald-800" : "border-rose-400 bg-rose-50 text-rose-700") : "border-white bg-white text-indigo-900"
                 }`}
                 onClick={() => choose(letter)}

@@ -99,7 +99,7 @@ export default function QaidaSidebar({
             <motion.button
               key={item.id}
               type="button"
-              className={`relative flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+              className={`relative flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left transition-colors sm:px-4 ${
                 locked
                   ? "cursor-not-allowed text-white/35"
                   : isActive
@@ -199,7 +199,7 @@ export default function QaidaSidebar({
         {/* Collapse toggle */}
         {onToggleCollapse && (
           <motion.button
-            className="mt-3 flex w-full items-center justify-center rounded-lg bg-white/10 px-2 py-1.5 text-xs text-white/60 hover:bg-white/20 hover:text-white"
+            className="mt-3 flex min-h-11 w-full items-center justify-center rounded-lg bg-white/10 px-2 py-2 text-xs text-white/60 hover:bg-white/20 hover:text-white"
             onClick={onToggleCollapse}
             whileTap={{ scale: 0.97 }}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -210,9 +210,9 @@ export default function QaidaSidebar({
       </div>
 
       {/* Help */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-[max(1rem,var(--qaida-safe-bottom))]">
         <motion.button
-          className="flex w-full items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/20 hover:text-white"
+          className="flex min-h-11 w-full items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/20 hover:text-white"
           whileTap={{ scale: 0.97 }}
           aria-label="Get help"
         >

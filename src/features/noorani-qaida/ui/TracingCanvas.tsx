@@ -227,7 +227,7 @@ export default function TracingCanvas({ letter, onComplete }: TracingCanvasProps
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative h-52 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-emerald-50 shadow-inner sm:h-60">
+      <div className="qaida-trace-stage relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-emerald-50 shadow-inner">
         <canvas
           ref={canvasRef}
           className="h-full w-full cursor-crosshair touch-none"

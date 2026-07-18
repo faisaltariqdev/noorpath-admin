@@ -82,15 +82,15 @@ export default function LetterTrain({ letters, onComplete, onClose }: LetterTrai
       paused={paused}
       onPauseToggle={() => setPaused((value) => !value)}
     >
-      <div className="flex h-full flex-col items-center justify-center gap-6 overflow-y-auto rounded-[1.5rem] bg-gradient-to-b from-sky-100 to-emerald-100 p-4">
-        <div className="flex min-h-24 w-full max-w-3xl items-center gap-2 overflow-x-auto rounded-2xl bg-white/80 p-3" aria-label="Letter train">
-          <span className="text-5xl" aria-hidden="true">🚂</span>
+      <div className="flex h-full flex-col items-center justify-center gap-4 overflow-x-hidden overflow-y-auto rounded-[1.5rem] bg-gradient-to-b from-sky-100 to-emerald-100 p-3 sm:gap-6 sm:p-4">
+        <div className="flex min-h-20 w-full max-w-3xl items-center gap-1.5 overflow-x-auto rounded-2xl bg-white/80 p-2.5 sm:min-h-24 sm:gap-2 sm:p-3" aria-label="Letter train">
+          <span className="flex-none text-4xl sm:text-5xl" aria-hidden="true">🚂</span>
           {sequence.map((letter, index) => {
             const placed = selected[index];
             return (
               <motion.div
                 key={letter.id}
-                className="qaida-arabic flex h-16 w-16 flex-none items-center justify-center rounded-2xl border-2 border-emerald-300 bg-white text-3xl font-bold text-emerald-800"
+                className="qaida-arabic flex h-14 w-14 flex-none items-center justify-center rounded-2xl border-2 border-emerald-300 bg-white text-2xl font-bold text-emerald-800 sm:h-16 sm:w-16 sm:text-3xl"
                 animate={placed ? { scale: [0.8, 1.08, 1] } : undefined}
                 lang="ar"
                 dir="rtl"
@@ -101,13 +101,13 @@ export default function LetterTrain({ letters, onComplete, onClose }: LetterTrai
           })}
         </div>
 
-        <div className="grid w-full max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
+        <div className="grid w-full max-w-2xl grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
           {choices.map((letter) => {
             const used = selected.some((item) => item.id === letter.id);
             return (
               <motion.button
                 key={letter.id}
-                className={`qaida-arabic min-h-20 rounded-2xl border-2 text-4xl font-bold ${
+                className={`qaida-arabic min-h-14 rounded-2xl border-2 text-3xl font-bold sm:min-h-20 sm:text-4xl ${
                   used ? "border-emerald-200 bg-emerald-100 text-emerald-400" : "border-white bg-white text-emerald-800 shadow-md"
                 }`}
                 onClick={() => choose(letter)}

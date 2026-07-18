@@ -62,8 +62,8 @@ export default function GameShell({
       animate="enter"
       exit="exit"
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-900/10 bg-white/90 px-3 py-3 sm:px-5">
-        <div className="flex min-w-0 items-center gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-900/10 bg-white/90 px-2.5 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onClose}
@@ -72,14 +72,14 @@ export default function GameShell({
           >
             ←
           </button>
-          <span className="text-2xl" aria-hidden="true">{icon}</span>
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-black text-slate-950 sm:text-lg">{title}</h1>
-            <p className="truncate text-xs text-slate-600 sm:text-sm">{instruction}</p>
+          <span className="hidden text-2xl sm:inline" aria-hidden="true">{icon}</span>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-sm font-black text-slate-950 sm:text-base md:text-lg">{title}</h1>
+            <p className="truncate text-[11px] text-slate-600 sm:text-xs md:text-sm">{instruction}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-black sm:text-sm" aria-label="Game status">
+        <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5 text-[11px] font-black sm:gap-2 sm:text-sm" aria-label="Game status">
           {onPauseToggle && (
             <button
               type="button"
@@ -90,11 +90,11 @@ export default function GameShell({
               {paused ? "Resume" : "Pause"}
             </button>
           )}
-          <span className="rounded-full bg-emerald-100 px-3 py-2 text-emerald-800">
+          <span className="rounded-full bg-emerald-100 px-2.5 py-2 text-emerald-800 sm:px-3">
             {Math.min(round, totalRounds)}/{totalRounds}
           </span>
-          <span className="rounded-full bg-amber-100 px-3 py-2 text-amber-900">Score {score}</span>
-          {mistakes > 0 && <span className="rounded-full bg-rose-100 px-3 py-2 text-rose-800">Retry {mistakes}</span>}
+          <span className="rounded-full bg-amber-100 px-2.5 py-2 text-amber-900 sm:px-3">Score {score}</span>
+          {mistakes > 0 && <span className="rounded-full bg-rose-100 px-2.5 py-2 text-rose-800 sm:px-3">Retry {mistakes}</span>}
         </div>
       </header>
 
@@ -118,7 +118,7 @@ export default function GameShell({
         </div>
       )}
 
-      <section className="relative min-h-0 flex-1 overflow-hidden p-3 sm:p-4">{children}</section>
+      <section className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-2.5 sm:p-4">{children}</section>
 
       <AnimatePresence>
         {paused && !finished && (

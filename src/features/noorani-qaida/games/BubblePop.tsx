@@ -55,7 +55,11 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
         isTarget: l.id === targetLetter.id,
         x: 8 + (i * 17) % 80,
         y: 15 + (i * 23) % 60,
-        size: 70 + Math.floor(Math.random() * 30),
+        size: (() => {
+          const max = typeof window !== "undefined" ? Math.min(96, Math.max(52, window.innerWidth * 0.2)) : 80;
+          const min = Math.max(48, max * 0.72);
+          return Math.round(min + Math.random() * (max - min));
+        })(),
         color: BUBBLE_COLORS[i % BUBBLE_COLORS.length],
         popped: false,
         duration: 3 + (i % 3) * 0.65,
@@ -128,7 +132,7 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
     >
       {/* Target */}
       <motion.div
-        className="mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-100 px-6 py-3 text-center shadow-md"
+        className="mx-auto mb-3 max-w-full rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-100 px-4 py-2.5 text-center shadow-md sm:mb-4 sm:px-6 sm:py-3"
         animate={{ scale: [1, 1.03, 1] }}
         transition={{ duration: 2, repeat: Infinity }}
       >
@@ -138,17 +142,19 @@ export default function BubblePop({ letters, targetLetter, onComplete, onClose }
       </motion.div>
 
       {/* Bubble field */}
-      <div className="relative min-h-[300px] flex-1 overflow-hidden rounded-2xl bg-gradient-to-b from-sky-100 to-blue-200">
+      <div className="qaida-game-field relative flex-1 overflow-hidden rounded-2xl bg-gradient-to-b from-sky-100 to-blue-200">
         <AnimatePresence>
           {bubbles.filter((b) => !b.popped).map((bubble) => (
             <motion.button
               key={bubble.id}
               className={`absolute flex items-center justify-center rounded-full bg-gradient-to-br ${bubble.color} font-bold text-white shadow-xl`}
               style={{
-                left: `${bubble.x}%`,
-                top: `${bubble.y}%`,
+                left: `min(${bubble.x}%, calc(100% - ${bubble.size}px))`,
+                top: `min(${bubble.y}%, calc(100% - ${bubble.size}px))`,
                 width: bubble.size,
                 height: bubble.size,
+                minWidth: 44,
+                minHeight: 44,
                 fontSize: bubble.size * 0.4,
               }}
               initial={{ scale: 0, opacity: 0 }}

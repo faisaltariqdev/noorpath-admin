@@ -60,7 +60,7 @@ export default function PracticeHub({
   };
 
   return (
-    <div className="qaida-scroll relative mx-auto flex h-full w-full max-w-6xl flex-col gap-5 overflow-y-auto p-4 sm:p-6">
+    <div className="qaida-scroll relative mx-auto flex h-full w-full max-w-6xl flex-col gap-4 overflow-x-hidden overflow-y-auto p-[var(--qaida-space-page)] sm:gap-5 sm:p-6">
       <FloatingParticles count={particleCount} />
 
       {/* Current letter banner */}

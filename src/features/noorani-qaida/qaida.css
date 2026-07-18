@@ -14,9 +14,33 @@
   --qaida-shadow-sm: 0 8px 22px rgba(8, 63, 40, 0.1);
   --qaida-shadow-md: 0 16px 40px rgba(8, 63, 40, 0.16);
   --qaida-shadow-lg: 0 24px 64px rgba(8, 46, 34, 0.22);
+  /* Fluid type + spacing tokens */
+  --qaida-text-xs: clamp(0.68rem, 0.62rem + 0.25vw, 0.78rem);
+  --qaida-text-sm: clamp(0.8rem, 0.74rem + 0.3vw, 0.92rem);
+  --qaida-text-base: clamp(0.92rem, 0.86rem + 0.35vw, 1.05rem);
+  --qaida-text-lg: clamp(1.05rem, 0.95rem + 0.55vw, 1.35rem);
+  --qaida-text-xl: clamp(1.2rem, 1.05rem + 0.85vw, 1.75rem);
+  --qaida-text-2xl: clamp(1.4rem, 1.15rem + 1.2vw, 2.15rem);
+  --qaida-space-page: clamp(0.75rem, 0.55rem + 1.2vw, 1.5rem);
+  --qaida-space-section: clamp(0.85rem, 0.65rem + 1vw, 1.35rem);
+  --qaida-safe-top: env(safe-area-inset-top, 0px);
+  --qaida-safe-right: env(safe-area-inset-right, 0px);
+  --qaida-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --qaida-safe-left: env(safe-area-inset-left, 0px);
   color: var(--qaida-ink);
   font-family: var(--font-qaida-body), system-ui, sans-serif;
+  font-size: var(--qaida-text-base);
   isolation: isolate;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  padding-top: var(--qaida-safe-top);
+  padding-right: var(--qaida-safe-right);
+  padding-bottom: var(--qaida-safe-bottom);
+  padding-left: var(--qaida-safe-left);
 }
 
 .qaida-root,
@@ -31,6 +55,7 @@
 .qaida-root h3,
 .qaida-root h4 {
   font-family: var(--font-qaida-display), var(--font-qaida-body), system-ui, sans-serif;
+  overflow-wrap: anywhere;
 }
 
 .qaida-root [lang="ar"],
@@ -40,12 +65,18 @@
 }
 
 /* Shared Arabic practice tiles: keep English below the glyph zone */
+.qaida-example-tile {
+  width: 100%;
+  min-width: 0;
+}
+
 .qaida-example-tile .qaida-example-glyph {
   overflow: visible;
 }
 
 .qaida-example-tile .qaida-arabic {
   line-height: 1.45;
+  max-width: 100%;
 }
 
 .qaida-root button,
@@ -58,6 +89,7 @@
 .qaida-root button,
 .qaida-root a {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .qaida-root button:focus-visible,
@@ -69,8 +101,8 @@
 
 .qaida-skip {
   position: fixed;
-  top: 8px;
-  left: 8px;
+  top: calc(8px + var(--qaida-safe-top));
+  left: calc(8px + var(--qaida-safe-left));
   z-index: 5000;
   min-height: 44px;
   transform: translateY(-150%);
@@ -90,17 +122,20 @@
   background: var(--qaida-surface);
   box-shadow: var(--qaida-shadow-sm);
   backdrop-filter: blur(12px);
+  min-width: 0;
 }
 
 .qaida-premium-button {
   position: relative;
   min-height: 44px;
+  min-width: 44px;
   isolation: isolate;
   overflow: hidden;
   border: 1px solid transparent;
   border-radius: 999px;
   cursor: pointer;
   transform: translateZ(0);
+  padding-inline: clamp(0.85rem, 0.7rem + 0.8vw, 1.35rem);
 }
 
 .qaida-premium-button::after {
@@ -126,6 +161,8 @@
 .qaida-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(23, 107, 58, 0.4) transparent;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .qaida-scroll::-webkit-scrollbar {
@@ -143,6 +180,7 @@
 .qaida-dashboard {
   width: min(1180px, 100%);
   margin-inline: auto;
+  padding-inline: min(var(--qaida-space-page), 4vw);
 }
 
 .qaida-dashboard-grid {
@@ -154,6 +192,7 @@
 .qaida-game-stage {
   position: relative;
   min-height: 0;
+  height: 100%;
   overflow: hidden;
   border-radius: var(--qaida-radius-lg);
   background: var(--qaida-surface-solid);
@@ -169,6 +208,34 @@
   white-space: nowrap;
 }
 
+/* Shell chrome: HUD stays usable on narrow phones */
+.qaida-hud {
+  padding-left: max(0.65rem, var(--qaida-safe-left));
+  padding-right: max(0.65rem, var(--qaida-safe-right));
+}
+
+.qaida-hud-stats {
+  max-width: 100%;
+}
+
+.qaida-trace-stage {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: clamp(11rem, 38vw, 15rem);
+  max-height: min(18rem, 48dvh);
+}
+
+.qaida-game-field {
+  min-height: clamp(14rem, 48dvh, 22rem);
+}
+
+/* Lesson letter stage: don’t force tall desktop panels on phones */
+@media (max-width: 1023px) {
+  .qaida-lesson-stage {
+    min-height: clamp(12rem, 42vw, 16rem) !important;
+  }
+}
+
 @media (max-width: 767px) {
   .qaida-dashboard-grid {
     grid-template-columns: 1fr;
@@ -176,6 +243,70 @@
 
   .qaida-panel {
     border-radius: var(--qaida-radius-sm);
+  }
+
+  .qaida-game-stage {
+    border-radius: var(--qaida-radius-md);
+  }
+
+  .qaida-root h1 {
+    font-size: var(--qaida-text-xl);
+    line-height: 1.2;
+  }
+
+  .qaida-root h2 {
+    font-size: var(--qaida-text-lg);
+    line-height: 1.25;
+  }
+}
+
+/* Ultra-narrow phones (iPhone SE / 320–360) */
+@media (max-width: 374px) {
+  .qaida-root {
+    --qaida-space-page: 0.65rem;
+  }
+
+  .qaida-premium-button {
+    font-size: 0.82rem;
+  }
+
+  .qaida-hud .qaida-hud-title {
+    font-size: 0.92rem;
+  }
+}
+
+/* Tablets: keep dashboard readable without desktop squeeze */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .qaida-dashboard-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* Short / landscape phones: keep stages and games usable */
+@media (max-height: 500px) and (orientation: landscape) {
+  .qaida-trace-stage {
+    min-height: 8.5rem;
+    max-height: min(12rem, 62dvh);
+  }
+
+  .qaida-game-field {
+    min-height: clamp(10rem, 58dvh, 16rem);
+  }
+
+  .qaida-lesson-stage {
+    min-height: 10rem !important;
+  }
+
+  .qaida-hud {
+    min-height: 3rem;
+    padding-block: 0.35rem;
+  }
+}
+
+/* Ultra-wide: constrain reading measure inside shell content */
+@media (min-width: 1600px) {
+  .qaida-dashboard {
+    width: min(1280px, 100%);
   }
 }
 

@@ -118,10 +118,10 @@ export default function SoundMatch({ letters, onComplete, onClose, focusLetter }
       paused={paused}
       onPauseToggle={() => setPaused((value) => !value)}
     >
-      <div className="flex h-full flex-col items-center justify-center gap-6 overflow-y-auto rounded-[1.5rem] bg-gradient-to-br from-fuchsia-100 to-sky-100 p-4">
+      <div className="flex h-full flex-col items-center justify-center gap-4 overflow-x-hidden overflow-y-auto rounded-[1.5rem] bg-gradient-to-br from-fuchsia-100 to-sky-100 p-3 sm:gap-6 sm:p-4">
         <motion.button
           type="button"
-          className="qaida-premium-button flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-indigo-700 text-5xl text-white shadow-xl"
+          className="qaida-premium-button flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-indigo-700 text-4xl text-white shadow-xl sm:h-28 sm:w-28 sm:text-5xl"
           onClick={() => playTarget()}
           animate={{ boxShadow: ["0 12px 28px rgba(99,102,241,.25)", "0 18px 45px rgba(217,70,239,.4)", "0 12px 28px rgba(99,102,241,.25)"] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -137,14 +137,14 @@ export default function SoundMatch({ letters, onComplete, onClose, focusLetter }
           Play slowly
         </button>
 
-        <div className="grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid w-full max-w-2xl grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
           {options.map((letter) => {
             const chosen = selected === letter.id;
             const correct = letter.id === target.id;
             return (
               <motion.button
                 key={letter.id}
-                className={`flex min-h-28 flex-col items-center justify-center rounded-[1.5rem] border-2 px-2 pb-2.5 pt-3 shadow-lg ${
+                className={`flex min-h-20 flex-col items-center justify-center rounded-[1.5rem] border-2 px-2 pb-2 pt-2.5 shadow-lg sm:min-h-28 sm:pb-2.5 sm:pt-3 ${
                   chosen ? (correct ? "border-emerald-500 bg-emerald-100 text-emerald-800" : "border-rose-400 bg-rose-50 text-rose-700") : "border-white bg-white text-indigo-950"
                 }`}
                 onClick={() => choose(letter)}
@@ -153,8 +153,8 @@ export default function SoundMatch({ letters, onComplete, onClose, focusLetter }
                 whileTap={selected === null ? { scale: 0.96 } : undefined}
                 aria-label={`Choose ${letter.name}, pronounce ${letter.sound}`}
               >
-                <span className="flex h-14 w-full items-center justify-center" aria-hidden="true">
-                  <span className="qaida-arabic block text-5xl font-bold leading-[1.4]" lang="ar" dir="rtl">
+                <span className="flex h-12 w-full items-center justify-center sm:h-14" aria-hidden="true">
+                  <span className="qaida-arabic block text-4xl font-bold leading-[1.4] sm:text-5xl" lang="ar" dir="rtl">
                     {letter.letter}
                   </span>
                 </span>

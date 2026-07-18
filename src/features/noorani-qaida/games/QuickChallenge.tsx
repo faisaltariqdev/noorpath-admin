@@ -122,14 +122,14 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
       >
         <div className="text-sm font-medium text-indigo-500 uppercase tracking-wider">{q.prompt}</div>
         <motion.div
-          className="qaida-arabic mt-3 text-7xl font-black text-indigo-900 sm:text-8xl"
+          className="qaida-arabic mt-3 text-5xl font-black text-indigo-900 sm:text-7xl md:text-8xl"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
           {q.arabic}
         </motion.div>
         <button
-          className="mt-2 flex items-center gap-1 rounded-full bg-indigo-200 px-3 py-1 text-xs text-indigo-700 hover:bg-indigo-300"
+          className="mt-2 flex min-h-11 items-center gap-1 rounded-full bg-indigo-200 px-4 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-300"
           onClick={() => void qaidaAudio.pronounce({ key: `letter-${q.letter.id}`, fallbackText: q.arabic })}
           aria-label="Hear pronunciation"
         >
@@ -138,7 +138,7 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
       </motion.div>
 
       {/* Options */}
-      <div className="grid min-h-[220px] flex-1 grid-cols-2 gap-3 pt-4">
+      <div className="qaida-game-field grid min-h-0 flex-1 grid-cols-2 gap-2.5 pt-3 sm:gap-3 sm:pt-4">
         {q.options.map((opt) => {
           const isSelected = selected === opt;
           const isCorrect = opt === q.correct;
@@ -151,7 +151,7 @@ export default function QuickChallenge({ letters, onComplete, onClose }: QuickCh
           return (
             <motion.button
               key={opt}
-              className={`flex items-center justify-center rounded-2xl ${style} p-4 font-bold shadow-md transition-colors`}
+              className={`flex min-h-14 items-center justify-center rounded-2xl ${style} p-3 text-sm font-bold shadow-md transition-colors sm:min-h-16 sm:p-4 sm:text-base`}
               onClick={() => handleAnswer(opt)}
               whileHover={!selected ? { scale: 1.03, y: -2 } : {}}
               whileTap={!selected ? { scale: 0.97 } : {}}
