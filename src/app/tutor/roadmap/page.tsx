@@ -150,13 +150,15 @@ export default function TutorRoadmapPage() {
       updated_at: new Date().toISOString(),
     };
 
-    if (editItem) {
-      await supabase.from("course_roadmaps").update(payload).eq("id", editItem.id);
-    } else {
-      await supabase.from("course_roadmaps").insert(payload);
-    }
+    const { error } = editItem
+      ? await supabase.from("course_roadmaps").update(payload).eq("id", editItem.id)
+      : await supabase.from("course_roadmaps").insert(payload);
 
     setSaving(false);
+    if (error) {
+      alert("Could not save roadmap item: " + error.message);
+      return;
+    }
     setShowForm(false);
     setEditItem(null);
     await loadRoadmap();
@@ -165,13 +167,21 @@ export default function TutorRoadmapPage() {
   async function updateStatus(id: string, status: RoadmapStatus) {
     const update: Partial<RoadmapItem> = { status, updated_at: new Date().toISOString() } as Partial<RoadmapItem> & { updated_at: string };
     if (status === "completed") (update as Record<string, string>).completed_date = new Date().toISOString().split("T")[0];
-    await supabase.from("course_roadmaps").update(update).eq("id", id);
+    const { error } = await supabase.from("course_roadmaps").update(update).eq("id", id);
+    if (error) {
+      alert("Could not update status: " + error.message);
+      return;
+    }
     setItems(prev => prev.map(it => it.id === id ? { ...it, ...update } : it));
   }
 
   async function deleteItem(id: string) {
     if (!confirm("Delete this lesson from the roadmap?")) return;
-    await supabase.from("course_roadmaps").delete().eq("id", id);
+    const { error } = await supabase.from("course_roadmaps").delete().eq("id", id);
+    if (error) {
+      alert("Could not delete: " + error.message);
+      return;
+    }
     setItems(prev => prev.filter(it => it.id !== id));
   }
 

@@ -467,16 +467,16 @@ export default function StudentProgressHub({
             <div className="card" style={{ marginTop: 18 }}>
               <div className="card-header">
                 <h3 className="card-title"><BookOpen size={16} color="#1b5e42" /> Recent Progress Reports</h3>
-                <Link href={role === "admin" ? "/admin/reports" : "/tutor/roadmap"} className="card-link">
-                  {role === "admin" ? "All Reports" : <><Map size={12} /> Full Roadmap</>} →
+                <Link href={role === "admin" ? "/admin/reports" : "/tutor/reports"} className="card-link">
+                  {role === "admin" ? "All Reports" : "Manage reports"} →
                 </Link>
               </div>
               {periodReports.length === 0 ? (
-                <div className="empty-state"><FileText size={36} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No reports in this period</h3><p>Session progress reports will appear here.</p></div>
+                <div className="empty-state"><FileText size={36} style={{ opacity: 0.2, margin: "0 auto" }} /><h3>No reports in this period</h3><p>Session progress reports will appear here for parents after you submit them.</p></div>
               ) : (
                 <div className="table-shell">
                   <table className="data-table">
-                    <thead><tr><th>Coverage</th><th>Tajweed</th><th>Rating</th><th>Tutor</th><th>Date</th></tr></thead>
+                    <thead><tr><th>Coverage</th><th>Tajweed</th><th>Rating</th><th>Tutor</th><th>Date</th>{role === "tutor" ? <th></th> : null}</tr></thead>
                     <tbody>
                       {periodReports.map(r => {
                         const cfg = RATING_CFG[r.overall_rating || ""] || { color: "#64748b", bg: "#f1f5f9" };
@@ -491,6 +491,11 @@ export default function StudentProgressHub({
                             <td><span className="badge" style={{ background: cfg.bg, color: cfg.color }}>{r.overall_rating?.replace("_", " ") || "—"}</span></td>
                             <td style={{ color: "#64748b" }}>{r.tutor_name}</td>
                             <td style={{ color: "#94a3b8", whiteSpace: "nowrap" }}>{new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</td>
+                            {role === "tutor" ? (
+                              <td>
+                                <Link href="/tutor/reports" className="btn btn-outline btn-xs">Open</Link>
+                              </td>
+                            ) : null}
                           </tr>
                         );
                       })}

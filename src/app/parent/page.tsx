@@ -31,8 +31,16 @@ interface ParentStudent {
 interface DashboardHomework {
   id: string;
   homework_text: string;
+  title?: string | null;
   due_date?: string | null;
   is_completed: boolean;
+}
+
+interface DailyWorkNote {
+  id: string;
+  work_text: string;
+  work_date: string;
+  status: string;
 }
 
 interface DashboardReport {
@@ -42,6 +50,7 @@ interface DashboardReport {
   tutor_notes?: string | null;
   homework?: string | null;
   mistakes?: string | null;
+  surah_covered?: string | null;
 }
 
 interface FeeInfo {
@@ -69,6 +78,7 @@ export default function ParentDashboard() {
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [latestReport, setLatestReport] = useState<DashboardReport | null>(null);
   const [homework, setHomework] = useState<DashboardHomework[]>([]);
+  const [dailyWork, setDailyWork] = useState<DailyWorkNote[]>([]);
   const [fees, setFees] = useState<FeeInfo>({ pending: 0, total: 0, overdueCount: 0 });
   const [displayCurrency, setDisplayCurrency] = useState("USD");
   const [upcomingCount, setUpcomingCount] = useState(0);
@@ -132,17 +142,17 @@ export default function ParentDashboard() {
       if (!selectedStudentId) return;
 
       const nowIso = new Date().toISOString();
-      const [{ data: reports }, { data: homeworkData }, { data: feeData }, { data: sessionData }] =
+      const [{ data: reports }, { data: homeworkData }, { data: feeData }, { data: sessionData }, { data: noteData }] =
         await Promise.all([
           supabase
             .from("progress_reports")
-            .select("overall_rating, created_at, tajweed_stars, tutor_notes, homework, mistakes")
+            .select("overall_rating, created_at, tajweed_stars, tutor_notes, homework, mistakes, surah_covered")
             .eq("student_id", selectedStudentId)
             .order("created_at", { ascending: false })
             .limit(1),
           supabase
             .from("homework_logs")
-            .select("id, homework_text, due_date, is_completed")
+            .select("id, homework_text, title, due_date, is_completed")
             .eq("student_id", selectedStudentId)
             .eq("is_completed", false)
             .order("due_date", { ascending: true })
@@ -159,10 +169,18 @@ export default function ParentDashboard() {
             .gte("scheduled_at", nowIso)
             .order("scheduled_at", { ascending: true })
             .limit(3),
+          supabase
+            .from("daily_work_notes")
+            .select("id, work_text, work_date, status")
+            .eq("student_id", selectedStudentId)
+            .eq("status", "pending")
+            .order("work_date", { ascending: false })
+            .limit(5),
         ]);
 
       setLatestReport(reports?.[0] || null);
       setHomework((homeworkData || []) as DashboardHomework[]);
+      setDailyWork((noteData || []) as DailyWorkNote[]);
 
       const selected = students.find((s) => s.id === selectedStudentId);
       setDisplayCurrency(selected?.currency || currencyForCountry(selected?.country) || "USD");
@@ -197,7 +215,7 @@ export default function ParentDashboard() {
   }, [selectedStudentId, students]);
 
   async function markHomeworkDone(id: string) {
-    await supabase
+    const { error } = await supabase
       .from("homework_logs")
       .update({
         is_completed: true,
@@ -205,6 +223,10 @@ export default function ParentDashboard() {
         completed_at: new Date().toISOString(),
       })
       .eq("id", id);
+    if (error) {
+      alert("Could not update homework: " + error.message);
+      return;
+    }
     setHomework((current) => current.filter((item) => item.id !== id));
   }
 
@@ -435,6 +457,34 @@ export default function ParentDashboard() {
                   </div>
                 )}
 
+                {dailyWork.length > 0 && (
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <div className="card-header">
+                      <h3 className="card-title">
+                        <Clock size={15} color="#1b5e42" /> Today&apos;s work from tutor
+                      </h3>
+                    </div>
+                    <div style={{ padding: "8px 0" }}>
+                      {dailyWork.map((note) => (
+                        <div
+                          key={note.id}
+                          style={{
+                            padding: "12px 20px",
+                            borderBottom: "1px solid #f1f5f9",
+                            fontSize: "0.85rem",
+                            color: "#334155",
+                          }}
+                        >
+                          <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>
+                            {new Date(note.work_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                          </div>
+                          {note.work_text}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="portal-dashboard-halves">
                   <div className="card">
                     <div className="card-header">
@@ -472,7 +522,7 @@ export default function ParentDashboard() {
                                   color: "#0f172a",
                                 }}
                               >
-                                {item.homework_text}
+                                {item.title || item.homework_text}
                               </div>
                               <div
                                 style={{
@@ -555,6 +605,11 @@ export default function ParentDashboard() {
                             {latestReport.tajweed_stars || 0}/5 stars
                           </span>
                         </div>
+                        {latestReport.surah_covered && (
+                          <div style={{ fontSize: "0.82rem", color: "#475569", marginBottom: 10 }}>
+                            <strong>Covered:</strong> {latestReport.surah_covered}
+                          </div>
+                        )}
                         {latestReport.homework && (
                           <div
                             style={{

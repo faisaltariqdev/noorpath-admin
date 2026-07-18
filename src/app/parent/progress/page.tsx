@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import ParentStudentSwitcher from "@/components/ParentStudentSwitcher";
 import { formatStudentLevel } from "@/lib/portal";
+import { unwrapOne } from "@/lib/currency";
 import { Star, BookOpen, CheckCircle, XCircle, Clock, Play, Volume2 } from "lucide-react";
 
 interface StudentSummary {
@@ -70,7 +71,10 @@ export default function ParentProgressPage() {
         .select("id, overall_rating, tajweed_stars, tutor_notes, surah_covered, pages_covered, homework, mistakes, tajweed_rules, audio_note_url, created_at, tutor:profiles(full_name)")
         .eq("student_id", selectedStudentId)
         .order("created_at", { ascending: false });
-      setReports((reps || []).map((report: any) => ({ ...report, tutor_name: report.tutor?.full_name || "—" })));
+      setReports((reps || []).map((report: any) => ({
+        ...report,
+        tutor_name: unwrapOne<{ full_name?: string }>(report.tutor)?.full_name || "—",
+      })));
       setSelected(null);
       setLoading(false);
     }
@@ -214,10 +218,22 @@ export default function ParentProgressPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>{selected.homework ? <CheckCircle size={15} color="#16a34a" /> : <XCircle size={15} color="#94a3b8" />} Homework given</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>{selected.mistakes ? <Clock size={15} color="#d97706" /> : <CheckCircle size={15} color="#16a34a" />} Review notes</div>
                 </div>
-                {(selected.tutor_notes || selected.mistakes) && (
+                {selected.homework && (
+                  <div style={{ background: "#eff6ff", borderRadius: 10, padding: "12px 14px", fontSize: "0.82rem", color: "#1e3a5f", lineHeight: 1.7, borderLeft: "3px solid #2563eb", marginBottom: 12 }}>
+                    <div style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>Homework</div>
+                    {selected.homework}
+                  </div>
+                )}
+                {selected.mistakes && (
+                  <div style={{ background: "#fff7ed", borderRadius: 10, padding: "12px 14px", fontSize: "0.82rem", color: "#9a3412", lineHeight: 1.7, borderLeft: "3px solid #ea580c", marginBottom: 12 }}>
+                    <div style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>Mistakes / Focus</div>
+                    {selected.mistakes}
+                  </div>
+                )}
+                {selected.tutor_notes && (
                   <div style={{ background: "#f8fafc", borderRadius: 10, padding: "12px 14px", fontSize: "0.82rem", color: "#475569", lineHeight: 1.7, borderLeft: "3px solid #1b5e42", marginBottom: 12 }}>
                     <div style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>Tutor Notes</div>
-                    {selected.tutor_notes || selected.mistakes}
+                    {selected.tutor_notes}
                   </div>
                 )}
                 {selected.audio_note_url && (

@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
   DollarSign, MessageSquare, Settings, LogOut,
   GraduationCap, FileText, Clock, Home, ChevronRight,
-  BarChart2, Sparkles,
+  BarChart2, Sparkles, Map,
 } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +73,7 @@ const PARENT_LINKS: NavSection[] = [
     { href: "/parent/sessions",     label: "Live Classes",        icon: Calendar },
     { href: "/parent/homework",     label: "Assignments",         icon: BookOpen },
     { href: "/parent/attendance",   label: "Attendance",          icon: Clock },
+    { href: "/parent/roadmap",      label: "Learning Roadmap",    icon: Map },
     { href: "/parent/qaida",        label: "Noorani Qaida",       icon: Sparkles },
   ]},
   { section: "Account", items: [

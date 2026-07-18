@@ -225,8 +225,14 @@ export default function SubmitReportPage() {
       audio_note_url: audioNoteUrl || null,
     }).select("id").single();
 
-    if (!error && insertedReport?.id && form.homework.trim()) {
-      await supabase.from("homework_logs").insert({
+    if (error) {
+      setSaving(false);
+      alert("Could not save report: " + error.message);
+      return;
+    }
+
+    if (insertedReport?.id && form.homework.trim()) {
+      const { error: hwError } = await supabase.from("homework_logs").insert({
         report_id: insertedReport.id,
         student_id: form.student_id,
         tutor_id: user?.id,
@@ -237,11 +243,17 @@ export default function SubmitReportPage() {
         status: "pending",
         is_completed: false,
       });
+      if (hwError) {
+        setSaving(false);
+        alert("Report saved, but homework could not be assigned: " + hwError.message);
+        router.push("/tutor/reports");
+        return;
+      }
     }
 
     setSaved(true);
     setSaving(false);
-    setTimeout(() => router.push("/tutor"), 2000);
+    setTimeout(() => router.push("/tutor/reports"), 1600);
   }
 
   const RATING_CONFIG: Record<string, { color: string; bg: string; label: string }> = {

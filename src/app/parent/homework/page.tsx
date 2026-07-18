@@ -14,7 +14,16 @@ interface StudentInfo {
   course?: string | null;
 }
 
-interface Homework { id: string; homework_text: string; subject: string; due_date: string | null; is_completed: boolean; parent_notes: string; created_at: string; }
+interface Homework {
+  id: string;
+  title?: string | null;
+  homework_text: string;
+  subject: string;
+  due_date: string | null;
+  is_completed: boolean;
+  parent_notes: string;
+  created_at: string;
+}
 
 export default function ParentHomeworkPage() {
   const [students, setStudents]   = useState<StudentInfo[]>([]);
@@ -46,11 +55,16 @@ export default function ParentHomeworkPage() {
     async function loadHomework() {
       if (!selectedStudentId) return;
       setLoading(true);
-      const { data } = await supabase.from("homework_logs")
-        .select("id, homework_text, subject, due_date, is_completed, parent_notes, created_at")
+      const { data, error } = await supabase.from("homework_logs")
+        .select("id, title, homework_text, subject, due_date, is_completed, parent_notes, created_at")
         .eq("student_id", selectedStudentId)
         .order("created_at", { ascending: false });
-      setHomework(data || []);
+      if (error) {
+        console.error("homework_logs load failed:", error.message);
+        setHomework([]);
+      } else {
+        setHomework((data || []) as Homework[]);
+      }
       setLoading(false);
     }
     loadHomework();
@@ -58,8 +72,16 @@ export default function ParentHomeworkPage() {
 
   async function markDone(id: string) {
     setMarking(id);
-    await supabase.from("homework_logs").update({ is_completed: true, completed_at: new Date().toISOString() }).eq("id", id);
-    setHomework(p => p.map(h => h.id === id ? { ...h, is_completed: true } : h));
+    const { error } = await supabase.from("homework_logs").update({
+      is_completed: true,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    }).eq("id", id);
+    if (!error) {
+      setHomework((p) => p.map((h) => (h.id === id ? { ...h, is_completed: true } : h)));
+    } else {
+      alert("Could not mark homework done: " + error.message);
+    }
     setMarking(null);
   }
 
@@ -135,10 +157,13 @@ export default function ParentHomeworkPage() {
                         </div>
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", marginBottom:4 }}>
-                            <span style={{ fontWeight:700, fontSize:"0.9rem", color:"#0f172a", fontFamily:"var(--font-playfair),Georgia,serif", textDecoration:h.is_completed?"line-through":"none", opacity:h.is_completed?.7:1 }}>{h.homework_text || "Homework task"}</span>
+                            <span style={{ fontWeight:700, fontSize:"0.9rem", color:"#0f172a", fontFamily:"var(--font-playfair),Georgia,serif", textDecoration:h.is_completed?"line-through":"none", opacity:h.is_completed?.7:1 }}>{h.title || h.homework_text || "Homework task"}</span>
                             {isOverdue && <span className="badge badge-red">Overdue</span>}
                             {h.is_completed && <span className="badge badge-green">Completed</span>}
                           </div>
+                          {h.title && h.homework_text && h.title !== h.homework_text && (
+                            <div style={{ fontSize: "0.8rem", color: "#475569", marginTop: 2, marginBottom: 4, lineHeight: 1.5 }}>{h.homework_text}</div>
+                          )}
                           {h.subject && <div style={{ fontSize:"0.78rem", color:"#64748b", display:"flex", alignItems:"center", gap:4 }}><BookOpen size={12} />{h.subject}</div>}
                           {h.due_date && <div style={{ fontSize:"0.74rem", color: isOverdue?"#dc2626":"#94a3b8", display:"flex", alignItems:"center", gap:4, marginTop:4, fontWeight:isOverdue?700:400 }}><Clock size={12} />Due: {new Date(h.due_date).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</div>}
                           {h.parent_notes && <div style={{ fontSize:"0.78rem", color:"#64748b", marginTop:6, fontStyle:"italic" }}>Note: {h.parent_notes}</div>}

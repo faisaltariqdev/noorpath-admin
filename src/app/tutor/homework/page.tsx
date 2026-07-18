@@ -5,31 +5,52 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { BookOpen, Plus, X, Trash2 } from "lucide-react";
 
+import { unwrapOne } from "@/lib/currency";
+
 interface Template { id: string; title: string; content: string; subject: string; level: string; created_at: string; }
+interface AssignedHomework {
+  id: string;
+  title?: string | null;
+  homework_text: string;
+  subject?: string | null;
+  due_date?: string | null;
+  is_completed: boolean;
+  status?: string | null;
+  student_name: string;
+  created_at: string;
+}
 const SUBJECTS = ["Quran Recitation", "Tajweed", "Memorization", "Noorani Qaida", "Duas", "Islamic Studies", "Arabic"];
 const LEVELS   = ["All Levels", "Beginner", "Intermediate", "Advanced", "Hifz"];
 const SUBJECT_BADGE: Record<string, string> = { "Quran Recitation":"badge-green","Tajweed":"badge-blue","Memorization":"badge-purple","Noorani Qaida":"badge-emerald","Duas":"badge-yellow","Islamic Studies":"badge-orange","Arabic":"badge-blue" };
 
 export default function HomeworkPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [assigned, setAssigned] = useState<AssignedHomework[]>([]);
   const [students, setStudents] = useState<{ id: string; full_name: string }[]>([]);
   const [loading, setLoading]     = useState(true);
   const [showForm, setShowForm]   = useState(false);
   const [showAssign, setShowAssign] = useState<string | null>(null);
   const [saving, setSaving]       = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ title: "", content: "", subject: "Quran Recitation", level: "All Levels" });
   const [assignForm, setAssignForm] = useState({ student_id: "", due_date: "", extra_note: "" });
 
   async function load() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    const [{ data: templateData }, { data: studentData }] = await Promise.all([
+    const [{ data: templateData }, { data: studentData }, { data: logData, error: logError }] = await Promise.all([
       supabase.from("homework_templates").select("*").eq("tutor_id", user?.id).order("created_at", { ascending: false }),
       supabase.from("students").select("id, full_name").eq("tutor_id", user?.id).eq("is_active", true).order("full_name"),
+      supabase.from("homework_logs").select("id, title, homework_text, subject, due_date, is_completed, status, created_at, student:students(full_name)").eq("tutor_id", user?.id).order("created_at", { ascending: false }).limit(40),
     ]);
     setTemplates(templateData || []);
     setStudents(studentData || []);
+    if (logError) setMsg(logError.message);
+    setAssigned((logData || []).map((row: any) => ({
+      ...row,
+      student_name: unwrapOne<{ full_name?: string }>(row.student)?.full_name || "—",
+    })));
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -38,23 +59,43 @@ export default function HomeworkPage() {
     e.preventDefault();
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("homework_templates").insert({ ...form, tutor_id: user?.id });
+    const { error } = await supabase.from("homework_templates").insert({ ...form, tutor_id: user?.id });
+    setSaving(false);
+    if (error) {
+      setMsg("Could not save template: " + error.message);
+      return;
+    }
     setForm({ title: "", content: "", subject: "Quran Recitation", level: "All Levels" });
     setShowForm(false);
-    setSaving(false);
+    setMsg("Template saved.");
+    setTimeout(() => setMsg(""), 2500);
     await load();
   }
 
   async function deleteTemplate(id: string) {
-    await supabase.from("homework_templates").delete().eq("id", id);
+    const { error } = await supabase.from("homework_templates").delete().eq("id", id);
+    if (error) {
+      setMsg("Could not delete template: " + error.message);
+      return;
+    }
     setTemplates(p => p.filter(t => t.id !== id));
+  }
+
+  async function deleteAssigned(id: string) {
+    if (!window.confirm("Remove this homework assignment?")) return;
+    const { error } = await supabase.from("homework_logs").delete().eq("id", id);
+    if (error) {
+      setMsg("Could not delete assignment: " + error.message);
+      return;
+    }
+    setAssigned((rows) => rows.filter((row) => row.id !== id));
   }
 
   async function assignTemplate(template: Template) {
     if (!assignForm.student_id) return;
     setAssigning(true);
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("homework_logs").insert({
+    const { error } = await supabase.from("homework_logs").insert({
       student_id: assignForm.student_id,
       tutor_id: user?.id,
       homework_text: `${template.content || template.title}${assignForm.extra_note ? `\n\nExtra note: ${assignForm.extra_note}` : ""}`,
@@ -64,9 +105,16 @@ export default function HomeworkPage() {
       status: "pending",
       is_completed: false,
     });
+    setAssigning(false);
+    if (error) {
+      setMsg("Could not assign homework: " + error.message);
+      return;
+    }
     setAssignForm({ student_id: "", due_date: "", extra_note: "" });
     setShowAssign(null);
-    setAssigning(false);
+    setMsg("Homework assigned — parent can see it now.");
+    setTimeout(() => setMsg(""), 3000);
+    await load();
   }
 
   return (
@@ -79,6 +127,34 @@ export default function HomeworkPage() {
         </div>
       </div>
       <div className="page-body">
+        {msg && (
+          <div className="card" style={{ marginBottom: 14, padding: "12px 16px", fontSize: "0.85rem", fontWeight: 600, color: msg.includes("Could not") ? "#b91c1c" : "#166534", background: msg.includes("Could not") ? "#fef2f2" : "#f0fdf4" }}>
+            {msg}
+          </div>
+        )}
+
+        {!loading && assigned.length > 0 && (
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div className="card-header" style={{ padding: "14px 18px", borderBottom: "1px solid #f1f5f9" }}>
+              <h2 style={{ margin: 0, fontSize: "0.95rem" }}>Assigned homework ({assigned.length})</h2>
+            </div>
+            <table className="data-table">
+              <thead><tr><th>Student</th><th>Title</th><th>Due</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                {assigned.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ fontWeight: 600 }}>{row.student_name}</td>
+                    <td>{row.title || row.homework_text?.slice(0, 48) || "—"}</td>
+                    <td style={{ color: "#64748b" }}>{row.due_date ? new Date(row.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</td>
+                    <td><span className={`badge ${row.is_completed ? "badge-green" : "badge-yellow"}`}>{row.is_completed ? "Done" : "Pending"}</span></td>
+                    <td><button type="button" className="btn btn-outline btn-xs" onClick={() => void deleteAssigned(row.id)} aria-label="Delete assignment"><Trash2 size={13} /></button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {loading
           ? <div className="empty-state"><div style={{ width:36, height:36, border:"3px solid #e2e8f0", borderTopColor:"#1b5e42", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 12px" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
           : templates.length === 0

@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle, Clock, Users, XCircle, CalendarDays } from "lucide-react";
+import { CheckCircle, Clock, Trash2, Users, XCircle, CalendarDays } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import { supabase } from "@/lib/supabase";
 import type { AttendanceStatus } from "@/types/database";
@@ -186,6 +186,33 @@ export default function TutorAttendancePage() {
     setStatuses(Object.fromEntries(students.map((s) => [s.id, status])));
   }
 
+  async function clearAttendance(studentId: string, studentName: string) {
+    const existing = records.find((row) => row.student_id === studentId);
+    if (!existing) {
+      setMessage("No saved attendance for this student on this date.");
+      return;
+    }
+    if (!window.confirm(`Clear attendance for ${studentName} on ${date}?`)) return;
+    const { error } = await supabase.from("attendance").delete().eq("id", existing.id);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    setRecords((rows) => rows.filter((row) => row.id !== existing.id));
+    setStatuses((prev) => {
+      const next = { ...prev };
+      delete next[studentId];
+      return next;
+    });
+    setNotes((prev) => {
+      const next = { ...prev };
+      delete next[studentId];
+      return next;
+    });
+    setMessage("Attendance cleared.");
+    setTimeout(() => setMessage(""), 2500);
+  }
+
   return (
     <>
       <TopBar title="Attendance" subtitle="Mark your students for each class day" />
@@ -346,6 +373,17 @@ export default function TutorAttendancePage() {
                     className="form-input"
                     style={{ width: 180, fontSize: "0.78rem", padding: "6px 10px" }}
                   />
+                  {records.some((row) => row.student_id === student.id) && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-xs"
+                      onClick={() => void clearAttendance(student.id, student.full_name)}
+                      aria-label={`Clear attendance for ${student.full_name}`}
+                      title="Clear saved attendance"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
