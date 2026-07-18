@@ -83,9 +83,9 @@ class QaidaAudioService {
         if (!this.enabled || requestId !== this.requestId) return;
         if (source) {
           const played = await this.playFile(source);
-          if (!played) await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78);
+          if (!played) await this.playSpeech(fallbackText, mode === "slow" ? 0.48 : 0.62);
         } else {
-          await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78);
+          await this.playSpeech(fallbackText, mode === "slow" ? 0.48 : 0.62);
         }
       }
     } finally {
@@ -115,7 +115,9 @@ class QaidaAudioService {
   }
 
   private async playSpeech(text: string, rate: number) {
-    await speakArabic(text, rate, 1.02);
+    // Expand short letter+harakah (e.g. شَ → شا) so TTS says a clear "Shaa"-like syllable.
+    // Display text is unchanged — only the spoken form is adjusted.
+    await speakArabic(ttsFriendlyArabic(text), rate, 1.02);
   }
 
   private playTone(frequency: number, durationSec: number) {
@@ -163,3 +165,33 @@ class QaidaAudioService {
 }
 
 export const qaidaAudio = new QaidaAudioService();
+
+const FATHA = "\u064E";
+const KASRA = "\u0650";
+const DAMMA = "\u064F";
+const SHADDAH = "\u0651";
+const HAMZA_FORMS = new Set(["ا", "أ", "إ", "آ", "ء"]);
+
+/**
+ * Browser TTS often mumbles isolated letter + short harakah (شَ).
+ * Open the syllable with a matching madd letter for clearer Qaida sounds.
+ * Longer phrases (duas, namaz) are left untouched.
+ */
+function ttsFriendlyArabic(text: string): string {
+  const trimmed = text.trim();
+  const match = /^([\u0621-\u064A])([\u064B-\u0652]+)$/u.exec(trimmed);
+  if (!match) return trimmed;
+
+  const letter = match[1]!;
+  const marks = match[2]!;
+  if (HAMZA_FORMS.has(letter)) return trimmed;
+
+  if (marks === FATHA) return `${letter}ا`;
+  if (marks === KASRA) return `${letter}ي`;
+  if (marks === DAMMA) return `${letter}و`;
+  if (marks === `${SHADDAH}${FATHA}`) return `${letter}${SHADDAH}ا`;
+  if (marks === `${SHADDAH}${KASRA}`) return `${letter}${SHADDAH}ي`;
+  if (marks === `${SHADDAH}${DAMMA}`) return `${letter}${SHADDAH}و`;
+
+  return trimmed;
+}
