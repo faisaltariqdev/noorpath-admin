@@ -44,6 +44,7 @@ export default function SoundMatch({ letters, onComplete, onClose, focusLetter }
       key: `letter-${target.id}`,
       fallbackText: target.letter,
       mode,
+      policy: "replace",
     });
   }, [target]);
 

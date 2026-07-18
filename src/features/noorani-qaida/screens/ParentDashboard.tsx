@@ -77,6 +77,29 @@ export default function ParentDashboard({ embedded = false }: { embedded?: boole
           ))}
         </section>
 
+        <section className="qaida-panel mt-5 overflow-hidden p-5 sm:p-6" aria-labelledby="today-plan-title">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Today&apos;s plan</p>
+              <h2 id="today-plan-title" className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">
+                {currentLetter
+                  ? `Next lesson: ${currentLetter.name} (${currentLetter.letter})`
+                  : "All letter lessons complete — celebrate and revise"}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                {currentLetter
+                  ? `Strength: keep listening and tracing. Focus: clear pronunciation of “${currentLetter.sound}”. Recommended next: open Practice → Hear ${currentLetter.name}, then one focus game.`
+                  : "Recommended next: open Games for a short revision round, then review badges together."}
+              </p>
+            </div>
+            <div className="flex flex-none flex-col gap-2 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-900">
+              <span>📈 Progress: {snapshot.completionPercent}%</span>
+              <span>💪 Streak: {progress.streak} day{progress.streak === 1 ? "" : "s"}</span>
+              <span>⏱️ Practice: {formatPracticeTime(progress.totalPracticeSeconds)}</span>
+            </div>
+          </div>
+        </section>
+
         <section className="qaida-panel mt-5 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

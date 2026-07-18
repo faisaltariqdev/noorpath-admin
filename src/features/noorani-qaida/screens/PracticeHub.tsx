@@ -19,10 +19,10 @@ interface PracticeHubProps {
 }
 
 const DRILLS = [
-  { key: "trace", icon: "✏️", label: "Trace", tint: "from-amber-100 to-orange-100 text-orange-700" },
-  { key: "write", icon: "🖍️", label: "Write", tint: "from-violet-100 to-fuchsia-100 text-violet-700" },
-  { key: "listen", icon: "🔊", label: "Listen", tint: "from-emerald-100 to-green-100 text-emerald-700" },
-  { key: "repeat", icon: "🎙️", label: "Pronounce", tint: "from-sky-100 to-blue-100 text-sky-700" },
+  { key: "listen", icon: "🔊", label: "Listen", tint: "from-emerald-100 to-green-100 text-emerald-700", action: "listen" as const },
+  { key: "repeat", icon: "🎙️", label: "Pronounce", tint: "from-sky-100 to-blue-100 text-sky-700", action: "listen" as const },
+  { key: "trace", icon: "✏️", label: "Trace", tint: "from-amber-100 to-orange-100 text-orange-700", action: "lesson" as const },
+  { key: "write", icon: "🖍️", label: "Write", tint: "from-violet-100 to-fuchsia-100 text-violet-700", action: "lesson" as const },
 ];
 
 export default function PracticeHub({
@@ -36,13 +36,24 @@ export default function PracticeHub({
 }: PracticeHubProps) {
   const { config, setMode, toggleGame, resetToAuto } = usePracticeConfig();
   const [teacherPanelOpen, setTeacherPanelOpen] = useState(false);
+  const [lastDrill, setLastDrill] = useState<string | null>(null);
 
   const enabledIds = useMemo(() => resolveEnabledGames(config), [config]);
   const activeGames = useMemo(() => enabledIds.map((id) => GAME_BY_ID[id]), [enabledIds]);
 
   const pronounce = (mode: "normal" | "slow" = "normal") => {
     if (!audioEnabled) return;
-    void qaidaAudio.pronounce({ key: `letter-${letter.id}`, fallbackText: letter.letter, mode });
+    void qaidaAudio.pronounce({ key: `letter-${letter.id}`, fallbackText: letter.letter, mode, policy: "replace" });
+  };
+
+  const runDrill = (drill: (typeof DRILLS)[number]) => {
+    setLastDrill(drill.key);
+    void qaidaAudio.effect("tap");
+    if (drill.action === "listen") {
+      pronounce(drill.key === "repeat" ? "slow" : "normal");
+      return;
+    }
+    onOpenLesson();
   };
 
   return (
@@ -102,10 +113,13 @@ export default function PracticeHub({
             <motion.button
               key={drill.key}
               type="button"
-              onClick={onOpenLesson}
+              onClick={() => runDrill(drill)}
               whileHover={reducedMotion ? undefined : { y: -3 }}
               whileTap={{ scale: 0.97 }}
-              className={`flex min-h-[92px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-emerald-900/10 bg-gradient-to-br p-3 font-black shadow-[0_10px_28px_-20px_rgba(6,78,59,0.5)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${drill.tint}`}
+              className={`flex min-h-[92px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-emerald-900/10 bg-gradient-to-br p-3 font-black shadow-[0_10px_28px_-20px_rgba(6,78,59,0.5)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${drill.tint} ${
+                lastDrill === drill.key ? "ring-2 ring-emerald-500 ring-offset-2" : ""
+              }`}
+              aria-label={`${drill.label} ${letter.name}`}
             >
               <span className="text-2xl" aria-hidden="true">{drill.icon}</span>
               <span className="text-xs">{drill.label} {letter.name}</span>

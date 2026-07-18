@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { GameId } from "../types";
-import { ALL_GAME_IDS } from "../data/games";
+import { ALL_GAME_IDS, GAME_BY_ID } from "../data/games";
 
 export type PracticeMode = "auto" | "custom";
 
@@ -82,8 +82,14 @@ export function usePracticeConfig() {
   return { config, hydrated, setMode, toggleGame, resetToAuto };
 }
 
-/** Resolves the ordered list of game ids that should appear for a lesson. */
+/** Resolves the ordered list of game ids for a lesson.
+ * Auto mode prioritises single-letter focus games, then discrimination/group games.
+ */
 export function resolveEnabledGames(config: PracticeConfig): GameId[] {
-  if (config.mode === "auto") return [...ALL_GAME_IDS];
-  return ALL_GAME_IDS.filter((id) => config.enabledGames.includes(id));
+  const ordered = [
+    ...ALL_GAME_IDS.filter((id) => GAME_BY_ID[id]?.singleLetter),
+    ...ALL_GAME_IDS.filter((id) => !GAME_BY_ID[id]?.singleLetter),
+  ];
+  if (config.mode === "auto") return ordered;
+  return ordered.filter((id) => config.enabledGames.includes(id));
 }

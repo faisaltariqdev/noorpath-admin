@@ -855,8 +855,10 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
                 exit="exit"
               >
                 <GamesHub
+                  letter={currentLetter}
                   onGameSelect={handleGameSelect}
                   progress={state.progress}
+                  reducedMotion={motionBudget.reduced}
                 />
               </motion.div>
             ) : (activeView === "rewards" || activeView === "certificates") ? (

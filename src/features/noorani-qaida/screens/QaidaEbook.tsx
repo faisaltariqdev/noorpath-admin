@@ -30,7 +30,7 @@ export default function QaidaEbook({
       setActiveId(letter.id);
       setPulseId(letter.id);
       if (audioEnabled) {
-        void qaidaAudio.pronounce({ key: `letter-${letter.id}`, fallbackText: letter.letter, mode });
+        void qaidaAudio.pronounce({ key: `letter-${letter.id}`, fallbackText: letter.letter, mode, policy: "replace" });
       }
       window.setTimeout(() => setPulseId(null), reducedMotion ? 80 : 480);
     },

@@ -221,7 +221,7 @@ function deviceSteps(device: DeviceKind, form: FormFactor, browser: string): Ste
           "Restart " + browser + " completely after installing voices.",
           "In Edge/Chrome, allow sound for admin.noorpath.online if prompted.",
         ],
-        tip: "If the browser tab shows a speaker icon but you hear nothing: Chrome on Windows often “pretends” to speak Arabic. Use Edge, or install Microsoft Arabic (Saudi Arabia) under Speech settings, then fully quit and reopen the browser. NoorPath will also speak the English letter name as a backup.",
+        tip: "Noorani Qaida uses Arabic speech voices. If you hear nothing, install an Arabic voice pack (Windows) or use Safari on iPhone/iPad. The in-app test speaks the Arabic letter ا.",
       },
       {
         id: "windows-output",
@@ -231,7 +231,7 @@ function deviceSteps(device: DeviceKind, form: FormFactor, browser: string): Ste
           "Right‑click the taskbar speaker → Open Volume mixer → set Chrome/Edge output device to your speakers.",
           "Windows Settings → System → Sound → Output → choose the device you are listening on.",
           "Temporarily unplug HDMI monitors (they sometimes steal audio).",
-          "Try Microsoft Edge if Chrome stays silent — Edge uses Windows voices more reliably.",
+          "Prefer Microsoft Edge on Windows for Microsoft Arabic (Saudi Arabia) voices.",
         ],
       },
       testSound,
@@ -324,11 +324,16 @@ export default function VoiceSetupWizard({
       onEnableAudio();
       qaidaAudio.setEnabled(true);
       qaidaAudio.unlock();
-      await qaidaAudio.pronounce({
-        key: "letter-1",
-        fallbackText: "Alif",
-        englishName: "Alif",
-        mode: "normal",
+      await new Promise<void>((resolve) => {
+        qaidaAudio.pronounce({
+          key: "letter-1",
+          fallbackText: "ا",
+          mode: "normal",
+          policy: "replace",
+          onEnd: () => resolve(),
+        });
+        // Safety timeout if speech engine is unavailable
+        window.setTimeout(() => resolve(), 2500);
       });
       await qaidaAudio.effect("tap");
       setTestStatus("done");

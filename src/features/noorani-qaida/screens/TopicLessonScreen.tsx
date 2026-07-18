@@ -45,6 +45,7 @@ export default function TopicLessonScreen({
       fallbackText: activeExample.arabic,
       mode,
       repeat,
+      policy: "replace",
       onStart: () => {
         setIsPlaying(true);
         setMascotAction("point");

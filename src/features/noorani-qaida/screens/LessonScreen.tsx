@@ -20,22 +20,13 @@ import {
 } from "../lesson/flow";
 import { useMotionBudget } from "../motion/useMotionBudget";
 import FullscreenButton from "../ui/FullscreenButton";
+import { GAME_CATALOG } from "../data/games";
 
 const ConfettiExplosion = dynamic(() => import("../animations/ConfettiExplosion"), { ssr: false });
 const TracingCanvas = dynamic(() => import("../ui/TracingCanvas"), {
   ssr: false,
   loading: () => <div className="h-56 animate-pulse rounded-2xl bg-emerald-50" aria-label="Loading tracing activity" />,
 });
-
-const GAMES = [
-  { id: "bubble-pop", label: "Bubble Pop", icon: "🫧", accent: "from-fuchsia-400 to-violet-600" },
-  { id: "find-letter", label: "Find Letter", icon: "🔎", accent: "from-sky-400 to-blue-600" },
-  { id: "letter-train", label: "Letter Train", icon: "🚂", accent: "from-orange-400 to-rose-500" },
-  { id: "memory-match", label: "Match It", icon: "🃏", accent: "from-emerald-400 to-teal-600" },
-  { id: "quick-challenge", label: "Quick Quiz", icon: "❓", accent: "from-amber-400 to-pink-500" },
-  { id: "puzzle", label: "Puzzle", icon: "🧩", accent: "from-indigo-400 to-purple-600" },
-  { id: "sound-match", label: "Sound Match", icon: "🎵", accent: "from-pink-400 to-rose-600" },
-] as const;
 
 type ActionTab = "trace" | "write" | "listen" | "repeat";
 
@@ -146,6 +137,7 @@ export default function LessonScreen({
   const [tracingCompleted, setTracingCompleted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [isPronouncing, setIsPronouncing] = useState(false);
+  const [showEntrance, setShowEntrance] = useState(!motionBudget.reduced);
 
   const isCompleted = progress.completed.includes(`letter-${letter.id}`);
   const totalActivities = 5;
@@ -162,6 +154,7 @@ export default function LessonScreen({
       fallbackText: letter.letter,
       mode,
       repeat,
+      policy: "replace",
       onStart: () => {
         setIsPronouncing(true);
         setMascotMood("excited");
@@ -183,17 +176,40 @@ export default function LessonScreen({
 
   useEffect(() => {
     qaidaAudio.setEnabled(audioEnabled);
+  }, [audioEnabled]);
+
+  useEffect(() => {
+    // Reset lesson micro-state and run a short introduce → listen cycle per letter
+    setShowEntrance(true);
+    setCompletedActivities(new Set());
+    setTracingCompleted(false);
+    setGameCompleted(false);
+    setMascotSpeech(`Assalamu Alaikum!\nToday we will learn ${letter.name}`);
     setMascotAction("wave");
+    setMascotMood("happy");
+    flowDispatch({ type: "reset" });
     flowDispatch({ type: "complete", step: "welcome" });
+
     const timer = window.setTimeout(() => {
       flowDispatch({ type: "complete", step: "introduce" });
       speak();
     }, motionBudget.reduced ? 150 : 700);
+
     return () => {
       window.clearTimeout(timer);
       qaidaAudio.stop();
     };
-  }, [audioEnabled, motionBudget.reduced, speak]);
+  }, [letter.id, letter.name, motionBudget.reduced, speak]);
+
+  useEffect(() => {
+    if (motionBudget.reduced) {
+      setShowEntrance(false);
+      return;
+    }
+    if (!showEntrance) return;
+    const timer = window.setTimeout(() => setShowEntrance(false), 1600);
+    return () => window.clearTimeout(timer);
+  }, [showEntrance, motionBudget.reduced, letter.id]);
 
   useEffect(() => {
     if (gameCompletionCount < 1) return;
@@ -232,6 +248,41 @@ export default function LessonScreen({
   return (
     <>
       <ConfettiExplosion active={showConfetti} particleCount={motionBudget.celebrationParticles} />
+
+      <AnimatePresence>
+        {showEntrance && (
+          <motion.div
+            key={`entrance-${letter.id}`}
+            className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-emerald-950/35 backdrop-blur-[2px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            aria-hidden="true"
+          >
+            <motion.div
+              className="flex flex-col items-center gap-3"
+              initial={{ y: -80, scale: 0.6, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 24, scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 280, damping: 18 }}
+            >
+              <motion.span
+                className="qaida-arabic flex h-28 w-28 items-center justify-center rounded-[2rem] border-4 border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-100 text-6xl font-black text-emerald-800 shadow-2xl"
+                lang="ar"
+                dir="rtl"
+                animate={{ boxShadow: ["0 0 0 0 rgba(245,197,24,0.5)", "0 0 40px 12px rgba(245,197,24,0.35)", "0 0 0 0 rgba(245,197,24,0.2)"] }}
+                transition={{ duration: 1.2, repeat: 1 }}
+              >
+                {letter.letter}
+              </motion.span>
+              <p className="rounded-full bg-white/95 px-4 py-1.5 text-sm font-black text-emerald-900 shadow-lg">
+                Meet {letter.name}
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main ref={lessonRef} className="relative min-h-full overflow-x-hidden bg-emerald-100 fullscreen:h-screen fullscreen:overflow-y-auto">
         <ScenicLearningBackground reducedMotion={motionBudget.reduced} />
@@ -433,23 +484,27 @@ export default function LessonScreen({
                 <h3 className="text-sm font-black text-white sm:text-base">Let&apos;s Practice with Fun!</h3>
               </div>
               <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:thin]">
-                {GAMES.map((game) => (
+                {GAME_CATALOG.map((game) => (
                   <motion.button
                     key={game.id}
                     className="group w-[104px] flex-none overflow-hidden rounded-2xl border border-white/15 bg-white/10 text-left shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
                     onClick={() => {
                       flowDispatch({ type: "go", step: "game" });
                       setMascotAction("point");
-                      setMascotSpeech("Choose a game and practise!");
+                      setMascotSpeech(`Let's play ${game.letterLabel(letter.name)}!`);
+                      void qaidaAudio.effect("tap");
                       onGameSelect(game.id);
                     }}
                     whileHover={{ y: -4, scale: 1.02 }}
                     whileTap={{ scale: 0.96 }}
+                    aria-label={game.letterLabel(letter.name)}
                   >
-                    <span className={`flex h-[76px] items-center justify-center bg-gradient-to-br text-4xl ${game.accent}`} aria-hidden="true">
-                      {game.icon}
-                    </span>
-                    <span className="block truncate px-2 py-2 text-center text-[11px] font-black text-white">{game.label}</span>
+                    <div className={`flex h-16 items-center justify-center bg-gradient-to-br ${game.accent}`}>
+                      <span className="text-3xl" aria-hidden="true">{game.icon}</span>
+                    </div>
+                    <div className="bg-white/10 px-2 py-2">
+                      <p className="truncate text-[11px] font-black text-white">{game.letterLabel(letter.name)}</p>
+                    </div>
                   </motion.button>
                 ))}
               </div>

@@ -170,6 +170,7 @@ export default function SalahLessonScreen({
     void qaidaAudio.pronounce({
       key: `salah-${lesson.id}-${step.id}`,
       fallbackText: step.arabic,
+      policy: "replace",
       onStart: () => setIsPlaying(true),
       onEnd: () => setIsPlaying(false),
     });

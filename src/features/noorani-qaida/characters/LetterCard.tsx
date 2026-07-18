@@ -45,16 +45,29 @@ export default function LetterCard({
   const handleTap = useCallback(() => {
     if (!interactive) return;
     setTapped(true);
-    setSparkle(true);
-    if (onTap) onTap();
-    else void qaidaAudio.pronounce({ key: `letter-${letter.id}`, fallbackText: letter.letter });
-    setTimeout(() => setTapped(false), 600);
-    setTimeout(() => setSparkle(false), 900);
+    if (onTap) {
+      onTap();
+      setSparkle(true);
+      window.setTimeout(() => setTapped(false), 600);
+      window.setTimeout(() => setSparkle(false), 900);
+    } else {
+      // Gesture first; speech + sparkles sync via AudioManager callbacks
+      void qaidaAudio.pronounce({
+        key: `letter-${letter.id}`,
+        fallbackText: letter.letter,
+        onStart: () => setSparkle(true),
+        onEnd: () => {
+          setSparkle(false);
+          setTapped(false);
+        },
+      });
+      window.setTimeout(() => setTapped(false), 700);
+    }
     if (completed) {
       setStarBurst(true);
-      setTimeout(() => setStarBurst(false), 1000);
+      window.setTimeout(() => setStarBurst(false), 1000);
     }
-  }, [interactive, letter.letter, onTap, completed]);
+  }, [interactive, letter.id, letter.letter, onTap, completed]);
 
   return (
     <div className="relative flex flex-col items-center gap-2">
