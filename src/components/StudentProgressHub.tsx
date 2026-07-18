@@ -10,6 +10,7 @@ import {
   FileText, Star, Plus, BookOpen, Map, GraduationCap, Loader2, Pencil, X,
 } from "lucide-react";
 import { TIMEZONE_OPTIONS, timezoneForCountry } from "@/lib/timezones";
+import { unwrapOne } from "@/lib/currency";
 
 interface StudentDetail {
   id: string;
@@ -126,6 +127,29 @@ export default function StudentProgressHub({
 
     if (studentRow) {
       const s: any = studentRow;
+      const tutor = unwrapOne<{ full_name?: string }>(s.tutor);
+      const parent = unwrapOne<{ full_name?: string }>(s.parent);
+
+      // Admin can always resolve names by id if the embed shape/RLS omits them.
+      let tutorName = tutor?.full_name || "";
+      let parentName = parent?.full_name || "";
+      if (role === "admin") {
+        const lookups: PromiseLike<{ data: { full_name: string } | null }>[] = [];
+        if (s.tutor_id && !tutorName) {
+          lookups.push(supabase.from("profiles").select("full_name").eq("id", s.tutor_id).maybeSingle());
+        } else {
+          lookups.push(Promise.resolve({ data: null }));
+        }
+        if (s.parent_id && !parentName) {
+          lookups.push(supabase.from("profiles").select("full_name").eq("id", s.parent_id).maybeSingle());
+        } else {
+          lookups.push(Promise.resolve({ data: null }));
+        }
+        const [tutorLookup, parentLookup] = await Promise.all(lookups);
+        if (!tutorName && tutorLookup.data?.full_name) tutorName = tutorLookup.data.full_name;
+        if (!parentName && parentLookup.data?.full_name) parentName = parentLookup.data.full_name;
+      }
+
       setStudent({
         id: s.id,
         full_name: s.full_name,
@@ -139,14 +163,17 @@ export default function StudentProgressHub({
         is_active: s.is_active,
         tutor_id: s.tutor_id,
         parent_id: s.parent_id,
-        tutor_name: s.tutor?.full_name || "Unassigned",
-        parent_name: s.parent?.full_name || "Unlinked",
+        tutor_name: tutorName || (s.tutor_id ? "Assigned" : "Unassigned"),
+        parent_name: parentName || (s.parent_id ? "Linked" : "Unlinked"),
       });
       setAssignedTutorId(s.tutor_id || undefined);
     }
     setNotes(noteRows || []);
     setRoadmap(roadmapRows || []);
-    setReports((reportRows || []).map((r: any) => ({ ...r, tutor_name: r.tutor?.full_name || "—" })));
+    setReports((reportRows || []).map((r: any) => ({
+      ...r,
+      tutor_name: unwrapOne<{ full_name?: string }>(r.tutor)?.full_name || "—",
+    })));
     setLoading(false);
   }
 
@@ -202,6 +229,16 @@ export default function StudentProgressHub({
     if (error) {
       setMsg("Error: " + error.message);
     } else {
+      // Keep upcoming sessions in sync when a student tutor is assigned.
+      if (editForm.tutor_id) {
+        await supabase
+          .from("class_sessions")
+          .update({ tutor_id: editForm.tutor_id })
+          .eq("student_id", studentId)
+          .eq("status", "scheduled")
+          .is("tutor_id", null)
+          .gte("scheduled_at", new Date().toISOString());
+      }
       setMsg("Student info updated.");
       setShowEdit(false);
       await load();

@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import TopBar from "@/components/TopBar";
 import { formatStudentLevel } from "@/lib/portal";
 import { TIMEZONE_OPTIONS, timezoneForCountry } from "@/lib/timezones";
+import { unwrapOne } from "@/lib/currency";
 import { GraduationCap, Pencil, Plus, Search, X, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 
 interface Student {
@@ -77,11 +78,15 @@ export default function StudentsPage() {
       supabase.from("profiles").select("id, full_name").eq("role", "parent"),
       supabase.from("courses").select("id, title, level, category, is_active").eq("is_active", true).order("sort_order"),
     ]);
-    const mapped = (studs || []).map((s: any) => ({
-      ...s,
-      tutor_name: s.tutor?.full_name || "Unassigned",
-      parent_name: s.parent?.full_name || "Unlinked",
-    }));
+    const mapped = (studs || []).map((s: any) => {
+      const tutor = unwrapOne<{ full_name?: string }>(s.tutor);
+      const parent = unwrapOne<{ full_name?: string }>(s.parent);
+      return {
+        ...s,
+        tutor_name: tutor?.full_name || (s.tutor_id ? "Assigned" : "Unassigned"),
+        parent_name: parent?.full_name || (s.parent_id ? "Linked" : "Unlinked"),
+      };
+    });
     setStudents(mapped);
     setFiltered(mapped);
     setTutors(tutorProfiles || []);
@@ -169,6 +174,15 @@ export default function StudentsPage() {
 
     if (error) setMsg("Error: " + error.message);
     else {
+      if (editingId && payload.tutor_id) {
+        await supabase
+          .from("class_sessions")
+          .update({ tutor_id: payload.tutor_id })
+          .eq("student_id", editingId)
+          .eq("status", "scheduled")
+          .is("tutor_id", null)
+          .gte("scheduled_at", new Date().toISOString());
+      }
       setMsg(editingId ? "Student updated successfully!" : "Student added successfully!");
       closeForm();
       await load();
