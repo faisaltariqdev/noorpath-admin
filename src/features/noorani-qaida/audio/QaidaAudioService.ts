@@ -1,3 +1,4 @@
+import { LETTERS } from "../data/curriculum";
 import { cancelSpeech, speakArabic, speakEnglish, unlockSpeechAudio } from "./speech";
 
 export type PronunciationMode = "normal" | "slow";
@@ -11,10 +12,19 @@ export interface QaidaAudioAssets {
 export interface PronunciationRequest {
   key: string;
   fallbackText: string;
+  /** Spoken if Arabic TTS is silent (common on Windows Chrome). */
+  englishFallback?: string;
   mode?: PronunciationMode;
   repeat?: number;
   onStart?: () => void;
   onEnd?: () => void;
+}
+
+function englishHintForKey(key: string, explicit?: string): string | undefined {
+  if (explicit?.trim()) return explicit.trim();
+  const letter = LETTERS.find((item) => item.audioKey === key || `letter-${item.id}` === key);
+  if (!letter) return undefined;
+  return letter.name || letter.sound;
 }
 
 class QaidaAudioService {
@@ -57,6 +67,7 @@ class QaidaAudioService {
   async pronounce({
     key,
     fallbackText,
+    englishFallback,
     mode = "normal",
     repeat = 1,
     onStart,
@@ -67,6 +78,7 @@ class QaidaAudioService {
     this.stop();
     const requestId = this.requestId;
     const source = this.assets.pronunciations?.[key]?.[mode];
+    const englishHint = englishHintForKey(key, englishFallback);
 
     onStart?.();
     try {
@@ -74,9 +86,11 @@ class QaidaAudioService {
         if (!this.enabled || requestId !== this.requestId) return;
         if (source) {
           const played = await this.playFile(source);
-          if (!played) await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78);
+          if (!played) {
+            await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78, englishHint);
+          }
         } else {
-          await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78);
+          await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78, englishHint);
         }
       }
     } finally {
@@ -105,8 +119,8 @@ class QaidaAudioService {
     }
   }
 
-  private async playSpeech(text: string, rate: number) {
-    await speakArabic(text, rate, 1.02);
+  private async playSpeech(text: string, rate: number, englishFallback?: string) {
+    await speakArabic(text, rate, 1.02, englishFallback);
   }
 
   private playTone(frequency: number, durationSec: number) {

@@ -129,14 +129,15 @@ function deviceSteps(device: DeviceKind, form: FormFactor, browser: string): Ste
       {
         id: "ios-safari",
         title: `Allow sound in ${browser}`,
-        summary: "Safari and Chrome on iOS require a tap before audio can play.",
+        summary: "Safari and Chrome on iPhone/iPad are supported. They require a real tap before audio can play.",
         bullets: [
+          "Prefer Safari for the most reliable Arabic voice on iPhone/iPad.",
           "Stay in this screen and use “Play test sound” after each change.",
-          "Do not use Low Power Mode if it is throttling background media unexpectedly.",
-          "If you previously muted the site: tap “aA” (Safari) → Website Settings → allow Auto-Play / media.",
+          "If muted earlier: Safari → “aA” → Website Settings → allow Auto-Play.",
+          "Install Arabic voices (optional): Settings → Accessibility → Spoken Content → Voices → Arabic.",
           "Close other tabs that may be holding exclusive audio focus.",
         ],
-        tip: "Always tap letters with your finger — audio unlocks on the first real tap.",
+        tip: "Noorani Qaida is compatible with iPhone/iPad Safari. Always tap letters with your finger — audio unlocks on the first real tap.",
       },
       testSound,
       {
@@ -220,7 +221,18 @@ function deviceSteps(device: DeviceKind, form: FormFactor, browser: string): Ste
           "Restart " + browser + " completely after installing voices.",
           "In Edge/Chrome, allow sound for admin.noorpath.online if prompted.",
         ],
-        tip: "Without an Arabic voice pack, some PCs stay silent. Installing Arabic voices usually fixes this.",
+        tip: "If the browser tab shows a speaker icon but you hear nothing: Chrome on Windows often “pretends” to speak Arabic. Use Edge, or install Microsoft Arabic (Saudi Arabia) under Speech settings, then fully quit and reopen the browser. NoorPath will also speak the English letter name as a backup.",
+      },
+      {
+        id: "windows-output",
+        title: "Confirm the correct speakers / headphones",
+        summary: "The tab speaker icon means the browser started speech — Windows may be sending it to another device.",
+        bullets: [
+          "Right‑click the taskbar speaker → Open Volume mixer → set Chrome/Edge output device to your speakers.",
+          "Windows Settings → System → Sound → Output → choose the device you are listening on.",
+          "Temporarily unplug HDMI monitors (they sometimes steal audio).",
+          "Try Microsoft Edge if Chrome stays silent — Edge uses Windows voices more reliably.",
+        ],
       },
       testSound,
       {
