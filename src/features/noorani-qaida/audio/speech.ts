@@ -53,16 +53,21 @@ function getBestArabicVoice(list: SpeechSynthesisVoice[]): SpeechSynthesisVoice 
   );
 }
 
+/** Prefer natural English voices that read whole words (not spellers). */
 function getBestEnglishVoice(list: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
-  return (
-    list.find((v) => v.localService && v.lang.toLowerCase().startsWith("en-gb"))
-    || list.find((v) => v.localService && v.lang.toLowerCase().startsWith("en-us"))
-    || list.find((v) => v.localService && v.lang.toLowerCase().startsWith("en"))
-    || list.find((v) => v.lang.toLowerCase().startsWith("en-gb"))
-    || list.find((v) => v.lang.toLowerCase().startsWith("en-us"))
-    || list.find((v) => v.lang.toLowerCase().startsWith("en"))
-    || null
-  );
+  const english = list.filter((v) => v.lang.toLowerCase().startsWith("en"));
+  const score = (voice: SpeechSynthesisVoice) => {
+    const name = voice.name.toLowerCase();
+    let value = 0;
+    if (voice.localService) value += 20;
+    if (name.includes("google")) value += 15;
+    if (name.includes("samantha") || name.includes("daniel") || name.includes("karen")) value += 12;
+    if (name.includes("microsoft") && (name.includes("aria") || name.includes("guy") || name.includes("jenny"))) value += 14;
+    if (name.includes("zira") || name.includes("david")) value += 8;
+    if (name.includes("spell")) value -= 50;
+    return value;
+  };
+  return [...english].sort((a, b) => score(b) - score(a))[0] || null;
 }
 
 function startResumeWatch() {
@@ -118,20 +123,24 @@ function speakUtterance(utter: SpeechSynthesisUtterance): Promise<void> {
   });
 }
 
-/** Clear English letter names: “Alif”, “Baa”, “Taa” — primary kids pronunciation. */
-export async function speakEnglish(text: string, rate = 0.88, pitch = 1.08): Promise<void> {
+/**
+ * Speak a Qaida letter name as ONE word (Alif / Baa / Taa…).
+ * Never spell letter-by-letter.
+ */
+export async function speakEnglish(text: string, rate = 0.9, pitch = 1.05): Promise<void> {
   if (typeof window === "undefined" || !("speechSynthesis" in window) || !text.trim()) return;
 
   const list = await ensureVoices();
-  const utter = new SpeechSynthesisUtterance(text.trim());
+  // Trailing period + slightly slower rate discourages A-L-I-F spelling mode.
+  const utter = new SpeechSynthesisUtterance(`${text.trim()}.`);
   const voice = getBestEnglishVoice(list);
   if (voice) {
     utter.voice = voice;
-    utter.lang = voice.lang || "en-GB";
+    utter.lang = voice.lang || "en-US";
   } else {
-    utter.lang = "en-GB";
+    utter.lang = "en-US";
   }
-  utter.rate = rate;
+  utter.rate = Math.min(rate, 0.95);
   utter.pitch = pitch;
   utter.volume = 1;
   await speakUtterance(utter);
@@ -166,10 +175,10 @@ export function unlockSpeechAudio(): void {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   void ensureVoices();
   try {
-    const warm = new SpeechSynthesisUtterance(" ");
+    const warm = new SpeechSynthesisUtterance("ready");
     warm.volume = 0;
     warm.rate = 2;
-    warm.lang = "en-GB";
+    warm.lang = "en-US";
     window.speechSynthesis.speak(warm);
   } catch {
     /* ignore */

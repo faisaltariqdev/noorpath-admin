@@ -1,5 +1,6 @@
 import { LETTERS } from "../data/curriculum";
-import { cancelSpeech, speakArabic, speakEnglish, unlockSpeechAudio } from "./speech";
+import { cancelSpeech, speakEnglish, unlockSpeechAudio } from "./speech";
+import { toSpokenQaidaName } from "./spokenNames";
 
 export type PronunciationMode = "normal" | "slow";
 export type QaidaSoundEffect = "tap" | "correct" | "retry" | "coin" | "reward" | "level-up";
@@ -12,7 +13,7 @@ export interface QaidaAudioAssets {
 export interface PronunciationRequest {
   key: string;
   fallbackText: string;
-  /** Preferred spoken name, e.g. "Alif". Defaults from curriculum letter name. */
+  /** Display name e.g. "Alif" — spoken as one clear word. */
   englishName?: string;
   mode?: PronunciationMode;
   repeat?: number;
@@ -20,7 +21,7 @@ export interface PronunciationRequest {
   onEnd?: () => void;
 }
 
-function spokenNameForKey(key: string, explicit?: string): string | null {
+function displayNameForKey(key: string, explicit?: string): string | null {
   if (explicit?.trim()) return explicit.trim();
   const letter = LETTERS.find((item) => item.audioKey === key || `letter-${item.id}` === key);
   if (!letter) return null;
@@ -64,8 +65,8 @@ class QaidaAudioService {
   }
 
   /**
-   * Primary: English letter name (“Alif”, “Baa”) — clear on Mac, Windows, mobile.
-   * Then: Arabic glyph once when available (optional second listen).
+   * Speaks ONE clear Qaida name: Alif, Baa, Taa, Thaa, Jeem, Haa…
+   * Does not spell A-L-I-F and does not double-speak Arabic after.
    */
   async pronounce({
     key,
@@ -81,8 +82,13 @@ class QaidaAudioService {
     this.stop();
     const requestId = this.requestId;
     const source = this.assets.pronunciations?.[key]?.[mode];
-    const name = spokenNameForKey(key, englishName);
-    const rate = mode === "slow" ? 0.7 : 0.9;
+    const displayName = displayNameForKey(key, englishName);
+    const spoken = displayName
+      ? toSpokenQaidaName(displayName)
+      : fallbackText && !/[\u0600-\u06FF]/.test(fallbackText)
+        ? fallbackText
+        : null;
+    const rate = mode === "slow" ? 0.75 : 0.9;
 
     onStart?.();
     try {
@@ -94,25 +100,8 @@ class QaidaAudioService {
           if (played) continue;
         }
 
-        // Kids hear the familiar English Qaida name first (Alif, Baa, Taa…).
-        if (name) {
-          await speakEnglish(name, rate, 1.08);
-        } else if (fallbackText) {
-          // Non-letter content: try Arabic text, then English text.
-          const looksArabic = /[\u0600-\u06FF]/.test(fallbackText);
-          if (looksArabic) await speakArabic(fallbackText, rate === 0.7 ? 0.55 : 0.78, 1.02);
-          else await speakEnglish(fallbackText, rate, 1.08);
-        }
-
-        // Soft Arabic echo after the name when we have a letter glyph.
-        if (
-          name
-          && fallbackText
-          && /[\u0600-\u06FF]/.test(fallbackText)
-          && this.enabled
-          && requestId === this.requestId
-        ) {
-          await speakArabic(fallbackText, mode === "slow" ? 0.5 : 0.72, 1.02);
+        if (spoken) {
+          await speakEnglish(spoken, rate, 1.05);
         }
       }
     } finally {
@@ -123,8 +112,8 @@ class QaidaAudioService {
   feedback(message: string, language: "ar" | "en" = "en") {
     if (!this.enabled) return;
     this.unlock();
-    if (language === "ar") void speakArabic(message, 0.78, 1.05);
-    else void speakEnglish(message);
+    // Keep feedback simple and English so it never letter-spells.
+    void speakEnglish(language === "ar" ? message : message, 0.92, 1.05);
   }
 
   async effect(effect: QaidaSoundEffect) {

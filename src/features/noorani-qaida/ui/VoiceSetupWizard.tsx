@@ -326,7 +326,7 @@ export default function VoiceSetupWizard({
       qaidaAudio.unlock();
       await qaidaAudio.pronounce({
         key: "letter-1",
-        fallbackText: "ا",
+        fallbackText: "Alif",
         englishName: "Alif",
         mode: "normal",
       });
