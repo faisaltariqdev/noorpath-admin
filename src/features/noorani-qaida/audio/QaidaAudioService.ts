@@ -12,19 +12,19 @@ export interface QaidaAudioAssets {
 export interface PronunciationRequest {
   key: string;
   fallbackText: string;
-  /** Spoken if Arabic TTS is silent (common on Windows Chrome). */
-  englishFallback?: string;
+  /** Preferred spoken name, e.g. "Alif". Defaults from curriculum letter name. */
+  englishName?: string;
   mode?: PronunciationMode;
   repeat?: number;
   onStart?: () => void;
   onEnd?: () => void;
 }
 
-function englishHintForKey(key: string, explicit?: string): string | undefined {
+function spokenNameForKey(key: string, explicit?: string): string | null {
   if (explicit?.trim()) return explicit.trim();
   const letter = LETTERS.find((item) => item.audioKey === key || `letter-${item.id}` === key);
-  if (!letter) return undefined;
-  return letter.name || letter.sound;
+  if (!letter) return null;
+  return letter.name || letter.sound || null;
 }
 
 class QaidaAudioService {
@@ -38,7 +38,6 @@ class QaidaAudioService {
     this.assets = assets;
   }
 
-  /** Must run inside a user gesture on Windows/Chrome for TTS + HTMLAudio. */
   unlock() {
     if (this.unlocked) return;
     this.unlocked = true;
@@ -64,10 +63,14 @@ class QaidaAudioService {
     }
   }
 
+  /**
+   * Primary: English letter name (“Alif”, “Baa”) — clear on Mac, Windows, mobile.
+   * Then: Arabic glyph once when available (optional second listen).
+   */
   async pronounce({
     key,
     fallbackText,
-    englishFallback,
+    englishName,
     mode = "normal",
     repeat = 1,
     onStart,
@@ -78,19 +81,38 @@ class QaidaAudioService {
     this.stop();
     const requestId = this.requestId;
     const source = this.assets.pronunciations?.[key]?.[mode];
-    const englishHint = englishHintForKey(key, englishFallback);
+    const name = spokenNameForKey(key, englishName);
+    const rate = mode === "slow" ? 0.7 : 0.9;
 
     onStart?.();
     try {
       for (let index = 0; index < Math.max(1, repeat); index += 1) {
         if (!this.enabled || requestId !== this.requestId) return;
+
         if (source) {
           const played = await this.playFile(source);
-          if (!played) {
-            await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78, englishHint);
-          }
-        } else {
-          await this.playSpeech(fallbackText, mode === "slow" ? 0.55 : 0.78, englishHint);
+          if (played) continue;
+        }
+
+        // Kids hear the familiar English Qaida name first (Alif, Baa, Taa…).
+        if (name) {
+          await speakEnglish(name, rate, 1.08);
+        } else if (fallbackText) {
+          // Non-letter content: try Arabic text, then English text.
+          const looksArabic = /[\u0600-\u06FF]/.test(fallbackText);
+          if (looksArabic) await speakArabic(fallbackText, rate === 0.7 ? 0.55 : 0.78, 1.02);
+          else await speakEnglish(fallbackText, rate, 1.08);
+        }
+
+        // Soft Arabic echo after the name when we have a letter glyph.
+        if (
+          name
+          && fallbackText
+          && /[\u0600-\u06FF]/.test(fallbackText)
+          && this.enabled
+          && requestId === this.requestId
+        ) {
+          await speakArabic(fallbackText, mode === "slow" ? 0.5 : 0.72, 1.02);
         }
       }
     } finally {
@@ -113,14 +135,9 @@ class QaidaAudioService {
       await this.playFile(source);
       return;
     }
-    // Soft click fallback when effect files are missing (Windows browsers still hear feedback).
     if (effect === "tap" || effect === "correct" || effect === "retry") {
       this.playTone(effect === "correct" ? 880 : effect === "retry" ? 220 : 520, 0.07);
     }
-  }
-
-  private async playSpeech(text: string, rate: number, englishFallback?: string) {
-    await speakArabic(text, rate, 1.02, englishFallback);
   }
 
   private playTone(frequency: number, durationSec: number) {
