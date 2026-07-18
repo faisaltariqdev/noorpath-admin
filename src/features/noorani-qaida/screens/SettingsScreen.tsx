@@ -7,6 +7,7 @@ interface SettingsScreenProps {
   settings: QaidaSettings;
   onUpdate: (settings: Partial<QaidaSettings>) => void;
   onReset: () => void;
+  onOpenVoiceSetup?: () => void;
 }
 
 function Toggle({
@@ -45,7 +46,7 @@ function Toggle({
   );
 }
 
-export default function SettingsScreen({ settings, onUpdate, onReset }: SettingsScreenProps) {
+export default function SettingsScreen({ settings, onUpdate, onReset, onOpenVoiceSetup }: SettingsScreenProps) {
   return (
     <main className="qaida-scroll h-full overflow-y-auto p-4 sm:p-6">
       <div className="mx-auto w-full max-w-3xl">
@@ -68,6 +69,30 @@ export default function SettingsScreen({ settings, onUpdate, onReset }: Settings
             description="Use gentle fades instead of repeated movement and particle effects."
             onChange={(reducedMotion) => onUpdate({ reducedMotion })}
           />
+        </section>
+
+        <section className="qaida-panel mt-5 p-4 sm:p-5" aria-label="Voice setup help">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-black text-slate-950">Voice setup guide</h2>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Step-by-step help for Windows, Mac, iPhone, iPad, and Android so letter sounds play correctly.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenVoiceSetup}
+              className="min-h-12 flex-none rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-emerald-800"
+            >
+              Open voice guide
+            </button>
+          </div>
+          <ul className="mt-4 space-y-2 text-sm text-slate-700">
+            <li>• Turn Audio guidance ON in this screen or the top speaker icon.</li>
+            <li>• Allow site sound in the browser if it asks.</li>
+            <li>• On Windows, install an Arabic speech voice pack for clearest pronunciation.</li>
+            <li>• On phones/tablets, raise Media volume (not only ringtone) and disable silent mode.</li>
+          </ul>
         </section>
 
         <section className="mt-5 rounded-[1.25rem] border border-rose-200 bg-rose-50 p-5">

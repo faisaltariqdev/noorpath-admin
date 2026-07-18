@@ -16,6 +16,11 @@ import { pageVariants } from "../motion/config";
 import QaidaLoader from "../ui/QaidaLoader";
 import { getOverallCurriculumProgress } from "../state/curriculumProgress";
 import { qaidaAudio } from "../audio/QaidaAudioService";
+import VoiceSetupWizard, {
+  hasCompletedVoiceSetup,
+  markVoiceSetupCompleted,
+  markVoiceSetupSeen,
+} from "../ui/VoiceSetupWizard";
 import { supabase } from "@/lib/supabase";
 
 const LessonScreen = dynamic(() => import("../screens/LessonScreen"), {
@@ -353,6 +358,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
   const [showCoinRain, setShowCoinRain] = useState(false);
   const [gameCompletionCount, setGameCompletionCount] = useState(0);
   const [showEnrolPrompt, setShowEnrolPrompt] = useState(false);
+  const [showVoiceSetup, setShowVoiceSetup] = useState(false);
   const [userName, setUserName] = useState(preview ? "Guest" : "Learner");
 
   const currentLetter = activeScreenId?.startsWith("letter-")
@@ -390,6 +396,14 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
       window.removeEventListener("keydown", unlock, true);
     };
   }, []);
+
+  useEffect(() => {
+    if (preview) return;
+    const timer = window.setTimeout(() => {
+      if (!hasCompletedVoiceSetup()) setShowVoiceSetup(true);
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [preview]);
 
   useEffect(() => {
     contentRef.current?.focus({ preventScroll: true });
@@ -897,6 +911,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
                     }
                   }}
                   onReset={() => state.dispatch({ type: "reset" })}
+                  onOpenVoiceSetup={() => setShowVoiceSetup(true)}
                 />
               </motion.div>
             ) : (
@@ -1011,6 +1026,17 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
           </motion.div>
         )}
       </AnimatePresence>
+
+      <VoiceSetupWizard
+        open={showVoiceSetup}
+        audioEnabled={state.audioEnabled}
+        onEnableAudio={() => state.setAudioEnabled(true)}
+        onClose={() => {
+          markVoiceSetupSeen();
+          setShowVoiceSetup(false);
+        }}
+        onCompleted={() => markVoiceSetupCompleted()}
+      />
     </div>
     </MotionConfig>
   );
