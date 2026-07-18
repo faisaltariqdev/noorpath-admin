@@ -16,11 +16,29 @@ interface AssignedHomework {
   due_date?: string | null;
   is_completed: boolean;
   status?: string | null;
+  assignment_type?: string | null;
+  is_published?: boolean | null;
+  archived_at?: string | null;
+  marks?: number | null;
+  max_marks?: number | null;
+  teacher_feedback?: string | null;
+  private_notes?: string | null;
+  external_url?: string | null;
   student_name: string;
+  student_id: string;
   created_at: string;
 }
 const SUBJECTS = ["Quran Recitation", "Tajweed", "Memorization", "Noorani Qaida", "Duas", "Islamic Studies", "Arabic"];
 const LEVELS   = ["All Levels", "Beginner", "Intermediate", "Advanced", "Hifz"];
+const ASSIGNMENT_TYPES = [
+  { value: "homework", label: "Homework" },
+  { value: "assignment", label: "Assignment" },
+  { value: "reading", label: "Reading Practice" },
+  { value: "pdf", label: "PDF" },
+  { value: "audio", label: "Audio" },
+  { value: "video", label: "Video" },
+  { value: "link", label: "External Link" },
+];
 const SUBJECT_BADGE: Record<string, string> = { "Quran Recitation":"badge-green","Tajweed":"badge-blue","Memorization":"badge-purple","Noorani Qaida":"badge-emerald","Duas":"badge-yellow","Islamic Studies":"badge-orange","Arabic":"badge-blue" };
 
 export default function HomeworkPage() {
@@ -34,7 +52,18 @@ export default function HomeworkPage() {
   const [assigning, setAssigning] = useState(false);
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ title: "", content: "", subject: "Quran Recitation", level: "All Levels" });
-  const [assignForm, setAssignForm] = useState({ student_id: "", due_date: "", extra_note: "" });
+  const [assignForm, setAssignForm] = useState({
+    student_id: "",
+    due_date: "",
+    extra_note: "",
+    assignment_type: "homework",
+    max_marks: "",
+    private_notes: "",
+    external_url: "",
+    publish: true,
+  });
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", homework_text: "", due_date: "", teacher_feedback: "", marks: "", max_marks: "", status: "pending" });
 
   async function load() {
     setLoading(true);
@@ -42,7 +71,7 @@ export default function HomeworkPage() {
     const [{ data: templateData }, { data: studentData }, { data: logData, error: logError }] = await Promise.all([
       supabase.from("homework_templates").select("*").eq("tutor_id", user?.id).order("created_at", { ascending: false }),
       supabase.from("students").select("id, full_name").eq("tutor_id", user?.id).eq("is_active", true).order("full_name"),
-      supabase.from("homework_logs").select("id, title, homework_text, subject, due_date, is_completed, status, created_at, student:students(full_name)").eq("tutor_id", user?.id).order("created_at", { ascending: false }).limit(40),
+      supabase.from("homework_logs").select("id, student_id, title, homework_text, subject, due_date, is_completed, status, assignment_type, is_published, archived_at, marks, max_marks, teacher_feedback, private_notes, external_url, created_at, student:students(full_name)").eq("tutor_id", user?.id).order("created_at", { ascending: false }).limit(60),
     ]);
     setTemplates(templateData || []);
     setStudents(studentData || []);
@@ -104,25 +133,105 @@ export default function HomeworkPage() {
       due_date: assignForm.due_date || null,
       status: "pending",
       is_completed: false,
+      assignment_type: assignForm.assignment_type,
+      max_marks: assignForm.max_marks ? Number(assignForm.max_marks) : null,
+      private_notes: assignForm.private_notes || null,
+      external_url: assignForm.external_url || null,
+      is_published: assignForm.publish,
+      published_at: assignForm.publish ? new Date().toISOString() : null,
     });
     setAssigning(false);
     if (error) {
       setMsg("Could not assign homework: " + error.message);
       return;
     }
-    setAssignForm({ student_id: "", due_date: "", extra_note: "" });
+    setAssignForm({ student_id: "", due_date: "", extra_note: "", assignment_type: "homework", max_marks: "", private_notes: "", external_url: "", publish: true });
     setShowAssign(null);
-    setMsg("Homework assigned — parent can see it now.");
+    setMsg("Assignment published — parent can see it now.");
     setTimeout(() => setMsg(""), 3000);
+    await load();
+  }
+
+  async function duplicateAssigned(row: AssignedHomework) {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("homework_logs").insert({
+      student_id: row.student_id,
+      tutor_id: user?.id,
+      title: `${row.title || "Assignment"} (copy)`,
+      homework_text: row.homework_text,
+      subject: row.subject,
+      due_date: row.due_date,
+      status: "pending",
+      is_completed: false,
+      assignment_type: row.assignment_type || "homework",
+      max_marks: row.max_marks,
+      private_notes: row.private_notes,
+      external_url: row.external_url,
+      is_published: false,
+    });
+    if (error) {
+      setMsg("Could not duplicate: " + error.message);
+      return;
+    }
+    setMsg("Assignment duplicated as draft.");
+    await load();
+  }
+
+  async function archiveAssigned(id: string) {
+    const { error } = await supabase.from("homework_logs").update({
+      status: "archived",
+      archived_at: new Date().toISOString(),
+      is_published: false,
+    }).eq("id", id);
+    if (error) {
+      setMsg("Could not archive: " + error.message);
+      return;
+    }
+    await load();
+  }
+
+  async function publishAssigned(id: string) {
+    const { error } = await supabase.from("homework_logs").update({
+      is_published: true,
+      published_at: new Date().toISOString(),
+      status: "pending",
+      archived_at: null,
+    }).eq("id", id);
+    if (error) {
+      setMsg("Could not publish: " + error.message);
+      return;
+    }
+    await load();
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editId) return;
+    const { error } = await supabase.from("homework_logs").update({
+      title: editForm.title,
+      homework_text: editForm.homework_text,
+      due_date: editForm.due_date || null,
+      teacher_feedback: editForm.teacher_feedback || null,
+      marks: editForm.marks ? Number(editForm.marks) : null,
+      max_marks: editForm.max_marks ? Number(editForm.max_marks) : null,
+      status: editForm.status,
+      is_completed: editForm.status === "completed",
+    }).eq("id", editId);
+    if (error) {
+      setMsg("Could not update: " + error.message);
+      return;
+    }
+    setEditId(null);
+    setMsg("Assignment updated.");
     await load();
   }
 
   return (
     <>
-      <TopBar title="Homework Templates" />
+      <TopBar title="Assignments" />
       <div className="page-header" style={{ paddingTop: 24 }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
-          <div><h1 className="page-title">Homework Templates</h1><p className="page-subtitle">Reusable assignments for your students</p></div>
+          <div><h1 className="page-title">Assignments</h1><p className="page-subtitle">Create, publish, archive, and grade student work</p></div>
           <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={15} /> New Template</button>
         </div>
       </div>
@@ -138,20 +247,46 @@ export default function HomeworkPage() {
             <div className="card-header" style={{ padding: "14px 18px", borderBottom: "1px solid #f1f5f9" }}>
               <h2 style={{ margin: 0, fontSize: "0.95rem" }}>Assigned homework ({assigned.length})</h2>
             </div>
+            <div className="table-shell" style={{ overflowX: "auto" }}>
             <table className="data-table">
-              <thead><tr><th>Student</th><th>Title</th><th>Due</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th>Student</th><th>Title</th><th>Type</th><th>Due</th><th>Status</th><th>Marks</th><th></th></tr></thead>
               <tbody>
                 {assigned.map((row) => (
                   <tr key={row.id}>
                     <td style={{ fontWeight: 600 }}>{row.student_name}</td>
                     <td>{row.title || row.homework_text?.slice(0, 48) || "—"}</td>
+                    <td style={{ textTransform: "capitalize" }}>{row.assignment_type || "homework"}</td>
                     <td style={{ color: "#64748b" }}>{row.due_date ? new Date(row.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</td>
-                    <td><span className={`badge ${row.is_completed ? "badge-green" : "badge-yellow"}`}>{row.is_completed ? "Done" : "Pending"}</span></td>
-                    <td><button type="button" className="btn btn-outline btn-xs" onClick={() => void deleteAssigned(row.id)} aria-label="Delete assignment"><Trash2 size={13} /></button></td>
+                    <td>
+                      <span className={`badge ${row.archived_at ? "badge-gray" : row.is_completed ? "badge-green" : row.is_published === false ? "badge-yellow" : "badge-blue"}`}>
+                        {row.archived_at ? "Archived" : row.is_completed ? "Done" : row.is_published === false ? "Draft" : (row.status || "Pending")}
+                      </span>
+                    </td>
+                    <td>{row.marks != null ? `${row.marks}${row.max_marks != null ? `/${row.max_marks}` : ""}` : "—"}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <button type="button" className="btn btn-outline btn-xs" onClick={() => {
+                        setEditId(row.id);
+                        setEditForm({
+                          title: row.title || "",
+                          homework_text: row.homework_text || "",
+                          due_date: row.due_date || "",
+                          teacher_feedback: row.teacher_feedback || "",
+                          marks: row.marks != null ? String(row.marks) : "",
+                          max_marks: row.max_marks != null ? String(row.max_marks) : "",
+                          status: row.status || (row.is_completed ? "completed" : "pending"),
+                        });
+                      }}>Edit</button>{" "}
+                      <button type="button" className="btn btn-outline btn-xs" onClick={() => void duplicateAssigned(row)}>Duplicate</button>{" "}
+                      {row.is_published === false || row.archived_at
+                        ? <button type="button" className="btn btn-outline btn-xs" onClick={() => void publishAssigned(row.id)}>Publish</button>
+                        : <button type="button" className="btn btn-outline btn-xs" onClick={() => void archiveAssigned(row.id)}>Archive</button>}{" "}
+                      <button type="button" className="btn btn-outline btn-xs" onClick={() => void deleteAssigned(row.id)} aria-label="Delete assignment"><Trash2 size={13} /></button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
@@ -233,14 +368,40 @@ export default function HomeworkPage() {
                     {students.map(student => <option key={student.id} value={student.id}>{student.full_name}</option>)}
                   </select>
                 </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Due Date</label>
+                    <input type="date" className="form-input" value={assignForm.due_date} onChange={e => setAssignForm(p => ({ ...p, due_date: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Type</label>
+                    <select className="form-input form-select" value={assignForm.assignment_type} onChange={e => setAssignForm(p => ({ ...p, assignment_type: e.target.value }))}>
+                      {ASSIGNMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Max marks</label>
+                    <input className="form-input" type="number" value={assignForm.max_marks} onChange={e => setAssignForm(p => ({ ...p, max_marks: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">External URL</label>
+                    <input className="form-input" value={assignForm.external_url} onChange={e => setAssignForm(p => ({ ...p, external_url: e.target.value }))} placeholder="PDF / audio / video link" />
+                  </div>
+                </div>
                 <div className="form-group">
-                  <label className="form-label">Due Date</label>
-                  <input type="date" className="form-input" value={assignForm.due_date} onChange={e => setAssignForm(p => ({ ...p, due_date: e.target.value }))} />
+                  <label className="form-label">Private notes (tutor only)</label>
+                  <textarea className="form-input" value={assignForm.private_notes} onChange={e => setAssignForm(p => ({ ...p, private_notes: e.target.value }))} rows={2} />
                 </div>
-                <div className="form-group" style={{ marginBottom: 24 }}>
-                  <label className="form-label">Extra Note</label>
-                  <textarea className="form-input" value={assignForm.extra_note} onChange={e => setAssignForm(p => ({ ...p, extra_note: e.target.value }))} rows={3} placeholder="Optional note for this specific student..." />
+                <div className="form-group">
+                  <label className="form-label">Extra Note for parent</label>
+                  <textarea className="form-input" value={assignForm.extra_note} onChange={e => setAssignForm(p => ({ ...p, extra_note: e.target.value }))} rows={2} />
                 </div>
+                <label style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16, fontSize: "0.82rem" }}>
+                  <input type="checkbox" checked={assignForm.publish} onChange={e => setAssignForm(p => ({ ...p, publish: e.target.checked }))} />
+                  Publish immediately
+                </label>
                 <div style={{ display:"flex", gap:10 }}>
                   <button type="button" className="btn btn-ghost" onClick={() => setShowAssign(null)} style={{ flex:1 }}>Cancel</button>
                   <button type="button" className="btn btn-primary" disabled={assigning || !assignForm.student_id} onClick={() => {
@@ -252,6 +413,53 @@ export default function HomeworkPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {editId && (
+          <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            <form onSubmit={saveEdit} style={{ background:"#fff", borderRadius:16, width:"100%", maxWidth:480, padding:20 }}>
+              <h2 style={{ margin:"0 0 14px", fontSize:"1rem" }}>Edit assignment</h2>
+              <div className="form-group">
+                <label className="form-label">Title</label>
+                <input className="form-input" value={editForm.title} onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Instructions</label>
+                <textarea className="form-input" rows={3} value={editForm.homework_text} onChange={(e) => setEditForm((p) => ({ ...p, homework_text: e.target.value }))} />
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
+                <div className="form-group">
+                  <label className="form-label">Due</label>
+                  <input type="date" className="form-input" value={editForm.due_date} onChange={(e) => setEditForm((p) => ({ ...p, due_date: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Marks</label>
+                  <input className="form-input" value={editForm.marks} onChange={(e) => setEditForm((p) => ({ ...p, marks: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Max</label>
+                  <input className="form-input" value={editForm.max_marks} onChange={(e) => setEditForm((p) => ({ ...p, max_marks: e.target.value }))} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select className="form-input form-select" value={editForm.status} onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}>
+                  <option value="pending">Pending</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="completed">Completed</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Teacher feedback</label>
+                <textarea className="form-input" rows={2} value={editForm.teacher_feedback} onChange={(e) => setEditForm((p) => ({ ...p, teacher_feedback: e.target.value }))} />
+              </div>
+              <div style={{ display:"flex", gap:10 }}>
+                <button type="button" className="btn btn-ghost" style={{ flex:1 }} onClick={() => setEditId(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex:1 }}>Save</button>
+              </div>
+            </form>
           </div>
         )}
       </div>

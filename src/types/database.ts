@@ -89,6 +89,10 @@ export interface Attendance {
   tutor_id?: string;
   notes?: string;
   session_date?: string;
+  scheduled_at?: string;
+  actual_join_at?: string;
+  actual_duration_minutes?: number;
+  class_label?: string;
 }
 
 export interface TeacherAttendance {
@@ -104,13 +108,17 @@ export interface TeacherAttendance {
   tutor?: Profile;
 }
 
+export type ReportKind = "daily" | "weekly" | "monthly" | "custom";
+
 export interface ProgressReport {
   id: string;
   session_id?: string;
   student_id: string;
   tutor_id?: string;
+  report_kind?: ReportKind;
   pages_covered?: string;
   surah_covered?: string;
+  topics_covered?: string;
   tajweed_rules?: string[];
   mistakes?: string;
   audio_note_url?: string;
@@ -118,6 +126,12 @@ export interface ProgressReport {
   tajweed_stars?: number;
   homework?: string;
   tutor_notes?: string;
+  reading_quality?: string;
+  behaviour?: string;
+  participation?: string;
+  next_lesson_plan?: string;
+  period_start?: string;
+  period_end?: string;
   created_at: string;
   student?: Student;
 }
@@ -135,6 +149,38 @@ export interface HomeworkLog {
   is_completed: boolean;
   completed_at?: string;
   parent_notes?: string;
+  assignment_type?: string;
+  marks?: number;
+  max_marks?: number;
+  teacher_feedback?: string;
+  submitted_at?: string;
+  published_at?: string;
+  archived_at?: string;
+  attachments?: unknown;
+  private_notes?: string;
+  is_published?: boolean;
+  external_url?: string;
+  created_at: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  image_url?: string;
+  pdf_url?: string;
+  priority: string;
+  target_type: string;
+  target_user_id?: string;
+  target_course?: string;
+  target_country?: string;
+  scheduled_at?: string;
+  expires_at?: string;
+  published_at?: string;
+  send_push: boolean;
+  send_email: boolean;
+  send_dashboard: boolean;
+  created_by?: string;
   created_at: string;
 }
 
@@ -271,6 +317,7 @@ export interface Database {
       homework_templates: { Row: HomeworkTemplate; Insert: Partial<HomeworkTemplate>; Update: Partial<HomeworkTemplate> };
       fees: { Row: Fee; Insert: Partial<Fee>; Update: Partial<Fee> };
       notifications: { Row: Notification; Insert: Partial<Notification>; Update: Partial<Notification> };
+      announcements: { Row: Announcement; Insert: Partial<Announcement>; Update: Partial<Announcement> };
       messages: { Row: LegacyMessage; Insert: Partial<LegacyMessage>; Update: Partial<LegacyMessage> };
       chat_messages: { Row: ChatMessage; Insert: Partial<ChatMessage>; Update: Partial<ChatMessage> };
       tutor_earnings: { Row: TutorEarning; Insert: Partial<TutorEarning>; Update: Partial<TutorEarning> };

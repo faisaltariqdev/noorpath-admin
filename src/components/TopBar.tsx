@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, MessageSquare } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 
 interface TopBarProps {
   title: string;
@@ -10,11 +10,11 @@ interface TopBarProps {
 
 export default function TopBar({ title, subtitle }: TopBarProps) {
   const pathname = usePathname();
-  const roleRoot = pathname.startsWith("/tutor")
-    ? "/tutor"
+  const announceHref = pathname.startsWith("/tutor")
+    ? "/tutor/messages"
     : pathname.startsWith("/parent")
-      ? "/parent"
-      : "/admin";
+      ? "/parent/messages"
+      : "/admin/announcements";
 
   return (
     <header className="topbar">
@@ -34,8 +34,8 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
       </div>
 
       <div className="topbar-right">
-        <Link href={`${roleRoot}/messages`} className="topbar-icon-btn" aria-label="Open messages">
-          <MessageSquare size={16} />
+        <Link href={announceHref} className="topbar-icon-btn" aria-label="Open announcements">
+          <Bell size={16} />
         </Link>
       </div>
     </header>

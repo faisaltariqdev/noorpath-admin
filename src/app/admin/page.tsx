@@ -95,7 +95,7 @@ export default function AdminDashboard() {
         supabase.from("students").select("id,full_name,course,trial_status,enrolled_at").order("enrolled_at", { ascending: false }).limit(6),
         supabase.from("fees").select("id,amount,currency,paid_date,student:students(full_name)").eq("status", "paid").order("paid_date", { ascending: false }).limit(6),
         supabase.from("class_sessions").select("id,scheduled_at,status,student:students(full_name),tutor:profiles(full_name)").gte("scheduled_at", todayStart).lt("scheduled_at", tomorrowStart).order("scheduled_at").limit(8),
-        supabase.from("notifications").select("id,title,body,message,created_at").order("created_at", { ascending: false }).limit(4),
+        supabase.from("announcements").select("id,title,message,created_at").order("created_at", { ascending: false }).limit(4),
         supabase.from("progress_reports").select("id,overall_rating,created_at,student:students(full_name),tutor:profiles(full_name)").order("created_at", { ascending: false }).limit(5),
       ]);
 
@@ -188,7 +188,7 @@ export default function AdminDashboard() {
                   {[
                     { label: "Enroll a student", href: "/admin/students", icon: UserPlus },
                     { label: "Manage teachers", href: "/admin/teachers", icon: Users },
-                    { label: "Review assignments", href: "/admin/assignments", icon: ClipboardList },
+                    { label: "Review queue", href: "/admin/review", icon: ClipboardList },
                     { label: "Open payments", href: "/admin/payments", icon: ReceiptText },
                   ].map((action) => (
                     <Link key={action.href} href={action.href} className="action-card">
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
             </PortalGrid>
 
             <PortalGrid>
-              <SectionCard title="Announcements" description="Latest academy broadcasts" className="portal-section-card--narrow" action={<Link href="/admin/notifications" className="card-link">Manage →</Link>}>
+              <SectionCard title="Announcements" description="Latest academy broadcasts" className="portal-section-card--narrow" action={<Link href="/admin/announcements" className="card-link">Manage →</Link>}>
                 {data.announcements.length === 0 ? <EmptyState icon={Bell} title="No announcements" description="Broadcasts will appear here." /> : (
                   <div className="list-stack">
                     {data.announcements.map((announcement) => (

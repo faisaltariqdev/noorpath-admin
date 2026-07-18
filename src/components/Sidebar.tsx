@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Role } from "@/types/database";
 import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
-  DollarSign, MessageSquare, Settings, LogOut,
-  GraduationCap, FileText, Clock, Home, ChevronRight,
+  DollarSign, Megaphone, Settings, LogOut,
+  GraduationCap, Clock, Home, ChevronRight,
   BarChart2, Sparkles, Map,
 } from "lucide-react";
 
@@ -33,11 +33,12 @@ const ADMIN_LINKS: NavSection[] = [
   { section: "Operations", items: [
     { href: "/admin/live-classes",  label: "Live Classes",      icon: Calendar },
     { href: "/admin/attendance",    label: "Attendance",        icon: Clock },
+    { href: "/admin/review",        label: "Review Queue",      icon: ClipboardList },
     { href: "/admin/payments",      label: "Payments",          icon: DollarSign },
     { href: "/admin/reports",       label: "Reports",           icon: BarChart2 },
   ]},
   { section: "Communication", items: [
-    { href: "/admin/messages",      label: "Messages",          icon: MessageSquare },
+    { href: "/admin/announcements", label: "Announcements",     icon: Megaphone },
   ]},
   { section: "System", items: [
     { href: "/admin/permissions",   label: "Permissions",       icon: ClipboardList },
@@ -55,31 +56,32 @@ const TUTOR_LINKS: NavSection[] = [
     { href: "/tutor/homework",      label: "Assignments",       icon: BookOpen },
     { href: "/tutor/attendance",    label: "Attendance",        icon: Clock },
     { href: "/tutor/reports",       label: "Reports",           icon: ClipboardList },
+    { href: "/tutor/roadmap",       label: "Roadmap",           icon: Map },
     { href: "/tutor/qaida",         label: "Noorani Qaida",     icon: Sparkles },
   ]},
   { section: "Account", items: [
     { href: "/tutor/earnings",      label: "Payments",          icon: DollarSign },
-    { href: "/tutor/messages",      label: "Messages",          icon: MessageSquare },
-    { href: "/tutor/profile",       label: "Settings",          icon: Settings },
+    { href: "/tutor/messages",      label: "Announcements",     icon: Megaphone },
+    { href: "/tutor/profile",       label: "Profile",           icon: Settings },
   ]},
 ];
 
 const PARENT_LINKS: NavSection[] = [
   { section: "Overview", items: [
-    { href: "/parent", label: "Home", icon: Home, exact: true },
+    { href: "/parent", label: "Family Hub", icon: Home, exact: true },
   ]},
   { section: "My Children", items: [
-    { href: "/parent/progress",     label: "Children & Progress", icon: GraduationCap },
-    { href: "/parent/sessions",     label: "Live Classes",        icon: Calendar },
-    { href: "/parent/homework",     label: "Assignments",         icon: BookOpen },
-    { href: "/parent/attendance",   label: "Attendance",          icon: Clock },
-    { href: "/parent/roadmap",      label: "Learning Roadmap",    icon: Map },
-    { href: "/parent/qaida",        label: "Noorani Qaida",       icon: Sparkles },
+    { href: "/parent?section=progress",   label: "Progress",      icon: GraduationCap },
+    { href: "/parent?section=today",      label: "Today's Class", icon: Calendar },
+    { href: "/parent?section=homework",   label: "Homework",      icon: BookOpen },
+    { href: "/parent?section=attendance", label: "Attendance",    icon: Clock },
+    { href: "/parent/roadmap",                      label: "Roadmap",       icon: Map },
+    { href: "/parent/qaida",                        label: "Noorani Qaida", icon: Sparkles },
   ]},
   { section: "Account", items: [
-    { href: "/parent/fees",         label: "Payments",            icon: DollarSign },
-    { href: "/parent/messages",     label: "Messages",            icon: MessageSquare },
-    { href: "/parent/profile",      label: "Settings",            icon: Settings },
+    { href: "/parent/fees",         label: "Payments",       icon: DollarSign },
+    { href: "/parent/messages",     label: "Announcements",  icon: Megaphone },
+    { href: "/parent/profile",      label: "Profile",        icon: Settings },
   ]},
 ];
 
@@ -95,8 +97,9 @@ const ROLE_CONFIG: Record<Role, { label: string; badgeClass: string }> = {
 
 interface SidebarProps { role: Role; userName: string; }
 
-export default function Sidebar({ role, userName }: SidebarProps) {
+function SidebarInner({ role, userName }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState(userName);
@@ -153,8 +156,20 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   }, [role]);
 
   function isActive(href: string, exact?: boolean) {
-    if (exact) return pathname === href;
-    return pathname === href || pathname.startsWith(href + "/");
+    const [pathOnly, query = ""] = href.split("?");
+    if (exact) {
+      if (pathname !== pathOnly) return false;
+      if (!query) return !searchParams.get("section");
+      const want = new URLSearchParams(query);
+      return want.get("section") === (searchParams.get("section") || "overview");
+    }
+    if (query) {
+      if (pathname !== pathOnly) return false;
+      const want = new URLSearchParams(query);
+      return want.get("section") === searchParams.get("section");
+    }
+    if (pathname === pathOnly) return !searchParams.get("section") || pathOnly !== "/parent";
+    return pathname.startsWith(pathOnly + "/");
   }
 
   async function handleLogout() {
@@ -244,5 +259,13 @@ export default function Sidebar({ role, userName }: SidebarProps) {
         </div>
       </aside>
     </>
+  );
+}
+
+export default function Sidebar(props: SidebarProps) {
+  return (
+    <Suspense fallback={null}>
+      <SidebarInner {...props} />
+    </Suspense>
   );
 }

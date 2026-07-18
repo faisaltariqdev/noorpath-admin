@@ -92,13 +92,21 @@ export default function SubmitReportPage() {
   const [form, setForm] = useState({
     student_id: "",
     session_id: "",
+    report_kind: "daily" as "daily" | "weekly" | "monthly" | "custom",
     overall_rating: "good",
     tajweed_stars: 4,
     pages_covered: "",
     surah_covered: "",
+    topics_covered: "",
     homework: "",
     tutor_notes: "",
     mistakes: "",
+    reading_quality: "",
+    behaviour: "",
+    participation: "",
+    next_lesson_plan: "",
+    period_start: "",
+    period_end: "",
     tajweed_rules: [] as string[],
     audio_note_url: "",
   });
@@ -212,15 +220,23 @@ export default function SubmitReportPage() {
 
     const { data: insertedReport, error } = await supabase.from("progress_reports").insert({
       student_id: form.student_id,
-      session_id: form.session_id || null,
+      session_id: form.report_kind === "daily" ? (form.session_id || null) : null,
       tutor_id: user?.id,
+      report_kind: form.report_kind,
       overall_rating: form.overall_rating,
       tajweed_stars: form.tajweed_stars,
       pages_covered: form.pages_covered || null,
       surah_covered: form.surah_covered || null,
+      topics_covered: form.topics_covered || null,
       homework: form.homework || null,
       tutor_notes: form.tutor_notes || null,
       mistakes: form.mistakes || null,
+      reading_quality: form.reading_quality || null,
+      behaviour: form.behaviour || null,
+      participation: form.participation || null,
+      next_lesson_plan: form.next_lesson_plan || null,
+      period_start: form.period_start || null,
+      period_end: form.period_end || null,
       tajweed_rules: tajweedIssues.length > 0 ? tajweedIssues : form.tajweed_rules,
       audio_note_url: audioNoteUrl || null,
     }).select("id").single();
@@ -237,11 +253,14 @@ export default function SubmitReportPage() {
         student_id: form.student_id,
         tutor_id: user?.id,
         homework_text: form.homework.trim(),
-        title: form.surah_covered || "Practice homework",
+        title: form.surah_covered || form.topics_covered || "Practice homework",
         subject: "Quran",
         due_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         status: "pending",
         is_completed: false,
+        assignment_type: "homework",
+        is_published: true,
+        published_at: new Date().toISOString(),
       });
       if (hwError) {
         setSaving(false);
@@ -283,9 +302,22 @@ export default function SubmitReportPage() {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      <TopBar title="Submit Progress Report" subtitle="Record today's class performance" />
+      <TopBar title="Class Report" subtitle="Daily work report or weekly/monthly progress" />
       <div className="page-content">
         <form onSubmit={handleSubmit} style={{ maxWidth: 720 }}>
+          <div className="card" style={{ padding: 16, marginBottom: 16 }}>
+            <label className="form-label">Report type</label>
+            <select
+              className="form-input form-select"
+              value={form.report_kind}
+              onChange={(e) => setForm((p) => ({ ...p, report_kind: e.target.value as typeof form.report_kind }))}
+            >
+              <option value="daily">Daily work report (after class)</option>
+              <option value="weekly">Weekly progress report</option>
+              <option value="monthly">Monthly progress report</option>
+              <option value="custom">Custom progress report</option>
+            </select>
+          </div>
 
           {/* Class Information */}
           <div className="card" style={{ marginBottom: 20 }}>
@@ -309,13 +341,53 @@ export default function SubmitReportPage() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Surah / Lesson Covered</label>
+                  <label className="form-label">Today&apos;s lesson / Surah</label>
                   <input className="form-input" value={form.surah_covered} onChange={e => setForm(p => ({ ...p, surah_covered: e.target.value }))} placeholder="e.g. Al-Baqarah, Juz 1" />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Pages / Lines Covered</label>
+                  <label className="form-label">Pages read</label>
                   <input className="form-input" value={form.pages_covered} onChange={e => setForm(p => ({ ...p, pages_covered: e.target.value }))} placeholder="e.g. Pages 4-6 or 8 lines" />
                 </div>
+              </div>
+              <div className="form-group" style={{ marginTop: 16, marginBottom: 0 }}>
+                <label className="form-label">Topics covered</label>
+                <input className="form-input" value={form.topics_covered} onChange={e => setForm(p => ({ ...p, topics_covered: e.target.value }))} placeholder="Makharij, Madd, revision…" />
+              </div>
+              {(form.report_kind === "weekly" || form.report_kind === "monthly" || form.report_kind === "custom") && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Period start</label>
+                    <input type="date" className="form-input" value={form.period_start} onChange={e => setForm(p => ({ ...p, period_start: e.target.value }))} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Period end</label>
+                    <input type="date" className="form-input" value={form.period_end} onChange={e => setForm(p => ({ ...p, period_end: e.target.value }))} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div className="card-header"><h3 className="card-title">Class quality & next plan</h3></div>
+            <div style={{ padding: "0 20px 20px", display: "grid", gap: 12 }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Reading quality</label>
+                <input className="form-input" value={form.reading_quality} onChange={e => setForm(p => ({ ...p, reading_quality: e.target.value }))} placeholder="Fluent / hesitant / improving…" />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Behaviour</label>
+                  <input className="form-input" value={form.behaviour} onChange={e => setForm(p => ({ ...p, behaviour: e.target.value }))} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Participation</label>
+                  <input className="form-input" value={form.participation} onChange={e => setForm(p => ({ ...p, participation: e.target.value }))} />
+                </div>
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Next lesson plan</label>
+                <textarea className="form-input" rows={2} value={form.next_lesson_plan} onChange={e => setForm(p => ({ ...p, next_lesson_plan: e.target.value }))} placeholder="What will be covered next class…" />
               </div>
             </div>
           </div>

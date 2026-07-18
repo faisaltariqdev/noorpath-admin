@@ -131,10 +131,10 @@ export default function TutorReportsPage() {
       <div className="page-header" style={{ paddingTop: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <h1 className="page-title">Progress Reports</h1>
-            <p className="page-subtitle">{reports.length} reports · view, edit or delete your submissions</p>
+            <h1 className="page-title">Class & Progress Reports</h1>
+            <p className="page-subtitle">{reports.length} reports · daily work + weekly/monthly progress</p>
           </div>
-          <Link href="/tutor/reports/new" className="btn btn-primary"><Plus size={15} /> New Report</Link>
+          <Link href="/tutor/reports/new" className="btn btn-primary"><Plus size={15} /> New daily / progress report</Link>
         </div>
       </div>
       <div className="page-body">

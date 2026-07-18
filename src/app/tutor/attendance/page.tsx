@@ -3,35 +3,30 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle, Clock, Trash2, Users, XCircle, CalendarDays } from "lucide-react";
+import { CheckCircle, Clock, Users, XCircle, CalendarDays } from "lucide-react";
 import TopBar from "@/components/TopBar";
+import { unwrapOne } from "@/lib/currency";
 import { supabase } from "@/lib/supabase";
 import type { AttendanceStatus } from "@/types/database";
-
-interface Student {
-  id: string;
-  full_name: string;
-}
-
-interface AttendanceRecord {
-  id: string;
-  student_id: string;
-  status: AttendanceStatus;
-  notes?: string | null;
-  late_minutes?: number | null;
-}
 
 interface DaySession {
   id: string;
   student_id: string;
   student_name: string;
+  course: string;
   scheduled_at: string;
+  duration_minutes: number;
   status: string;
+  attendance_id?: string;
+  att_status?: AttendanceStatus;
+  actual_join_at?: string | null;
+  actual_duration_minutes?: number | null;
+  notes?: string | null;
+  late_minutes?: number | null;
 }
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const STATUSES: AttendanceStatus[] = ["present", "absent", "late", "leave"];
-
 const STATUS_CONFIG: Record<AttendanceStatus, { bg: string; color: string; label: string }> = {
   present: { bg: "#1b5e42", color: "#fff", label: "Present" },
   absent: { bg: "#dc2626", color: "#fff", label: "Absent" },
@@ -40,15 +35,14 @@ const STATUS_CONFIG: Record<AttendanceStatus, { bg: string; color: string; label
 };
 
 export default function TutorAttendancePage() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [sessions, setSessions] = useState<DaySession[]>([]);
-  const [myAttendance, setMyAttendance] = useState<{ session_date: string; status: string; notes?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [date, setDate] = useState(TODAY);
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
+  const [joinTimes, setJoinTimes] = useState<Record<string, string>>({});
+  const [durations, setDurations] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [lateMinutes, setLateMinutes] = useState<Record<string, string>>({});
 
@@ -64,70 +58,56 @@ export default function TutorAttendancePage() {
 
       const dayStart = `${date}T00:00:00`;
       const dayEnd = `${date}T23:59:59`;
-      const monthKey = date.slice(0, 7);
-      const monthStart = `${monthKey}-01`;
-      const monthEndDate = new Date(`${monthKey}-01T00:00:00`);
-      monthEndDate.setMonth(monthEndDate.getMonth() + 1);
-      const monthEnd = monthEndDate.toISOString().slice(0, 10);
 
-      const [{ data: studs }, { data: att }, { data: daySessions }, { data: ownAtt }] = await Promise.all([
-        supabase
-          .from("students")
-          .select("id, full_name")
-          .eq("tutor_id", user.id)
-          .eq("is_active", true)
-          .order("full_name"),
-        supabase
-          .from("attendance")
-          .select("id, student_id, status, notes, late_minutes")
-          .eq("tutor_id", user.id)
-          .eq("session_date", date),
+      const [{ data: daySessions }, { data: att }] = await Promise.all([
         supabase
           .from("class_sessions")
-          .select("id, student_id, scheduled_at, status, student:students(full_name)")
+          .select("id, student_id, scheduled_at, duration_minutes, status, student:students(full_name, course)")
           .eq("tutor_id", user.id)
           .gte("scheduled_at", dayStart)
           .lte("scheduled_at", dayEnd)
           .order("scheduled_at"),
         supabase
-          .from("teacher_attendance")
-          .select("session_date, status, notes")
+          .from("attendance")
+          .select("id, session_id, student_id, status, notes, late_minutes, actual_join_at, actual_duration_minutes")
           .eq("tutor_id", user.id)
-          .gte("session_date", monthStart)
-          .lt("session_date", monthEnd)
-          .order("session_date", { ascending: false }),
+          .eq("session_date", date),
       ]);
 
-      const studList = (studs || []) as Student[];
-      const attList = (att || []) as AttendanceRecord[];
-      setStudents(studList);
-      setRecords(attList);
-      setMyAttendance((ownAtt || []) as { session_date: string; status: string; notes?: string | null }[]);
-      setSessions(
-        (daySessions || []).map((row: any) => ({
-          id: row.id,
-          student_id: row.student_id,
-          student_name: row.student?.full_name || "Student",
-          scheduled_at: row.scheduled_at,
-          status: row.status,
-        }))
-      );
+      const attBySession = new Map((att || []).filter((a: any) => a.session_id).map((a: any) => [a.session_id, a]));
+      const mapped: DaySession[] = (daySessions || []).map((s: any) => {
+        const student = unwrapOne<{ full_name?: string; course?: string }>(s.student);
+        const existing = attBySession.get(s.id);
+        return {
+          id: s.id,
+          student_id: s.student_id,
+          student_name: student?.full_name || "—",
+          course: student?.course || "—",
+          scheduled_at: s.scheduled_at,
+          duration_minutes: s.duration_minutes || 30,
+          status: s.status,
+          attendance_id: existing?.id,
+          att_status: existing?.status,
+          actual_join_at: existing?.actual_join_at,
+          actual_duration_minutes: existing?.actual_duration_minutes,
+          notes: existing?.notes,
+          late_minutes: existing?.late_minutes,
+        };
+      });
 
-      const initStatuses: Record<string, AttendanceStatus> = {};
-      const initNotes: Record<string, string> = {};
-      const initLate: Record<string, string> = {};
-      for (const student of studList) {
-        const existing = attList.find((row) => row.student_id === student.id);
-        initStatuses[student.id] = existing?.status || "present";
-        initNotes[student.id] = existing?.notes || "";
-        initLate[student.id] = existing?.late_minutes ? String(existing.late_minutes) : "";
-      }
-      setStatuses(initStatuses);
-      setNotes(initNotes);
-      setLateMinutes(initLate);
+      setSessions(mapped);
+      setStatuses(Object.fromEntries(mapped.map((s) => [s.id, (s.att_status as AttendanceStatus) || "present"])));
+      setJoinTimes(Object.fromEntries(mapped.map((s) => {
+        if (!s.actual_join_at) return [s.id, ""];
+        const d = new Date(s.actual_join_at);
+        return [s.id, `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`];
+      })));
+      setDurations(Object.fromEntries(mapped.map((s) => [s.id, s.actual_duration_minutes != null ? String(s.actual_duration_minutes) : String(s.duration_minutes)])));
+      setNotes(Object.fromEntries(mapped.map((s) => [s.id, s.notes || ""])));
+      setLateMinutes(Object.fromEntries(mapped.map((s) => [s.id, s.late_minutes != null ? String(s.late_minutes) : ""])));
       setLoading(false);
     }
-    load();
+    void load();
   }, [date]);
 
   async function saveAttendance() {
@@ -141,22 +121,30 @@ export default function TutorAttendancePage() {
     }
 
     const errors: string[] = [];
-    for (const student of students) {
-      const status = statuses[student.id] || "present";
+    for (const session of sessions) {
+      const status = statuses[session.id] || "present";
+      let actualJoin: string | null = null;
+      if (joinTimes[session.id]) {
+        actualJoin = new Date(`${date}T${joinTimes[session.id]}:00`).toISOString();
+      }
       const payload = {
-        student_id: student.id,
+        student_id: session.student_id,
         tutor_id: user.id,
+        session_id: session.id,
         session_date: date,
         status,
-        late_minutes: status === "late" ? Number(lateMinutes[student.id] || 0) : 0,
-        notes: notes[student.id]?.trim() || null,
+        late_minutes: status === "late" ? Number(lateMinutes[session.id] || 0) : 0,
+        notes: notes[session.id]?.trim() || null,
         marked_at: new Date().toISOString(),
+        scheduled_at: session.scheduled_at,
+        actual_join_at: actualJoin,
+        actual_duration_minutes: durations[session.id] ? Number(durations[session.id]) : session.duration_minutes,
+        class_label: `${session.course} · ${new Date(session.scheduled_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
       };
-      const existing = records.find((row) => row.student_id === student.id);
-      const { error } = existing
-        ? await supabase.from("attendance").update(payload).eq("id", existing.id)
+      const { error } = session.attendance_id
+        ? await supabase.from("attendance").update(payload).eq("id", session.attendance_id)
         : await supabase.from("attendance").insert(payload);
-      if (error) errors.push(`${student.full_name}: ${error.message}`);
+      if (error) errors.push(`${session.student_name}: ${error.message}`);
     }
 
     setSaving(false);
@@ -166,13 +154,10 @@ export default function TutorAttendancePage() {
     }
     setMessage("Attendance saved.");
     setTimeout(() => setMessage(""), 2500);
-
-    const { data: att } = await supabase
-      .from("attendance")
-      .select("id, student_id, status, notes, late_minutes")
-      .eq("tutor_id", user.id)
-      .eq("session_date", date);
-    setRecords((att || []) as AttendanceRecord[]);
+    // Trigger reload by bumping date state through a no-op remount path
+    const current = date;
+    setDate("");
+    requestAnimationFrame(() => setDate(current));
   }
 
   const counts = useMemo(() => ({
@@ -182,64 +167,19 @@ export default function TutorAttendancePage() {
     leave: Object.values(statuses).filter((s) => s === "leave").length,
   }), [statuses]);
 
-  function markAll(status: AttendanceStatus) {
-    setStatuses(Object.fromEntries(students.map((s) => [s.id, status])));
-  }
-
-  async function clearAttendance(studentId: string, studentName: string) {
-    const existing = records.find((row) => row.student_id === studentId);
-    if (!existing) {
-      setMessage("No saved attendance for this student on this date.");
-      return;
-    }
-    if (!window.confirm(`Clear attendance for ${studentName} on ${date}?`)) return;
-    const { error } = await supabase.from("attendance").delete().eq("id", existing.id);
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-    setRecords((rows) => rows.filter((row) => row.id !== existing.id));
-    setStatuses((prev) => {
-      const next = { ...prev };
-      delete next[studentId];
-      return next;
-    });
-    setNotes((prev) => {
-      const next = { ...prev };
-      delete next[studentId];
-      return next;
-    });
-    setMessage("Attendance cleared.");
-    setTimeout(() => setMessage(""), 2500);
-  }
-
   return (
     <>
-      <TopBar title="Attendance" subtitle="Mark your students for each class day" />
+      <TopBar title="Attendance" subtitle="Mark each scheduled class with join time and duration" />
       <div className="page-header" style={{ paddingTop: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <h1 className="page-title">Mark Student Attendance</h1>
-            <p className="page-subtitle">{students.length} assigned students · {date}</p>
+            <h1 className="page-title">Session Attendance</h1>
+            <p className="page-subtitle">{sessions.length} classes on {date}</p>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="form-input"
-              style={{ width: "auto" }}
-            />
-            <button type="button" className="btn btn-ghost" onClick={() => markAll("present")} disabled={!students.length}>
-              All present
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={saveAttendance}
-              disabled={saving || students.length === 0}
-            >
-              {saving ? "Saving..." : message === "Attendance saved." ? <><CheckCircle size={14} /> Saved</> : "Save Attendance"}
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="form-input" style={{ width: "auto" }} />
+            <button type="button" className="btn btn-primary" onClick={() => void saveAttendance()} disabled={saving || sessions.length === 0}>
+              {saving ? "Saving…" : message === "Attendance saved." ? <><CheckCircle size={14} /> Saved</> : "Save Attendance"}
             </button>
           </div>
         </div>
@@ -257,87 +197,53 @@ export default function TutorAttendancePage() {
             { label: "Late", count: counts.late, color: "#d97706", bg: "#fef9c3" },
             { label: "Leave", count: counts.leave, color: "#2563eb", bg: "#dbeafe" },
           ].map((card) => (
-            <div key={card.label} style={{ background: card.bg, borderRadius: 12, padding: "12px 18px", display: "flex", gap: 10, alignItems: "center" }}>
-              <div style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "1.5rem", fontWeight: 800, color: card.color }}>{card.count}</div>
+            <div key={card.label} style={{ background: card.bg, borderRadius: 12, padding: "12px 18px" }}>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: card.color }}>{card.count}</div>
               <div style={{ fontSize: "0.78rem", color: card.color, fontWeight: 600 }}>{card.label}</div>
             </div>
           ))}
         </div>
 
-        {sessions.length > 0 && (
-          <div className="card" style={{ marginBottom: 16, padding: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, fontWeight: 700, fontSize: "0.85rem" }}>
-              <CalendarDays size={16} /> Classes on this date ({sessions.length})
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {sessions.map((session) => (
-                <span key={session.id} className="badge badge-blue">
-                  {new Date(session.scheduled_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {session.student_name} · {session.status}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {myAttendance.length > 0 && (
-          <div className="card" style={{ marginBottom: 16, padding: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: "0.85rem", marginBottom: 10 }}>My attendance (this month)</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {myAttendance.map((row) => (
-                <span key={`${row.session_date}-${row.status}`} className={`badge ${row.status === "present" ? "badge-green" : row.status === "late" ? "badge-yellow" : row.status === "leave" ? "badge-blue" : "badge-red"}`}>
-                  {new Date(row.session_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {row.status}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {loading ? (
+          <div className="empty-state">Loading…</div>
+        ) : sessions.length === 0 ? (
           <div className="empty-state">
-            <div style={{ width: 36, height: 36, border: "3px solid #e2e8f0", borderTopColor: "#1b5e42", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-          </div>
-        ) : students.length === 0 ? (
-          <div className="empty-state">
-            <Users size={40} style={{ opacity: 0.2, margin: "0 auto" }} />
-            <h3>No students assigned</h3>
-            <p>Students appear here once admin assigns them to you.</p>
+            <CalendarDays size={40} style={{ opacity: 0.2, margin: "0 auto" }} />
+            <h3>No classes scheduled</h3>
+            <p>Attendance is marked per live class session for this date.</p>
           </div>
         ) : (
           <div className="card">
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {students.map((student, index) => (
-                <div
-                  key={student.id}
-                  style={{
-                    display: "flex",
-                    gap: 14,
-                    alignItems: "center",
-                    padding: "14px 20px",
-                    borderBottom: index < students.length - 1 ? "1px solid #f1f5f9" : "none",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div className="avatar" style={{ width: 36, height: 36, fontSize: "0.85rem", flexShrink: 0 }}>
-                    {student.full_name.charAt(0)}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 140 }}>
-                    <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#0f172a" }}>{student.full_name}</div>
-                    {sessions.some((s) => s.student_id === student.id) && (
-                      <div style={{ fontSize: "0.7rem", color: "#15803d", marginTop: 2 }}>Has class today</div>
-                    )}
+            {sessions.map((session, index) => (
+              <div
+                key={session.id}
+                style={{
+                  padding: "16px 20px",
+                  borderBottom: index < sessions.length - 1 ? "1px solid #f1f5f9" : "none",
+                  display: "grid",
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{session.student_name}</div>
+                    <div style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                      {session.course} · Scheduled{" "}
+                      {new Date(session.scheduled_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {" · "}{session.duration_minutes} min planned · Class status: {session.status}
+                    </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {STATUSES.map((status) => {
-                      const active = statuses[student.id] === status;
+                      const active = statuses[session.id] === status;
                       const config = STATUS_CONFIG[status];
                       return (
                         <button
                           key={status}
                           type="button"
-                          onClick={() => setStatuses((prev) => ({ ...prev, [student.id]: status }))}
+                          onClick={() => setStatuses((prev) => ({ ...prev, [session.id]: status }))}
                           style={{
-                            padding: "5px 12px",
+                            padding: "6px 12px",
                             borderRadius: 8,
                             border: `1px solid ${active ? config.bg : "#e2e8f0"}`,
                             background: active ? config.bg : "transparent",
@@ -345,6 +251,7 @@ export default function TutorAttendancePage() {
                             fontWeight: 600,
                             fontSize: "0.72rem",
                             cursor: "pointer",
+                            minHeight: 40,
                           }}
                         >
                           {status === "present" && <CheckCircle size={11} />}
@@ -355,38 +262,55 @@ export default function TutorAttendancePage() {
                       );
                     })}
                   </div>
-                  {statuses[student.id] === "late" && (
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+                  <div>
+                    <label className="form-label">Actual join time</label>
+                    <input
+                      type="time"
+                      className="form-input"
+                      value={joinTimes[session.id] || ""}
+                      onChange={(e) => setJoinTimes((p) => ({ ...p, [session.id]: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Duration (min)</label>
                     <input
                       type="number"
-                      min={1}
-                      value={lateMinutes[student.id] || ""}
-                      onChange={(e) => setLateMinutes((prev) => ({ ...prev, [student.id]: e.target.value }))}
-                      placeholder="Mins late"
                       className="form-input"
-                      style={{ width: 100, fontSize: "0.78rem", padding: "6px 10px" }}
+                      value={durations[session.id] || ""}
+                      onChange={(e) => setDurations((p) => ({ ...p, [session.id]: e.target.value }))}
                     />
+                  </div>
+                  {statuses[session.id] === "late" && (
+                    <div>
+                      <label className="form-label">Late minutes</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={lateMinutes[session.id] || ""}
+                        onChange={(e) => setLateMinutes((p) => ({ ...p, [session.id]: e.target.value }))}
+                      />
+                    </div>
                   )}
-                  <input
-                    value={notes[student.id] || ""}
-                    onChange={(e) => setNotes((prev) => ({ ...prev, [student.id]: e.target.value }))}
-                    placeholder="Note (optional)"
-                    className="form-input"
-                    style={{ width: 180, fontSize: "0.78rem", padding: "6px 10px" }}
-                  />
-                  {records.some((row) => row.student_id === student.id) && (
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-xs"
-                      onClick={() => void clearAttendance(student.id, student.full_name)}
-                      aria-label={`Clear attendance for ${student.full_name}`}
-                      title="Clear saved attendance"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  )}
+                  <div>
+                    <label className="form-label">Notes</label>
+                    <input
+                      className="form-input"
+                      value={notes[session.id] || ""}
+                      onChange={(e) => setNotes((p) => ({ ...p, [session.id]: e.target.value }))}
+                      placeholder="Optional"
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && sessions.length === 0 && (
+          <div style={{ marginTop: 12, fontSize: "0.8rem", color: "#64748b", display: "flex", gap: 6, alignItems: "center" }}>
+            <Users size={14} /> Only students with a scheduled class on this date appear here.
           </div>
         )}
       </div>
