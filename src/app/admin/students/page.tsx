@@ -269,8 +269,11 @@ export default function StudentsPage() {
                       </button>
                     </td>
                     <td style={{ color: "#94a3b8" }}>{new Date(s.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
-                    <td>
-                      <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                    <td data-label="Actions">
+                      <div
+                        style={{ display: "inline-flex", gap: 6, flexWrap: "nowrap", whiteSpace: "nowrap" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button type="button" onClick={() => openEditForm(s)} className="btn btn-xs btn-ghost">
                           <Pencil size={12} /> Edit
                         </button>
