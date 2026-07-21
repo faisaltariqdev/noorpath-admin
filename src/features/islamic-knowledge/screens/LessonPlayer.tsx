@@ -1,9 +1,12 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import DialogueBubble from "../components/DialogueBubble";
+import MagicalScene from "../components/MagicalScene";
 import NooriMascot, { type NooriAction, type NooriMood } from "../components/NooriMascot";
 import SparkBurst from "../components/SparkBurst";
+import { buildDialogueForStep } from "../lib/dialogue";
 import type { IKLesson, IKQuestion } from "../types";
 
 interface LessonPlayerProps {
@@ -22,48 +25,87 @@ function pickQuestions(questions: IKQuestion[], ageBand: LessonPlayerProps["ageB
   return [...medium, ...hard, ...easy].slice(0, 5);
 }
 
-function moodFromStep(mood?: string): NooriMood {
-  if (mood === "cheer") return "cheer";
-  if (mood === "hint") return "hint";
-  if (mood === "think") return "think";
-  return "happy";
-}
-
 export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: LessonPlayerProps) {
+  const reduce = useReducedMotion();
   const quiz = useMemo(() => pickQuestions(lesson.questions, ageBand), [lesson.questions, ageBand]);
+
   const [phase, setPhase] = useState<"learn" | "quiz" | "done">("learn");
   const [stepIndex, setStepIndex] = useState(0);
+  const [lineIndex, setLineIndex] = useState(0);
+  const [typedReady, setTypedReady] = useState(false);
+  const [challengeDone, setChallengeDone] = useState(false);
   const [qIndex, setQIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [fillValue, setFillValue] = useState("");
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [stars, setStars] = useState<1 | 2 | 3>(1);
-  const [tappedReveal, setTappedReveal] = useState(false);
-  const [emojiPop, setEmojiPop] = useState(0);
   const [spark, setSpark] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [balloons, setBalloons] = useState(false);
   const [nooriAction, setNooriAction] = useState<NooriAction>("wave");
+  const [nooriMood, setNooriMood] = useState<NooriMood>("happy");
+  const [sceneKey, setSceneKey] = useState(0);
 
   const step = lesson.steps[stepIndex];
+  const dialogue = useMemo(
+    () => (step ? buildDialogueForStep(step, stepIndex) : []),
+    [step, stepIndex],
+  );
+  const line = dialogue[lineIndex];
   const question = quiz[qIndex];
-  const needsTap = step?.type === "tap" || step?.type === "fact";
+  const isLastLine = lineIndex >= dialogue.length - 1;
+  const isChallenge = line?.kind === "challenge";
 
-  function goNextStep() {
-    if (needsTap && !tappedReveal) {
-      setTappedReveal(true);
-      setNooriAction("clap");
-      setSpark(true);
-      window.setTimeout(() => setSpark(false), 700);
+  useEffect(() => {
+    setTypedReady(false);
+    setNooriMood(line?.kind === "cheer" ? "cheer" : line?.kind === "challenge" ? "listen" : "happy");
+    setNooriAction(line?.kind === "challenge" ? "point" : lineIndex === 0 ? "wave" : "idle");
+  }, [line?.id, line?.kind, lineIndex]);
+
+  function celebrateSoft() {
+    setSpark(true);
+    setShake(true);
+    setBalloons(true);
+    setNooriAction("bounce");
+    setNooriMood("cheer");
+    window.setTimeout(() => setSpark(false), 800);
+    window.setTimeout(() => setShake(false), 450);
+    window.setTimeout(() => setBalloons(false), 1600);
+  }
+
+  function advanceDialogue() {
+    if (!typedReady && !reduce) return;
+    if (isChallenge && !challengeDone) return;
+
+    if (!isLastLine) {
+      setLineIndex((i) => i + 1);
+      setNooriAction("walk");
+      setSceneKey((k) => k + 1);
       return;
     }
+
+    // Finished all dialogue for this curriculum step
     if (stepIndex < lesson.steps.length - 1) {
       setStepIndex((i) => i + 1);
-      setTappedReveal(false);
+      setLineIndex(0);
+      setChallengeDone(false);
       setNooriAction("bounce");
+      setSceneKey((k) => k + 1);
+      celebrateSoft();
       return;
     }
+
     setPhase("quiz");
     setNooriAction("point");
+    setNooriMood("listen");
+  }
+
+  function onChallengeTap() {
+    if (!isChallenge || challengeDone) return;
+    setChallengeDone(true);
+    celebrateSoft();
+    setTypedReady(true);
   }
 
   function checkAnswer(answer: string) {
@@ -75,12 +117,14 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
           String(expected).toLowerCase().replace(/[^\w\u0600-\u06FF]/g, "")
         : answer === expected;
 
-    setFeedback(ok ? "correct" : "wrong");
-    setNooriAction(ok ? "clap" : "idle");
     if (ok) {
+      setFeedback("correct");
       setCorrect((c) => c + 1);
-      setSpark(true);
-      window.setTimeout(() => setSpark(false), 700);
+      celebrateSoft();
+    } else {
+      setFeedback("wrong");
+      setNooriMood("sad");
+      setNooriAction("idle");
     }
 
     window.setTimeout(() => {
@@ -91,6 +135,7 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
         setFillValue("");
         setFeedback(null);
         setNooriAction("point");
+        setNooriMood("happy");
       } else {
         const total = quiz.length;
         const ratio = total > 0 ? nextCorrect / total : 1;
@@ -98,149 +143,122 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
         setStars(s);
         setPhase("done");
         setNooriAction("bounce");
+        setNooriMood("cheer");
+        celebrateSoft();
         onComplete(nextCorrect, total);
       }
-    }, 900);
+    }, ok ? 1000 : 1200);
   }
 
-  const speech =
-    phase === "done"
-      ? "MashaAllah! You shine like a star!"
-      : phase === "quiz"
-        ? feedback === "correct"
-          ? "Yes! Brilliant!"
-          : feedback === "wrong"
-            ? "Almost — try the next one!"
-            : "Tap the best answer!"
-        : needsTap && !tappedReveal
-          ? "Tap the big picture to reveal!"
-          : step?.mascotMood === "cheer"
-            ? "You're doing amazing!"
-            : step?.mascotMood === "hint"
-              ? "Ready for the next surprise?"
-              : "Let's learn together!";
+  const ctaLabel = (() => {
+    if (phase !== "learn") return "";
+    if (isChallenge && !challengeDone) return "Tap the picture ↑";
+    if (!typedReady && !reduce) return "…";
+    if (!isLastLine) return lineIndex === 0 ? "YES!" : "Next →";
+    if (stepIndex < lesson.steps.length - 1) return "Next adventure →";
+    return "Play Quiz 🎮";
+  })();
 
   return (
-    <div className="ik-lesson">
+    <motion.div
+      className={`ik-dialogue-root ${shake ? "ik-shake" : ""}`}
+      animate={shake && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <MagicalScene />
+      {balloons && !reduce && (
+        <div className="ik-balloons" aria-hidden>
+          {["🎈", "⭐", "✨", "🌙", "🎈"].map((b, i) => (
+            <motion.span
+              key={i}
+              className="ik-balloon"
+              style={{ left: `${15 + i * 16}%` }}
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: -120, opacity: [0, 1, 0] }}
+              transition={{ duration: 1.4, delay: i * 0.08 }}
+            >
+              {b}
+            </motion.span>
+          ))}
+        </div>
+      )}
+
       <button type="button" className="ik-back ik-hover-lift" onClick={onBack}>
         ← Back
       </button>
 
-      <div className="ik-lesson-stage">
-        <aside className="ik-lesson-mascot-rail" aria-label="Noori the guide">
+      <div className="ik-dialogue-stage">
+        <aside className="ik-dialogue-buddy">
           <NooriMascot
-            mood={
-              phase === "done"
-                ? "cheer"
-                : feedback === "wrong"
-                  ? "sad"
-                  : moodFromStep(step?.mascotMood)
-            }
+            mood={nooriMood}
             action={nooriAction}
-            size={120}
-            speech={speech}
-            speechSide="right"
+            size={148}
+            lookAt="right"
+            caption={phase === "quiz" ? "Your turn!" : "Noori"}
           />
         </aside>
 
-        <div className="ik-lesson-main">
-          {phase === "learn" && step && (
+        <div className="ik-dialogue-panel">
+          {phase === "learn" && line && (
             <>
-              <div className="ik-progress-dots">
+              <div className="ik-progress-dots" aria-label="Lesson progress">
                 {lesson.steps.map((_, i) => (
-                  <motion.span
-                    key={i}
-                    className={`ik-dot ${i <= stepIndex ? "on" : ""}`}
-                    layout
-                    animate={i === stepIndex ? { scale: [1, 1.3, 1] } : {}}
-                    transition={{ duration: 0.5 }}
-                  />
+                  <span key={i} className={`ik-dot ${i <= stepIndex ? "on" : ""}`} />
                 ))}
               </div>
+
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={step.id}
-                  className="ik-step-card ik-step-card-live"
-                  initial={{ opacity: 0, y: 24, rotateX: -8 }}
-                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                  exit={{ opacity: 0, y: -16, scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                  key={`${step?.id}-${line.id}-${sceneKey}`}
+                  className="ik-dialogue-frame"
+                  initial={reduce ? false : { opacity: 0, x: 40, scale: 0.96 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -30, scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 280, damping: 22 }}
                 >
                   <SparkBurst show={spark} />
-                  <motion.button
-                    type="button"
-                    className="ik-step-emoji-btn"
-                    whileHover={{ scale: 1.12, rotate: [-2, 2, -2, 0] }}
-                    whileTap={{ scale: 0.92 }}
-                    onClick={() => {
-                      setEmojiPop((n) => n + 1);
-                      if (needsTap && !tappedReveal) {
-                        setTappedReveal(true);
-                        setSpark(true);
-                        setNooriAction("clap");
-                        window.setTimeout(() => setSpark(false), 700);
-                      }
-                    }}
-                  >
-                    <motion.span
-                      key={emojiPop}
-                      className="ik-step-emoji"
-                      animate={{ scale: [1, 1.2, 1], rotate: [0, -8, 8, 0] }}
-                      transition={{ duration: 0.45 }}
-                    >
-                      {step.emoji}
-                    </motion.span>
-                    {needsTap && !tappedReveal && (
-                      <span className="ik-tap-hint">👆 Tap me!</span>
-                    )}
-                  </motion.button>
 
-                  {step.title && <h2>{step.title}</h2>}
-                  <AnimatePresence mode="wait">
-                    <motion.p
-                      key={tappedReveal || !needsTap ? "full" : "tease"}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
+                  {(isChallenge || step?.emoji) && (
+                    <motion.button
+                      type="button"
+                      className={`ik-tap-object ${isChallenge && !challengeDone ? "ik-tap-pulse" : ""}`}
+                      whileHover={{ scale: 1.1, rotate: [-3, 3, 0] }}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={isChallenge ? onChallengeTap : undefined}
+                      aria-label={isChallenge ? "Tap to reveal" : "Lesson picture"}
                     >
-                      {needsTap && !tappedReveal
-                        ? "Something special is hiding here…"
-                        : step.text}
-                    </motion.p>
-                  </AnimatePresence>
-
-                  {(step.type === "card" || step.type === "intro") && (
-                    <div className="ik-interact-chips">
-                      {["Listen", "Remember", "Smile"].map((label) => (
-                        <motion.button
-                          key={label}
-                          type="button"
-                          className="ik-mini-chip"
-                          whileHover={{ y: -4, scale: 1.06 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setNooriAction("wave");
-                            setSpark(true);
-                            window.setTimeout(() => setSpark(false), 500);
-                          }}
-                        >
-                          {label === "Listen" ? "👂" : label === "Remember" ? "🧠" : "😊"} {label}
-                        </motion.button>
-                      ))}
-                    </div>
+                      <span className="ik-tap-object-emoji">{step?.emoji || "⭐"}</span>
+                      {isChallenge && !challengeDone && <span className="ik-tap-hint">👆 Tap!</span>}
+                      {challengeDone && isChallenge && <span className="ik-tap-hint">🎉 Yay!</span>}
+                    </motion.button>
                   )}
+
+                  <DialogueBubble
+                    key={line.id}
+                    text={line.text}
+                    emoji={line.emoji}
+                    kind={line.kind}
+                    onTyped={() => setTypedReady(true)}
+                  />
                 </motion.div>
               </AnimatePresence>
+
               <div className="ik-actions">
-                {stepIndex > 0 && (
+                {stepIndex + lineIndex > 0 && (
                   <motion.button
                     type="button"
                     className="ik-btn ik-btn-ghost"
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.96 }}
                     onClick={() => {
-                      setStepIndex((i) => i - 1);
-                      setTappedReveal(false);
+                      if (lineIndex > 0) {
+                        setLineIndex((i) => i - 1);
+                        setChallengeDone(false);
+                      } else if (stepIndex > 0) {
+                        setStepIndex((i) => i - 1);
+                        setLineIndex(0);
+                        setChallengeDone(false);
+                      }
                     }}
                   >
                     Back
@@ -249,15 +267,12 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                 <motion.button
                   type="button"
                   className="ik-btn ik-btn-primary ik-btn-pulse"
+                  disabled={(!typedReady && !reduce) || (isChallenge && !challengeDone)}
                   whileHover={{ scale: 1.06, y: -2 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={goNextStep}
+                  onClick={advanceDialogue}
                 >
-                  {needsTap && !tappedReveal
-                    ? "Reveal →"
-                    : stepIndex < lesson.steps.length - 1
-                      ? "Next adventure →"
-                      : "Play Quiz 🎮"}
+                  {ctaLabel}
                 </motion.button>
               </div>
             </>
@@ -273,36 +288,35 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
               <AnimatePresence mode="wait">
                 <motion.div
                   key={question.id}
-                  className="ik-step-card ik-step-card-live"
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -40 }}
-                  transition={{ type: "spring", stiffness: 280, damping: 24 }}
+                  className="ik-dialogue-frame"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
                 >
                   <SparkBurst show={spark} />
-                  <div className="ik-quiz-badge">
-                    {question.difficulty.toUpperCase()} · Q{qIndex + 1}/{quiz.length}
-                  </div>
-                  <h2 style={{ fontSize: "1.35rem" }}>{question.prompt}</h2>
-                  {question.hint && (
-                    <motion.p
-                      className="ik-hint-line"
-                      animate={{ opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      💡 {question.hint}
-                    </motion.p>
+                  <DialogueBubble
+                    text={question.prompt}
+                    emoji="❓"
+                    kind="talk"
+                    onTyped={() => setTypedReady(true)}
+                  />
+                  {feedback === "wrong" && (
+                    <DialogueBubble text="Let's try together 😊" emoji="💛" kind="cheer" />
+                  )}
+                  {feedback === "correct" && (
+                    <DialogueBubble text="Amazing! Great job!!" emoji="🎉" kind="cheer" />
                   )}
 
                   {(question.kind === "mcq" || question.kind === "true_false" || question.kind === "tap_select") && (
-                    <div className="ik-options">
+                    <div className="ik-options ik-options-play">
                       {question.options?.map((opt, idx) => {
+                        const isAnswer = opt.id === question.answer;
                         const cls =
                           feedback && selected === opt.id
                             ? feedback === "correct"
                               ? "correct"
-                              : "wrong"
-                            : feedback && opt.id === question.answer
+                              : "soft-miss"
+                            : feedback === "wrong" && isAnswer
                               ? "correct"
                               : "";
                         return (
@@ -311,10 +325,7 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                             type="button"
                             className={`ik-option ${cls}`}
                             disabled={!!feedback}
-                            initial={{ opacity: 0, x: -12 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.07 }}
-                            whileHover={feedback ? undefined : { scale: 1.03, x: 8 }}
+                            whileHover={feedback ? undefined : { scale: 1.04, y: -3 }}
                             whileTap={feedback ? undefined : { scale: 0.97 }}
                             onClick={() => {
                               setSelected(opt.id);
@@ -335,26 +346,18 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                       <input
                         className="ik-fill-input"
                         value={fillValue}
-                        placeholder="Type your answer…"
+                        placeholder="Type here…"
                         onChange={(e) => setFillValue(e.target.value)}
                         disabled={!!feedback}
                       />
-                      <div className="ik-actions">
-                        <motion.button
-                          type="button"
-                          className="ik-btn ik-btn-primary"
-                          disabled={!fillValue.trim() || !!feedback}
-                          whileHover={{ scale: 1.05 }}
-                          onClick={() => checkAnswer(fillValue)}
-                        >
-                          Check answer
-                        </motion.button>
-                      </div>
-                      {feedback && (
-                        <p style={{ color: feedback === "correct" ? "#27ae60" : "#e74c3c", fontWeight: 800 }}>
-                          {feedback === "correct" ? "MashaAllah! Correct!" : `Almost! Answer: ${question.answer}`}
-                        </p>
-                      )}
+                      <motion.button
+                        type="button"
+                        className="ik-btn ik-btn-primary"
+                        disabled={!fillValue.trim() || !!feedback}
+                        onClick={() => checkAnswer(fillValue)}
+                      >
+                        Check
+                      </motion.button>
                     </>
                   )}
                 </motion.div>
@@ -364,36 +367,24 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
 
           {phase === "done" && (
             <motion.div
-              className="ik-celebrate"
-              initial={{ scale: 0.85, opacity: 0 }}
+              className="ik-dialogue-frame ik-celebrate"
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200 }}
             >
               <SparkBurst show />
-              <NooriMascot mood="cheer" action="bounce" size={110} speechSide="top" />
-              <motion.div
-                className="ik-stars"
-                animate={{ scale: [1, 1.15, 1], rotate: [0, -3, 3, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity }}
-              >
-                {"⭐".repeat(stars)}
-              </motion.div>
-              <h2>MashaAllah!</h2>
-              <p style={{ color: "var(--ik-muted)", fontSize: "1.1rem" }}>
-                You finished <strong>{lesson.title}</strong>
-              </p>
+              <DialogueBubble text="MashaAllah! You did it!" emoji="🏆" kind="cheer" />
+              <div className="ik-stars">{"⭐".repeat(stars)}</div>
               <div className="ik-reward-row">
-                <motion.span className="ik-chip" whileHover={{ scale: 1.08 }}>+XP</motion.span>
-                <motion.span className="ik-chip" whileHover={{ scale: 1.08 }}>+Coins</motion.span>
-                <motion.span className="ik-chip" whileHover={{ scale: 1.08 }}>
-                  Score {correct}/{quiz.length}
-                </motion.span>
+                <span className="ik-chip">+XP</span>
+                <span className="ik-chip">+Coins</span>
+                <span className="ik-chip">
+                  {correct}/{quiz.length}
+                </span>
               </div>
               <motion.button
                 type="button"
                 className="ik-btn ik-btn-primary ik-btn-pulse"
                 whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={onBack}
               >
                 Continue exploring →
@@ -402,6 +393,6 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1020,4 +1020,320 @@
     font-size: 0.75rem;
     padding: 6px 10px;
   }
+
+  .ik-dialogue-stage {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .ik-dialogue-buddy {
+    padding-top: 40px;
+  }
+
+  .ik-dialogue-buddy .ik-noori-live {
+    transform: scale(0.72);
+    transform-origin: top center;
+  }
+
+  .ik-dialog-bubble {
+    max-width: 100%;
+  }
+}
+
+/* ——— Dialogue experience (character conversation) ——— */
+.ik-dialogue-root {
+  position: relative;
+  z-index: 1;
+  min-height: min(70vh, 640px);
+  padding-bottom: 12px;
+}
+
+.ik-magic {
+  position: absolute;
+  inset: -12px -8px 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 24px;
+}
+
+.ik-magic-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 70% 0%, rgba(255, 220, 140, 0.35), transparent 55%),
+    linear-gradient(180deg, #d9f3ff 0%, #eefaf4 45%, #e8f6e8 100%);
+}
+
+.ik-magic-sun {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 230, 150, 0.9), rgba(255, 200, 80, 0.15) 60%, transparent 70%);
+  filter: blur(1px);
+}
+
+.ik-magic-clouds {
+  position: absolute;
+  inset: 0;
+}
+
+.ik-cloud-blob {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  filter: blur(0.5px);
+}
+
+.ik-cloud-blob.a { width: 120px; height: 36px; top: 14%; left: 8%; }
+.ik-cloud-blob.b { width: 90px; height: 28px; top: 22%; right: 18%; }
+.ik-cloud-blob.c { width: 70px; height: 22px; top: 10%; left: 40%; }
+
+.ik-magic-mosque {
+  position: absolute;
+  bottom: 52px;
+  left: 0;
+  right: 0;
+  opacity: 0.9;
+}
+
+.ik-mosque-svg {
+  width: 100%;
+  height: 70px;
+}
+
+.ik-magic-trees {
+  position: absolute;
+  bottom: 36px;
+  left: 4%;
+  right: 4%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.4rem;
+  opacity: 0.55;
+}
+
+.ik-magic-grass {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42px;
+  background: linear-gradient(180deg, rgba(82, 183, 136, 0.25), rgba(10, 110, 79, 0.28));
+  border-radius: 0 0 24px 24px;
+}
+
+.ik-firefly {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f0d78c;
+  box-shadow: 0 0 8px #c9922a;
+}
+
+.ik-float-star {
+  position: absolute;
+  color: #c9922a;
+  font-size: 0.85rem;
+}
+
+.ik-balloons {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.ik-balloon {
+  position: absolute;
+  bottom: 20%;
+  font-size: 1.4rem;
+}
+
+.ik-dialogue-stage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) minmax(0, 1fr);
+  gap: 16px 20px;
+  align-items: start;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.ik-dialogue-buddy {
+  position: sticky;
+  top: 8px;
+  display: flex;
+  justify-content: center;
+  padding-top: 28px;
+}
+
+.ik-noori-live {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ik-noori-shadow {
+  position: absolute;
+  bottom: 4px;
+  width: 55%;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.14);
+  z-index: 0;
+}
+
+.ik-noori-caption {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ik-emerald);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.ik-dialogue-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ik-dialogue-frame {
+  position: relative;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 28px;
+  padding: 22px 20px 20px;
+  box-shadow: 0 16px 40px rgba(26, 46, 40, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.ik-dialog-bubble {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid rgba(201, 146, 42, 0.35);
+  border-radius: 22px;
+  padding: 16px 18px 16px 16px;
+  box-shadow: 0 10px 28px rgba(26, 46, 40, 0.1);
+  text-align: left;
+}
+
+.ik-dialog-bubble.ik-dialog-challenge {
+  border-color: rgba(10, 110, 79, 0.35);
+  background: linear-gradient(135deg, #fff, #eefaf4);
+}
+
+.ik-dialog-bubble.ik-dialog-cheer {
+  border-color: rgba(201, 146, 42, 0.55);
+  background: linear-gradient(135deg, #fffdf5, #fff);
+}
+
+.ik-dialog-tail {
+  position: absolute;
+  left: -10px;
+  top: 28px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-left: 2px solid rgba(201, 146, 42, 0.35);
+  border-bottom: 2px solid rgba(201, 146, 42, 0.35);
+  transform: rotate(45deg);
+}
+
+.ik-dialog-emoji {
+  display: inline-block;
+  font-size: 1.35rem;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.ik-dialog-text {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.45;
+  color: var(--ik-ink);
+  display: inline;
+}
+
+.ik-typewriter {
+  display: inline;
+}
+
+.ik-hot-word {
+  color: var(--ik-emerald);
+  font-weight: 900;
+  background: rgba(10, 110, 79, 0.08);
+  border-radius: 6px;
+  padding: 0 3px;
+}
+
+.ik-caret {
+  display: inline-block;
+  margin-left: 1px;
+  color: var(--ik-gold);
+  animation: ik-pulse 0.8s ease infinite;
+}
+
+.ik-tap-object {
+  border: none;
+  width: 110px;
+  height: 110px;
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 35%, #fff7e0, #e8f6f1);
+  box-shadow: 0 12px 28px rgba(10, 110, 79, 0.14);
+  cursor: pointer;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.ik-tap-object-emoji {
+  font-size: 3.2rem;
+  line-height: 1;
+}
+
+.ik-tap-pulse {
+  animation: ik-pulse-glow 1.4s ease-in-out infinite;
+}
+
+.ik-options-play .ik-option {
+  min-height: 52px;
+  font-size: 1.05rem;
+}
+
+.ik-option.soft-miss {
+  border-color: #e9c46a !important;
+  background: #fff9e8 !important;
+}
+
+.ik-option.wrong {
+  border-color: #e9c46a;
+  background: #fff9e8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ik-btn-pulse,
+  .ik-tap-pulse,
+  .ik-caret {
+    animation: none !important;
+  }
 }

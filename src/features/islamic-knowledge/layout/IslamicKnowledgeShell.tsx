@@ -204,13 +204,7 @@ export default function IslamicKnowledgeShell() {
                   Tap cards, reveal surprises, earn stars with Noori — a magical journey separate from Noorani Qaida.
                 </p>
                 <div className="ik-mascot" aria-hidden>
-                  <NooriMascot
-                    mood="cheer"
-                    action="wave"
-                    size={110}
-                    speech="Assalamu Alaikum!"
-                    speechSide="top"
-                  />
+                  <NooriMascot mood="cheer" action="wave" size={110} lookAt="left" caption="Noori" />
                 </div>
               </div>
 
