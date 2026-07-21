@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
   DollarSign, Megaphone, Settings, LogOut,
   GraduationCap, Clock, Home, ChevronRight,
-  BarChart2, Sparkles, Map,
+  BarChart2, Sparkles, Map, BookMarked,
 } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,9 +26,10 @@ const ADMIN_LINKS: NavSection[] = [
     { href: "/admin/parents",       label: "Parents",           icon: Home },
   ]},
   { section: "Learning", items: [
-    { href: "/admin/courses",       label: "Courses",           icon: BookOpen },
-    { href: "/admin/noorani-qaida", label: "Noorani Qaida",     icon: Sparkles },
-    { href: "/admin/assignments",   label: "Assignments",       icon: ClipboardList },
+    { href: "/admin/courses",             label: "Courses",            icon: BookOpen },
+    { href: "/admin/noorani-qaida",       label: "Noorani Qaida",      icon: Sparkles },
+    { href: "/admin/islamic-knowledge",   label: "Islamic Knowledge",  icon: BookMarked },
+    { href: "/admin/assignments",         label: "Assignments",        icon: ClipboardList },
   ]},
   { section: "Operations", items: [
     { href: "/admin/live-classes",  label: "Live Classes",      icon: Calendar },
