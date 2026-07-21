@@ -127,7 +127,7 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
       </button>
 
       <div className="ik-lesson-stage">
-        <aside className="ik-lesson-mascot-rail">
+        <aside className="ik-lesson-mascot-rail" aria-label="Noori the guide">
           <NooriMascot
             mood={
               phase === "done"
@@ -137,8 +137,9 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                   : moodFromStep(step?.mascotMood)
             }
             action={nooriAction}
-            size={128}
+            size={120}
             speech={speech}
+            speechSide="right"
           />
         </aside>
 
@@ -369,7 +370,7 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
               transition={{ type: "spring", stiffness: 200 }}
             >
               <SparkBurst show />
-              <NooriMascot mood="cheer" action="bounce" size={110} />
+              <NooriMascot mood="cheer" action="bounce" size={110} speechSide="top" />
               <motion.div
                 className="ik-stars"
                 animate={{ scale: [1, 1.15, 1], rotate: [0, -3, 3, 0] }}

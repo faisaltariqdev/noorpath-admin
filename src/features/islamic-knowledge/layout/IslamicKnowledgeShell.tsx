@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import NoorPathLogo from "@/components/NoorPathLogo";
 import {
   ALL_TOPICS,
   TOPIC_BY_ID,
@@ -133,12 +135,12 @@ export default function IslamicKnowledgeShell() {
       <div className="ik-shell">
         <aside className="ik-sidebar" aria-label="Islamic Knowledge navigation">
           <div className="ik-brand">
-            <span>📖</span>
+            <div className="ik-brand-logo">
+              <Image src="/favicon.svg" alt="NoorPath" width={40} height={40} />
+            </div>
             <div>
-              Islamic Knowledge
-              <div style={{ fontSize: "0.72rem", fontWeight: 600, opacity: 0.8 }}>
-                Explorer for ages 3–12
-              </div>
+              <NoorPathLogo size="sm" dark />
+              <div className="ik-brand-sub">Islamic Knowledge · ages 3–12</div>
             </div>
           </div>
 
@@ -193,12 +195,22 @@ export default function IslamicKnowledgeShell() {
           {view === "home" && (
             <>
               <div className="ik-hero">
-                <h1>Discover Islam with joy</h1>
+                <div className="ik-hero-brand">
+                  <Image src="/favicon.svg" alt="NoorPath" width={36} height={36} />
+                  <NoorPathLogo size="md" dark />
+                </div>
+                <h1 className="ik-hero-title">Discover Islam with joy</h1>
                 <p>
                   Tap cards, reveal surprises, earn stars with Noori — a magical journey separate from Noorani Qaida.
                 </p>
                 <div className="ik-mascot" aria-hidden>
-                  <NooriMascot mood="cheer" action="wave" size={118} speech="Assalamu Alaikum!" />
+                  <NooriMascot
+                    mood="cheer"
+                    action="wave"
+                    size={110}
+                    speech="Assalamu Alaikum!"
+                    speechSide="top"
+                  />
                 </div>
               </div>
 

@@ -37,16 +37,36 @@
 
 .ik-brand {
   font-weight: 800;
-  font-size: 1.15rem;
   letter-spacing: -0.02em;
   padding: 8px 10px 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.ik-brand span {
-  font-size: 1.6rem;
+.ik-brand-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ik-brand-logo img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}
+
+.ik-brand-sub {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.8;
+  margin-top: 4px;
 }
 
 .ik-nav-btn {
@@ -119,30 +139,53 @@
   color: #fff;
   border-radius: 28px;
   padding: 28px 32px;
-  overflow: hidden;
+  padding-right: min(200px, 34%);
+  overflow: visible;
   box-shadow: 0 16px 40px rgba(10, 110, 79, 0.25);
   margin-bottom: 28px;
+  min-height: 168px;
 }
 
-.ik-hero h1 {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  font-weight: 800;
-  margin: 0 0 8px;
+.ik-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ik-hero-brand img {
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.ik-hero-title {
+  font-size: clamp(1.55rem, 3.2vw, 2.35rem);
+  font-weight: 900;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #ffe7a0 0%, #c9922a 45%, #f0d78c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
 }
 
 .ik-hero p {
   margin: 0;
-  opacity: 0.92;
+  opacity: 0.95;
   max-width: 520px;
   line-height: 1.55;
   font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .ik-mascot {
   position: absolute;
-  right: 12px;
-  bottom: -4px;
+  right: 8px;
+  bottom: -12px;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+  z-index: 2;
+  pointer-events: none;
 }
 
 .ik-sky {
@@ -188,11 +231,20 @@
   right: 12%;
 }
 
+.ik-noori {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ik-noori-right {
+  flex-direction: row;
+  align-items: flex-start;
+  width: auto !important;
+  gap: 4px;
+}
+
 .ik-noori-speech {
-  position: absolute;
-  bottom: calc(100% - 8px);
-  left: 50%;
-  transform: translateX(-50%);
   background: #fff;
   border: 2px solid rgba(201, 146, 42, 0.45);
   color: var(--ik-ink);
@@ -202,13 +254,20 @@
   padding: 8px 12px;
   border-radius: 14px;
   width: max-content;
-  max-width: 160px;
+  max-width: 140px;
   text-align: center;
   box-shadow: 0 8px 20px rgba(26, 46, 40, 0.12);
   z-index: 2;
+  position: absolute;
 }
 
-.ik-noori-speech::after {
+.ik-noori-speech-top {
+  bottom: calc(100% - 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ik-noori-speech-top::after {
   content: "";
   position: absolute;
   bottom: -8px;
@@ -218,10 +277,37 @@
   border-top-color: #fff;
 }
 
+.ik-noori-speech-right {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  margin-top: 28px;
+  order: 2;
+  max-width: 120px;
+}
+
+.ik-noori-right .ik-noori-speech-right {
+  order: 2;
+}
+
+.ik-noori-right > svg,
+.ik-noori-right > div:last-child {
+  order: 1;
+}
+
+.ik-lesson {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
 .ik-lesson-stage {
   display: grid;
-  grid-template-columns: 150px 1fr;
-  gap: 16px;
+  grid-template-columns: minmax(130px, 168px) minmax(0, 1fr);
+  gap: 12px 20px;
   align-items: start;
 }
 
@@ -230,7 +316,13 @@
   top: 12px;
   display: flex;
   justify-content: center;
-  padding-top: 24px;
+  align-items: flex-start;
+  padding-top: 48px;
+  min-width: 0;
+}
+
+.ik-lesson-main {
+  min-width: 0;
 }
 
 .ik-step-card-live {
@@ -763,34 +855,169 @@
   filter: grayscale(0.6);
 }
 
+/* Tablet */
+@media (max-width: 1024px) {
+  .ik-shell {
+    grid-template-columns: 200px 1fr;
+  }
+  .ik-hero {
+    padding-right: 160px;
+  }
+  .ik-lesson-stage {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+  .ik-lesson-mascot-rail {
+    padding-top: 36px;
+  }
+  .ik-noori-speech-right {
+    max-width: 96px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Mobile + small tablet */
 @media (max-width: 860px) {
   .ik-shell {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
   }
+
   .ik-sidebar {
     flex-direction: row;
     flex-wrap: wrap;
-    padding: 12px;
+    align-items: center;
+    padding: 10px 12px;
     gap: 6px;
+    max-height: none;
   }
+
   .ik-brand {
     width: 100%;
-    padding-bottom: 8px;
+    padding: 4px 6px 10px;
   }
+
+  .ik-nav-btn {
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    border-radius: 12px;
+  }
+
   .ik-xp-card {
     display: none;
   }
-  .ik-hero .ik-mascot {
-    display: none;
-  }
+
   .ik-main {
-    padding: 16px;
+    padding: 14px 14px 28px;
   }
-  .ik-lesson-stage {
-    grid-template-columns: 1fr;
+
+  .ik-hero {
+    padding: 20px 18px;
+    padding-right: 18px;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand mascot"
+      "title mascot"
+      "copy mascot";
+    align-items: center;
+    gap: 4px 10px;
   }
-  .ik-lesson-mascot-rail {
+
+  .ik-hero-brand { grid-area: brand; margin-bottom: 4px; }
+  .ik-hero-title { grid-area: title; margin-bottom: 4px; font-size: 1.45rem; }
+  .ik-hero p { grid-area: copy; font-size: 0.92rem; max-width: none; }
+  .ik-mascot {
+    grid-area: mascot;
     position: static;
-    padding-top: 0;
+    pointer-events: none;
+    transform: scale(0.85);
+    transform-origin: center right;
+  }
+
+  /* Keep character on the LEFT side of the lesson on mobile */
+  .ik-lesson-stage {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .ik-lesson-mascot-rail {
+    position: sticky;
+    top: 8px;
+    padding-top: 56px;
+    justify-content: flex-start;
+  }
+
+  .ik-lesson-mascot-rail .ik-noori {
+    transform: scale(0.72);
+    transform-origin: top center;
+  }
+
+  .ik-lesson-mascot-rail .ik-noori-right {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ik-noori-speech-right {
+    order: 0 !important;
+    margin-top: 0;
+    margin-bottom: 6px;
+    max-width: 84px;
+    font-size: 0.65rem;
+    padding: 6px 8px;
+  }
+
+  .ik-step-card {
+    padding: 22px 16px;
+    min-height: 260px;
+    border-radius: 22px;
+  }
+
+  .ik-step-emoji-btn {
+    width: 96px;
+    height: 96px;
+  }
+
+  .ik-actions {
+    gap: 8px;
+  }
+
+  .ik-btn {
+    padding: 12px 18px;
+    font-size: 0.92rem;
+  }
+
+  .ik-grid {
+    grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+    gap: 12px;
+  }
+
+  .ik-manage-table th,
+  .ik-manage-table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ik-hero-title {
+    font-size: 1.28rem;
+  }
+
+  .ik-lesson-stage {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .ik-lesson-mascot-rail {
+    padding-top: 48px;
+  }
+
+  .ik-interact-chips {
+    gap: 6px;
+  }
+
+  .ik-mini-chip {
+    font-size: 0.75rem;
+    padding: 6px 10px;
   }
 }
