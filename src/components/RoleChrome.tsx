@@ -13,8 +13,8 @@ interface RoleChromeProps {
 /** Immersive Qaida routes that must not sit inside the portal sidebar shell. */
 const FULLSCREEN_ROUTES: Record<Role, Set<string>> = {
   admin: new Set(["/admin/noorani-qaida", "/admin/islamic-knowledge"]),
-  tutor: new Set(["/tutor/qaida"]),
-  parent: new Set(["/parent/qaida"]),
+  tutor: new Set(["/tutor/qaida", "/tutor/islamic-knowledge"]),
+  parent: new Set(["/parent/qaida", "/parent/islamic-knowledge"]),
 };
 
 export default function RoleChrome({ role, userName, children }: RoleChromeProps) {

@@ -41,5 +41,5 @@ const IslamicKnowledgeShell = dynamic(
 );
 
 export default function IslamicKnowledgePage() {
-  return <IslamicKnowledgeShell />;
+  return <IslamicKnowledgeShell surface="admin" />;
 }

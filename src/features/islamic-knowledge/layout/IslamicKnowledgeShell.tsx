@@ -22,13 +22,21 @@ import { supabase } from "@/lib/supabase";
 
 const SETTINGS_KEY = "islamic_knowledge_topics";
 
+export type IKSurface = "admin" | "tutor" | "parent";
+
 function levelLabel(level: TrackLevel): string {
   if (level === "beginner") return "Beginner";
   if (level === "intermediate") return "Intermediate";
   return "Advanced";
 }
 
-export default function IslamicKnowledgeShell() {
+function portalHome(surface: IKSurface): string {
+  if (surface === "tutor") return "/tutor";
+  if (surface === "parent") return "/parent";
+  return "/admin";
+}
+
+export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?: IKSurface }) {
   const { progress, hydrated, finishLesson } = useIslamicKnowledgeState();
   const [view, setView] = useState<IKView>("home");
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
@@ -36,6 +44,7 @@ export default function IslamicKnowledgeShell() {
   const [manageMsg, setManageMsg] = useState("");
   const [saving, setSaving] = useState(false);
   const [ageBand, setAgeBand] = useState<"young" | "mid" | "older">("mid");
+  const canManage = surface === "admin";
 
   useEffect(() => {
     let cancelled = false;
@@ -146,33 +155,34 @@ export default function IslamicKnowledgeShell() {
 
           {(
             [
-              ["home", "🏠", "Home"],
-              ["beginner", "🌱", "Beginner"],
-              ["intermediate", "🚀", "Intermediate"],
-              ["advanced", "🏆", "Advanced"],
-              ["rewards", "🎁", "Rewards"],
-              ["manage", "⚙️", "Manage"],
-            ] as const
-          ).map(([id, emoji, label]) => (
+              { id: "home" as const, emoji: "🏠", label: "Home" },
+              { id: "beginner" as const, emoji: "🌱", label: "Beginner" },
+              { id: "intermediate" as const, emoji: "🚀", label: "Intermediate" },
+              { id: "advanced" as const, emoji: "🏆", label: "Advanced" },
+              { id: "rewards" as const, emoji: "🎁", label: "Rewards" },
+              ...(canManage ? [{ id: "manage" as const, emoji: "⚙️", label: "Manage" }] : []),
+            ]
+          ).map((item) => (
             <button
-              key={id}
+              key={item.id}
               type="button"
-              className={`ik-nav-btn ${view === id ? "active" : ""}`}
+              className={`ik-nav-btn ${view === item.id ? "active" : ""}`}
               onClick={() => {
-                setView(id);
+                setView(item.id);
                 setActiveTopicId(null);
               }}
             >
-              <span>{emoji}</span> {label}
+              <span>{item.emoji}</span> {item.label}
             </button>
           ))}
 
           <Link
-            href="/admin"
+            href={portalHome(surface)}
             className="ik-nav-btn"
             style={{ marginTop: 8, textDecoration: "none" }}
           >
-            <span>←</span> Admin panel
+            <span>←</span>{" "}
+            {surface === "parent" ? "Parent portal" : surface === "tutor" ? "Tutor panel" : "Admin panel"}
           </Link>
 
           <div className="ik-xp-card">
@@ -313,7 +323,7 @@ export default function IslamicKnowledgeShell() {
             </>
           )}
 
-          {view === "manage" && (
+          {view === "manage" && canManage && (
             <>
               <h2 className="ik-section-title">Admin · Topic controls</h2>
               <p style={{ color: "var(--ik-muted)", marginBottom: 16 }}>

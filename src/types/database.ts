@@ -20,6 +20,8 @@ export interface Profile {
   is_active: boolean;
   /** When true, parent can open Noorani Qaida in their portal. */
   qaida_enabled?: boolean;
+  /** When true, parent can open Islamic Knowledge in their portal. */
+  islamic_knowledge_enabled?: boolean;
   created_at: string;
   updated_at: string;
 }

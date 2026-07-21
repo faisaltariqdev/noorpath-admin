@@ -58,7 +58,8 @@ const TUTOR_LINKS: NavSection[] = [
     { href: "/tutor/attendance",    label: "Attendance",        icon: Clock },
     { href: "/tutor/reports",       label: "Reports",           icon: ClipboardList },
     { href: "/tutor/roadmap",       label: "Roadmap",           icon: Map },
-    { href: "/tutor/qaida",         label: "Noorani Qaida",     icon: Sparkles },
+    { href: "/tutor/qaida",               label: "Noorani Qaida",     icon: Sparkles },
+    { href: "/tutor/islamic-knowledge",   label: "Islamic Knowledge", icon: BookMarked },
   ]},
   { section: "Account", items: [
     { href: "/tutor/earnings",      label: "Payments",          icon: DollarSign },
@@ -78,6 +79,7 @@ const PARENT_LINKS: NavSection[] = [
     { href: "/parent?section=attendance", label: "Attendance",    icon: Clock },
     { href: "/parent/roadmap",                      label: "Roadmap",       icon: Map },
     { href: "/parent/qaida",                        label: "Noorani Qaida", icon: Sparkles },
+    { href: "/parent/islamic-knowledge",            label: "Islamic Knowledge", icon: BookMarked },
   ]},
   { section: "Account", items: [
     { href: "/parent/fees",         label: "Payments",       icon: DollarSign },
@@ -105,6 +107,8 @@ function SidebarInner({ role, userName }: SidebarProps) {
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState(userName);
   const [qaidaEnabled, setQaidaEnabled] = useState(false);
+  const [ikEnabled, setIkEnabled] = useState(false);
+  const [tutorIkEnabled, setTutorIkEnabled] = useState(true);
   const sidebarRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const { label, badgeClass } = ROLE_CONFIG[role];
@@ -113,6 +117,8 @@ function SidebarInner({ role, userName }: SidebarProps) {
       ...section,
       items: section.items.filter((item) => {
         if (role === "parent" && item.href === "/parent/qaida" && !qaidaEnabled) return false;
+        if (role === "parent" && item.href === "/parent/islamic-knowledge" && !ikEnabled) return false;
+        if (role === "tutor" && item.href === "/tutor/islamic-knowledge" && !tutorIkEnabled) return false;
         return true;
       }),
     }))
@@ -147,11 +153,23 @@ function SidebarInner({ role, userName }: SidebarProps) {
       if (!user?.id) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, qaida_enabled, role")
+        .select("full_name, qaida_enabled, islamic_knowledge_enabled, role")
         .eq("id", user.id)
         .single();
       if (profile?.full_name) setDisplayName(profile.full_name);
-      if (role === "parent") setQaidaEnabled(Boolean(profile?.qaida_enabled));
+      if (role === "parent") {
+        setQaidaEnabled(Boolean(profile?.qaida_enabled));
+        setIkEnabled(Boolean(profile?.islamic_knowledge_enabled));
+      }
+      if (role === "tutor") {
+        const { data: settings } = await supabase
+          .from("app_settings")
+          .select("value")
+          .eq("key", "role_permissions")
+          .maybeSingle();
+        const tutor = (settings?.value as { tutor?: { islamic_knowledge?: boolean } } | null)?.tutor;
+        setTutorIkEnabled(tutor?.islamic_knowledge !== false);
+      }
     }
     loadProfile();
   }, [role]);
