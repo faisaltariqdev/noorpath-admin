@@ -71,7 +71,7 @@ function lesson(
 /** Beginner track — 20 interactive Islamic Knowledge topics */
 export const BEGINNER_TOPICS: IKTopic[] = [
   { id: "who-is-allah", level: "beginner", order: 1, title: "Who is Allah?", shortTitle: "Allah", emoji: "🌙", color: "#0A6E4F", summary: "Meet our Creator with love and wonder.", lessonIds: ["who-is-allah-1"] },
-  { id: "who-is-prophet", level: "beginner", order: 2, title: "Who is Prophet Muhammad ﷺ?", shortTitle: "Prophet ﷺ", emoji: "💚", color: "#1B7A5A", summary: "Our beloved Messenger and best example.", lessonIds: ["who-is-prophet-1"] },
+  { id: "who-is-prophet", level: "beginner", order: 2, title: "Who is Our Prophet?", shortTitle: "Our Prophet", emoji: "💚", color: "#1B7A5A", summary: "Prophet Muhammad (peace be upon him) — our beloved Messenger.", lessonIds: ["who-is-prophet-1"] },
   { id: "five-pillars", level: "beginner", order: 3, title: "The Five Pillars", shortTitle: "5 Pillars", emoji: "🕌", color: "#C9922A", summary: "Five special pillars that hold up Islam.", lessonIds: ["five-pillars-1"] },
   { id: "six-articles", level: "beginner", order: 4, title: "The Six Articles of Faith", shortTitle: "Iman", emoji: "⭐", color: "#5B6CFF", summary: "Six beautiful things every Muslim believes.", lessonIds: ["six-articles-1"] },
   { id: "kalimas", level: "beginner", order: 5, title: "The Kalimas", shortTitle: "Kalimas", emoji: "📿", color: "#0A6E4F", summary: "Special words that light up the heart.", lessonIds: ["kalimas-1"] },
@@ -150,21 +150,21 @@ export const LESSONS: IKLesson[] = [
   lesson(
     "who-is-prophet-1",
     "who-is-prophet",
-    "Who is Prophet Muhammad ﷺ?",
+    "Who is Our Prophet?",
     "The best teacher and friend",
-    ["Who was Prophet Muhammad for Kids", "Interactive kids lesson about Prophet Muhammad ﷺ — kindness, honesty, and being our Messenger."],
+    ["Who was Prophet Muhammad for Kids", "Interactive kids lesson about Prophet Muhammad (peace be upon him) — kindness, honesty, and being our Messenger."],
     [
-      ["💚", "Prophet Muhammad ﷺ is Allah’s final Messenger. We love him!", "Our Prophet ﷺ", "intro", "happy"],
+      ["💚", "Prophet Muhammad (peace be upon him) is Allah’s final Messenger. We love him!", "Our Prophet", "intro", "happy"],
       ["🗣️", "He taught us to be kind, honest, and gentle with everyone.", "Kind & truthful", "card", "cheer"],
       ["📖", "Allah gave him the Quran — our beautiful Book.", "The Quran", "tap", "think"],
       ["🧒", "He loved children and smiled at them. You can smile too!", "Love for kids", "mascot", "happy"],
-      ["⭐", "When we say his name, we say ﷺ — peace be upon him.", "Send salawat", "fact", "hint"],
+      ["⭐", "When we say his name, we add: peace be upon him.", "Send salawat", "fact", "hint"],
     ],
     [
-      mcq("p1e", "easy", "Who is the final Messenger of Allah?", ["Prophet Muhammad ﷺ", "A king", "An angel"], 0),
-      tf("p1m", "medium", "Prophet Muhammad ﷺ was always kind to children.", true),
-      mcq("p1h", "hard", "What Book did Allah give to the Prophet ﷺ?", ["The Quran", "A storybook", "A map"], 0),
-      fill("p1f", "easy", "We say Muhammad ____ (peace be upon him).", "ﷺ"),
+      mcq("p1e", "easy", "Who is the final Messenger of Allah?", ["Prophet Muhammad (PBUH)", "A king", "An angel"], 0),
+      tf("p1m", "medium", "Our Prophet was always kind to children.", true),
+      mcq("p1h", "hard", "What Book did Allah give to our Prophet?", ["The Quran", "A storybook", "A map"], 0),
+      fill("p1f", "easy", "We say: peace be upon ____.", "him"),
     ],
   ),
   lesson(

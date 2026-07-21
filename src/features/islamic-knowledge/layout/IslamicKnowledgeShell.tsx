@@ -9,6 +9,8 @@ import {
   getLessonForTopic,
   topicsForLevel,
 } from "../data/curriculum";
+import NooriMascot from "../components/NooriMascot";
+import SkyDecor from "../components/SkyDecor";
 import "../islamic-knowledge.css";
 import LessonPlayer from "../screens/LessonPlayer";
 import { XP_PER_LEVEL } from "../state/progress";
@@ -97,7 +99,7 @@ export default function IslamicKnowledgeShell() {
     }
     return (
       <div className="ik-grid">
-        {topics.map((topic) => {
+        {topics.map((topic, index) => {
           const lesson = getLessonForTopic(topic.id);
           const done = lesson ? progress.completedLessonIds.includes(lesson.id) : false;
           const stars = lesson ? progress.lessonStars[lesson.id] : undefined;
@@ -107,13 +109,18 @@ export default function IslamicKnowledgeShell() {
               type="button"
               className="ik-topic-card"
               style={{ borderTop: `4px solid ${topic.color}` }}
-              whileHover={{ y: -3 }}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(index * 0.04, 0.4), type: "spring", stiffness: 260 }}
+              whileHover={{ y: -8, scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => openTopic(topic)}
             >
               {done && <span className="ik-done-pill">{stars ? `${"⭐".repeat(stars)}` : "Done"}</span>}
               <span className="ik-topic-emoji">{topic.emoji}</span>
               <h3>{topic.title}</h3>
               <p>{topic.summary}</p>
+              <span className="ik-play-badge">▶ Play</span>
             </motion.button>
           );
         })}
@@ -181,32 +188,30 @@ export default function IslamicKnowledgeShell() {
         </aside>
 
         <main className="ik-main" id="ik-main">
-          <div className="ik-cloud" style={{ width: 120, height: 40, top: 40, left: "20%" }} />
-          <div className="ik-cloud" style={{ width: 80, height: 28, top: 90, right: "18%" }} />
+          <SkyDecor />
 
           {view === "home" && (
             <>
               <div className="ik-hero">
                 <h1>Discover Islam with joy</h1>
                 <p>
-                  Playful lessons, quizzes, stars, and badges — a separate journey from Noorani Qaida.
-                  Learn who Allah is, good manners, pillars, and more!
+                  Tap cards, reveal surprises, earn stars with Noori — a magical journey separate from Noorani Qaida.
                 </p>
                 <div className="ik-mascot" aria-hidden>
-                  🦊
+                  <NooriMascot mood="cheer" action="wave" size={118} speech="Assalamu Alaikum!" />
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20, position: "relative", zIndex: 1 }}>
                 <span style={{ fontWeight: 800, color: "var(--ik-muted)" }}>Age mode:</span>
                 {(
                   [
-                    ["young", "3–6"],
-                    ["mid", "7–9"],
-                    ["older", "10–12"],
+                    ["young", "3-6"],
+                    ["mid", "7-9"],
+                    ["older", "10-12"],
                   ] as const
                 ).map(([id, label]) => (
-                  <button
+                  <motion.button
                     key={id}
                     type="button"
                     className="ik-btn"
@@ -216,10 +221,12 @@ export default function IslamicKnowledgeShell() {
                       background: ageBand === id ? "var(--ik-emerald)" : "#fff",
                       color: ageBand === id ? "#fff" : "var(--ik-emerald)",
                     }}
+                    whileHover={{ scale: 1.06, y: -2 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setAgeBand(id)}
                   >
                     {label}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
 

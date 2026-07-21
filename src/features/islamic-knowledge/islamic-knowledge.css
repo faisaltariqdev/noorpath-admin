@@ -140,16 +140,227 @@
 
 .ik-mascot {
   position: absolute;
-  right: 28px;
-  bottom: -8px;
-  font-size: 5rem;
+  right: 12px;
+  bottom: -4px;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
-  animation: ik-float 3s ease-in-out infinite;
 }
 
-@keyframes ik-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+.ik-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.ik-sky-moon {
+  position: absolute;
+  top: 18px;
+  right: 8%;
+  font-size: 1.8rem;
+  filter: drop-shadow(0 4px 8px rgba(201, 146, 42, 0.35));
+}
+
+.ik-sky-star {
+  position: absolute;
+  color: #c9922a;
+  font-weight: 900;
+}
+
+.ik-sky-cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  filter: blur(1px);
+}
+
+.ik-sky-cloud-a {
+  width: 140px;
+  height: 42px;
+  top: 60px;
+  left: 8%;
+}
+
+.ik-sky-cloud-b {
+  width: 100px;
+  height: 32px;
+  top: 110px;
+  right: 12%;
+}
+
+.ik-noori-speech {
+  position: absolute;
+  bottom: calc(100% - 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 2px solid rgba(201, 146, 42, 0.45);
+  color: var(--ik-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  padding: 8px 12px;
+  border-radius: 14px;
+  width: max-content;
+  max-width: 160px;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(26, 46, 40, 0.12);
+  z-index: 2;
+}
+
+.ik-noori-speech::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-top-color: #fff;
+}
+
+.ik-lesson-stage {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.ik-lesson-mascot-rail {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+}
+
+.ik-step-card-live {
+  position: relative;
+  overflow: hidden;
+}
+
+.ik-step-emoji-btn {
+  border: none;
+  background: radial-gradient(circle at 50% 40%, #fff7e0, #e8f6f1);
+  width: 120px;
+  height: 120px;
+  border-radius: 32px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  position: relative;
+  box-shadow: 0 10px 24px rgba(10, 110, 79, 0.12);
+  margin-bottom: 8px;
+}
+
+.ik-tap-hint {
+  position: absolute;
+  bottom: -6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ik-gold);
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  animation: ik-pulse 1.2s ease infinite;
+}
+
+.ik-interact-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.ik-mini-chip {
+  border: 2px solid #e5efe9;
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--ik-ink);
+}
+
+.ik-mini-chip:hover {
+  border-color: var(--ik-emerald);
+  background: var(--ik-sky);
+}
+
+.ik-btn-pulse {
+  animation: ik-pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes ik-pulse-glow {
+  0%, 100% { box-shadow: 0 8px 20px rgba(10, 110, 79, 0.3); }
+  50% { box-shadow: 0 8px 28px rgba(10, 110, 79, 0.55), 0 0 0 4px rgba(10, 110, 79, 0.12); }
+}
+
+@keyframes ik-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.85; }
+}
+
+.ik-spark-burst {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 0;
+  height: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ik-spark {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.ik-quiz-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ik-gold);
+  letter-spacing: 0.06em;
+  background: rgba(201, 146, 42, 0.12);
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.ik-hint-line {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.ik-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ik-option-letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: var(--ik-sky);
+  color: var(--ik-emerald);
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.ik-option:hover:not(:disabled) {
+  border-color: var(--ik-emerald);
+  background: #f3fbf7;
+  box-shadow: 0 8px 18px rgba(10, 110, 79, 0.12);
+}
+
+.ik-hover-lift:hover {
+  transform: translateY(-2px);
 }
 
 .ik-grid {
@@ -168,14 +379,32 @@
   text-align: left;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(26, 46, 40, 0.08);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+}
+
+.ik-topic-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.55s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ik-topic-card:hover:not(:disabled)::before {
+  transform: translateX(120%);
 }
 
 .ik-topic-card:hover:not(:disabled) {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 32px rgba(26, 46, 40, 0.12);
+  transform: translateY(-8px) scale(1.03);
+  box-shadow:
+    0 18px 36px rgba(10, 110, 79, 0.18),
+    0 0 0 2px rgba(10, 110, 79, 0.12);
 }
 
 .ik-topic-card:disabled {
@@ -183,10 +412,41 @@
   cursor: not-allowed;
 }
 
+.ik-topic-card > * {
+  position: relative;
+  z-index: 1;
+}
+
 .ik-topic-emoji {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   display: block;
   margin-bottom: 10px;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: fit-content;
+}
+
+.ik-topic-card:hover:not(:disabled) .ik-topic-emoji {
+  transform: scale(1.25) rotate(-8deg);
+}
+
+.ik-play-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ik-emerald);
+  background: var(--ik-sky);
+  padding: 4px 8px;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ik-topic-card:hover:not(:disabled) .ik-play-badge {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .ik-topic-card h3 {
@@ -520,10 +780,17 @@
   .ik-xp-card {
     display: none;
   }
-  .ik-mascot {
+  .ik-hero .ik-mascot {
     display: none;
   }
   .ik-main {
     padding: 16px;
+  }
+  .ik-lesson-stage {
+    grid-template-columns: 1fr;
+  }
+  .ik-lesson-mascot-rail {
+    position: static;
+    padding-top: 0;
   }
 }
