@@ -10,7 +10,7 @@ import CoinRain from "../animations/CoinRain";
 import { useQaidaState } from "../state/useQaidaState";
 import { LETTERS } from "../data/curriculum";
 import { letterWindow } from "../data/games";
-import { ALL_CURRICULUM_SCREEN_IDS, TOPIC_LESSON_BY_ID } from "../data/modules";
+import { ALL_CURRICULUM_SCREEN_IDS, MODULE_BY_ID, TOPIC_LESSON_BY_ID } from "../data/modules";
 import { useMotionBudget } from "../motion/useMotionBudget";
 import { pageVariants } from "../motion/config";
 import QaidaLoader from "../ui/QaidaLoader";
@@ -74,6 +74,10 @@ const SettingsScreen = dynamic(() => import("../screens/SettingsScreen"), {
   ssr: false,
   loading: () => <QaidaLoader />,
 });
+const StandaloneLearningTrack = dynamic(() => import("../screens/StandaloneLearningTrack"), {
+  ssr: false,
+  loading: () => <QaidaLoader />,
+});
 const BubblePop = dynamic(() => import("../games/BubblePop"), { ssr: false });
 const FindLetter = dynamic(() => import("../games/FindLetter"), { ssr: false });
 const MemoryMatch = dynamic(() => import("../games/MemoryMatch"), { ssr: false });
@@ -82,7 +86,7 @@ const LetterTrain = dynamic(() => import("../games/LetterTrain"), { ssr: false }
 const LetterPuzzle = dynamic(() => import("../games/LetterPuzzle"), { ssr: false });
 const SoundMatch = dynamic(() => import("../games/SoundMatch"), { ssr: false });
 
-type ActiveView = "dashboard" | "journey" | "qaida" | "lessons" | "games" | "practice" | "rewards" | "certificates" | "parents" | "teachers" | "settings";
+type ActiveView = "dashboard" | "journey" | "qaida" | "daily-duas" | "namaz" | "kalmas" | "lessons" | "games" | "practice" | "rewards" | "certificates" | "parents" | "teachers" | "settings";
 type ActiveGame = "bubble-pop" | "find-letter" | "memory-match" | "quick-challenge" | "letter-train" | "puzzle" | "sound-match" | null;
 
 /** Views a public website visitor can access in preview mode. */
@@ -479,7 +483,9 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
       setActiveScreenId(PREVIEW_LESSON_ID);
       return;
     }
-    if (view === "lessons" && !activeScreenId) {
+    if (view === "daily-duas" || view === "namaz" || view === "kalmas") {
+      setActiveScreenId(MODULE_BY_ID[view].screenIds[0] ?? null);
+    } else if (view === "lessons" && !activeScreenId) {
       setActiveScreenId(state.currentCurriculumScreen);
     } else if (view === "practice" && !activeScreenId?.startsWith("letter-")) {
       setActiveScreenId(state.currentLesson);
@@ -545,6 +551,28 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
     }, motionBudget.reduced ? 500 : 1800);
   }, [motionBudget.reduced, state]);
 
+  const handleStandaloneLessonSelect = useCallback((id: string) => {
+    setActiveScreenId(id);
+    state.dispatch({ type: "set_current_screen", id });
+  }, [state]);
+
+  const handleStandaloneLessonComplete = useCallback((moduleId: "daily-duas" | "namaz" | "kalmas", id: string) => {
+    state.completeScreen(id);
+    state.dispatch({ type: "earn_coins", amount: 15 });
+    setShowConfetti(true);
+    setShowCoinRain(true);
+    window.setTimeout(() => {
+      setShowConfetti(false);
+      setShowCoinRain(false);
+      const lessonIds = MODULE_BY_ID[moduleId].screenIds;
+      const next = lessonIds[lessonIds.indexOf(id) + 1];
+      if (next) {
+        setActiveScreenId(next);
+        state.dispatch({ type: "set_current_screen", id: next });
+      }
+    }, motionBudget.reduced ? 500 : 1800);
+  }, [motionBudget.reduced, state]);
+
   const handleGameComplete = useCallback((stars: 1 | 2 | 3) => {
     state.dispatch({ type: "game_completed" });
     state.dispatch({ type: "earn_xp", amount: stars * 15 });
@@ -560,6 +588,9 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
   const getBreadcrumb = () => {
     if (activeGame) return `Practice · ${currentLetter.name}`;
     if (activeView === "qaida") return "Interactive Book";
+    if (activeView === "daily-duas") return "Interactive Daily Duas";
+    if (activeView === "namaz") return "Interactive Namaz";
+    if (activeView === "kalmas") return "Interactive 6 Kalmas";
     if (activeView === "lessons") return "Lesson";
     if (activeView === "practice") return `Practice · ${currentLetter.name}`;
     if (activeView === "journey") return "Learning Path";
@@ -579,6 +610,9 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
     if (activeGame === "puzzle") return "Letter Puzzle 🧩";
     if (activeGame === "sound-match") return "Sound Match 🎵";
     if (activeView === "qaida") return "Noorani Qaida Book";
+    if (activeView === "daily-duas") return "Daily Duas";
+    if (activeView === "namaz") return "Namaz";
+    if (activeView === "kalmas") return "6 Kalmas";
     if (activeView === "lessons") {
       if (currentScreenId === "certificate") return "Certificate";
       return TOPIC_LESSON_BY_ID[currentScreenId]?.title ?? `${currentLetter.id}. ${currentLetter.name}`;
@@ -829,6 +863,25 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
                   reducedMotion={motionBudget.reduced}
                   particleCount={motionBudget.pageVisible ? motionBudget.ambientParticles : 0}
                   audioEnabled={state.audioEnabled}
+                />
+              </motion.div>
+            ) : activeView === "daily-duas" || activeView === "namaz" || activeView === "kalmas" ? (
+              <motion.div
+                key={activeView}
+                className="absolute inset-0 overflow-hidden"
+                variants={pageVariants}
+                initial="initial"
+                animate="enter"
+                exit="exit"
+              >
+                <StandaloneLearningTrack
+                  moduleId={activeView}
+                  currentScreenId={currentScreenId}
+                  progress={state.progress}
+                  reducedMotion={motionBudget.reduced}
+                  audioEnabled={state.audioEnabled}
+                  onSelectLesson={handleStandaloneLessonSelect}
+                  onCompleteLesson={handleStandaloneLessonComplete}
                 />
               </motion.div>
             ) : activeView === "practice" ? (

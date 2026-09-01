@@ -23,7 +23,8 @@ export default function DialogueBubble({
       className={`ik-dialog-bubble ik-dialog-${kind}`}
       role="status"
       initial={reduce ? false : { opacity: 0, y: 18, scale: 0.86 }}
-      animate={{ opacity: 1, y: 0, scale: [0.96, 1.04, 1] }}
+      // Spring only supports 2 keyframes — let the spring overshoot from 0.86 → 1
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ type: "spring", stiffness: 320, damping: 18 }}
     >
@@ -32,7 +33,7 @@ export default function DialogueBubble({
         <motion.span
           className="ik-dialog-emoji"
           animate={reduce ? undefined : { rotate: [-6, 6, -4, 0], scale: [1, 1.12, 1] }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.7, ease: "easeInOut" }}
         >
           {emoji}
         </motion.span>

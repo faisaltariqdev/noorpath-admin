@@ -99,7 +99,9 @@ assert.equal(motion.createMotionBudget(true, 1440).ambientParticles, 0);
 assert.equal(motion.createMotionBudget(false, 375).allowParallax, false);
 assert.equal(motion.createMotionBudget(false, 1440).ambientParticles <= 12, true);
 
-assert.equal(curriculum.CURRICULUM_MODULES.length, 13, "the complete curriculum must expose 13 modules (11 Qaida + Daily Duas + Namaz)");
+assert.equal(curriculum.CURRICULUM_MODULES.length, 14, "the complete curriculum must expose 14 modules (11 Qaida + Daily Duas + Namaz + 6 Kalmas)");
+assert.equal(curriculum.QAIDA_BOOK_MODULES.length, 11, "the Noorani Qaida book must only show its 11 core modules");
+assert.equal(curriculum.QAIDA_BOOK_MODULES.some((module) => ["daily-duas", "namaz", "kalmas"].includes(module.id)), false, "supplementary learning belongs in the sidebar, not the Qaida book");
 assert.equal(new Set(Array.from(curriculum.ALL_CURRICULUM_SCREEN_IDS)).size, curriculum.ALL_CURRICULUM_SCREEN_IDS.length, "screen ids must be unique");
 assert.equal(curriculumProgress.isModuleUnlocked(completedOnce, "harakaat"), true, "every module is freely accessible — nothing is locked");
 const allLetters = Array.from({ length: 28 }, (_, index) => `letter-${index + 1}`);

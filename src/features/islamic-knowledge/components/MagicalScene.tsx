@@ -3,8 +3,8 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-/** Soft parallax atmosphere behind dialogue — GPU transforms only. */
-export default function MagicalScene() {
+/** Soft topic-aware parallax atmosphere behind dialogue — GPU transforms only. */
+export default function MagicalScene({ topicId }: { topicId?: string }) {
   const reduce = useReducedMotion();
   const [offset, setOffset] = useState({ x: 0, y: 0 });
 
@@ -20,7 +20,7 @@ export default function MagicalScene() {
   }, [reduce]);
 
   return (
-    <div className="ik-magic" aria-hidden>
+    <div className="ik-magic" data-topic={topicId} aria-hidden>
       <div className="ik-magic-sky" />
       <motion.div
         className="ik-magic-sun"
@@ -48,9 +48,9 @@ export default function MagicalScene() {
         </svg>
       </motion.div>
       <motion.div className="ik-magic-trees" style={{ x: offset.x * 0.7 }}>
-        <span>🌴</span>
-        <span>🌳</span>
-        <span>🌴</span>
+        <span>{topicId === "ramadan" || topicId === "eid" ? "🏮" : "🌴"}</span>
+        <span>{topicId === "wudu-prayer" || topicId === "cleanliness" ? "💧" : "🌳"}</span>
+        <span>{topicId === "seerah-timeline" || topicId === "stories-prophets" ? "🗺️" : "🌴"}</span>
       </motion.div>
       <div className="ik-magic-grass" />
       {!reduce &&

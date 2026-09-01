@@ -1,5 +1,5 @@
-import { IK_BADGES } from "../data/curriculum";
-import type { IKBadge, IKProgress } from "../types";
+import { BEGINNER_TOPICS, IK_BADGES } from "../data/curriculum";
+import type { IKBadge, IKLessonReward, IKProgress } from "../types";
 
 export const IK_STORAGE_KEY = "noorpath-islamic-knowledge-v1";
 export const XP_PER_LESSON = 25;
@@ -58,7 +58,7 @@ export function completeLesson(
   correct: number,
   total: number,
   relatedBadgeId?: string,
-): { progress: IKProgress; stars: 1 | 2 | 3; levelUp: boolean; newBadges: string[] } {
+): { progress: IKProgress } & IKLessonReward {
   const ratio = total > 0 ? correct / total : 1;
   const stars: 1 | 2 | 3 = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : 1;
   const already = progress.completedLessonIds.includes(lessonId);
@@ -77,10 +77,12 @@ export function completeLesson(
   let badges = next.badges;
   const beforeIds = new Set(badges.filter((b) => b.earned).map((b) => b.id));
 
+  const beginnerLessonIds = new Set(BEGINNER_TOPICS.flatMap((topic) => topic.lessonIds));
+  const beginnerCompleted = completedLessonIds.filter((id) => beginnerLessonIds.has(id)).length;
   if (completedLessonIds.length >= 1) badges = earnBadge(badges, "first-lesson");
-  if (completedLessonIds.length >= 5) badges = earnBadge(badges, "beginner-5");
-  if (completedLessonIds.length >= 10) badges = earnBadge(badges, "beginner-10");
-  if (completedLessonIds.length >= 20) badges = earnBadge(badges, "beginner-all");
+  if (beginnerCompleted >= 5) badges = earnBadge(badges, "beginner-5");
+  if (beginnerCompleted >= 10) badges = earnBadge(badges, "beginner-10");
+  if (beginnerCompleted >= 20) badges = earnBadge(badges, "beginner-all");
   if (ratio >= 1) badges = earnBadge(badges, "quiz-ace");
   if (relatedBadgeId) badges = earnBadge(badges, relatedBadgeId);
 
@@ -100,6 +102,12 @@ export function completeLesson(
     if (idx >= 0) weakTopicIds.splice(idx, 1);
   }
 
+  const previousScore = next.quizScores[lessonId];
+  const previousRatio = previousScore?.total ? previousScore.correct / previousScore.total : -1;
+  const bestScore = ratio >= previousRatio
+    ? { correct, total, at: new Date().toISOString() }
+    : previousScore!;
+
   next = {
     ...next,
     xp,
@@ -112,7 +120,7 @@ export function completeLesson(
     },
     quizScores: {
       ...next.quizScores,
-      [lessonId]: { correct, total, at: new Date().toISOString() },
+      [lessonId]: bestScore,
     },
     weakTopicIds,
     badges,
@@ -125,6 +133,8 @@ export function completeLesson(
   return {
     progress: next,
     stars,
+    earnedXp: bonusXp + starBonus,
+    earnedCoins: bonusCoins + stars * 2,
     levelUp: next.level > levelBefore,
     newBadges,
   };

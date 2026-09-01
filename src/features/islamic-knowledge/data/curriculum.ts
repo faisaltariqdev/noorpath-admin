@@ -12,13 +12,16 @@ function steps(rows: Array<[string, string, string?, LessonStep["type"]?, Lesson
 }
 
 function mcq(id: string, difficulty: IKQuestion["difficulty"], prompt: string, options: string[], correctIndex: number, hint?: string): IKQuestion {
+  const prepared = options.map((label, i) => ({ id: `${id}-o${i}`, label }));
+  const shift = [...id].reduce((sum, char) => sum + char.charCodeAt(0), 0) % Math.max(prepared.length, 1);
   return {
     id,
     kind: "mcq",
     difficulty,
     prompt,
     hint,
-    options: options.map((label, i) => ({ id: `${id}-o${i}`, label })),
+    explanation: hint,
+    options: [...prepared.slice(shift), ...prepared.slice(0, shift)],
     answer: `${id}-o${correctIndex}`,
   };
 }
@@ -30,6 +33,7 @@ function tf(id: string, difficulty: IKQuestion["difficulty"], prompt: string, is
     difficulty,
     prompt,
     hint,
+    explanation: hint,
     options: [
       { id: `${id}-t`, label: "True", emoji: "✅" },
       { id: `${id}-f`, label: "False", emoji: "❌" },
@@ -39,7 +43,67 @@ function tf(id: string, difficulty: IKQuestion["difficulty"], prompt: string, is
 }
 
 function fill(id: string, difficulty: IKQuestion["difficulty"], prompt: string, answer: string, hint?: string): IKQuestion {
-  return { id, kind: "fill_blank", difficulty, prompt, answer: answer.toLowerCase(), hint };
+  return { id, kind: "fill_blank", difficulty, prompt, answer: answer.toLowerCase(), hint, explanation: hint };
+}
+
+function matching(
+  id: string,
+  difficulty: IKQuestion["difficulty"],
+  prompt: string,
+  pairs: Array<[string, string]>,
+  hint?: string,
+): IKQuestion {
+  return {
+    id,
+    kind: "matching",
+    difficulty,
+    prompt,
+    hint,
+    explanation: hint,
+    pairs: pairs.map(([left, right]) => ({ left, right })),
+    answer: pairs.map(([left, right]) => `${left}:${right}`),
+  };
+}
+
+function sorting(
+  id: string,
+  difficulty: IKQuestion["difficulty"],
+  prompt: string,
+  labelsInCorrectOrder: string[],
+  hint?: string,
+): IKQuestion {
+  const options = labelsInCorrectOrder.map((label, index) => ({ id: `${id}-o${index}`, label }));
+  return {
+    id,
+    kind: "sorting",
+    difficulty,
+    prompt,
+    hint,
+    explanation: hint,
+    options: [...options].reverse(),
+    order: options.map((option) => option.id),
+    answer: options.map((option) => option.id),
+  };
+}
+
+function tapSelect(
+  id: string,
+  difficulty: IKQuestion["difficulty"],
+  prompt: string,
+  options: Array<[string, string]>,
+  correctIndex: number,
+  hint?: string,
+): IKQuestion {
+  return {
+    id,
+    kind: "tap_select",
+    difficulty,
+    prompt,
+    hint,
+    explanation: hint,
+    options: options.map(([emoji, label], index) => ({ id: `${id}-o${index}`, emoji, label })),
+    answer: `${id}-o${correctIndex}`,
+  };
 }
 
 function lesson(
@@ -204,8 +268,9 @@ export const LESSONS: IKLesson[] = [
     ],
     [
       mcq("i1e", "easy", "How many articles of faith are there?", ["Six", "Three", "Twelve"], 0),
-      tf("i1m", "medium", "Muslims believe in angels.", true),
-      mcq("i1h", "hard", "The final Book for Muslims is the ____.", ["Quran", "Newspaper", "Diary"], 0),
+      tf("i1m", "medium", "Qadr means that Allah does not know what will happen.", false, "Allah knows everything, and Muslims believe in Qadr."),
+      mcq("i1h", "hard", "Which article of faith teaches that everyone will answer for their deeds?", ["Belief in the Last Day", "Belief in wealth", "Belief in luck"], 0, "The Last Day is the day of judgment."),
+      matching("i1x", "hard", "Match each belief to its meaning.", [["Angels", "Servants made of light"], ["Books", "Revelation from Allah"], ["Qadr", "Allah's knowledge and decree"]], "Think about the six beliefs introduced in the lesson."),
     ],
   ),
   lesson(
@@ -224,6 +289,7 @@ export const LESSONS: IKLesson[] = [
       mcq("k1e", "easy", "La ilaha illallah means there is no god but ____.", ["Allah", "anyone", "the sun"], 0),
       tf("k1m", "medium", "The Kalimas help us remember Allah.", true),
       fill("k1f", "hard", "Complete: La ilaha ____ Allah.", "illallah"),
+      mcq("k1x", "medium", "What does “Muhammadur Rasulullah” teach us?", ["Muhammad ﷺ is Allah's Messenger", "Muhammad ﷺ is an angel", "Muhammad ﷺ wrote the Quran himself"], 0, "It is the second part of the declaration taught here."),
     ],
   ),
   lesson(
@@ -240,7 +306,7 @@ export const LESSONS: IKLesson[] = [
     ],
     [
       mcq("d1e", "easy", "What do we say before eating?", ["Bismillah", "Goodbye", "Hurry"], 0),
-      tf("d1m", "medium", "Alhamdulillah means all praise is for Allah.", true),
+      tf("d1m", "medium", "A Muslim can make dua at many suitable times and places.", true, "Allah hears sincere dua wherever we call upon Him appropriately."),
       mcq("d1h", "hard", "Dua means ____.", ["talking to Allah", "running", "sleeping"], 0),
     ],
   ),
@@ -258,7 +324,7 @@ export const LESSONS: IKLesson[] = [
     ],
     [
       mcq("g1e", "easy", "What do Muslims say to greet?", ["Assalamu Alaikum", "Only hi", "Bye bye"], 0),
-      tf("g1m", "medium", "Wa Alaikum Assalam is the reply to Salam.", true),
+      tf("g1m", "medium", "Wa Alaikum Assalam is a reply to Assalamu Alaikum.", true, "The reply returns the greeting of peace."),
       fill("g1f", "hard", "Assalamu Alaikum means ____ be upon you.", "peace"),
     ],
   ),
@@ -275,8 +341,8 @@ export const LESSONS: IKLesson[] = [
       ["👟", "Take turns. Don’t push. Be a gentle friend.", "Gentle friend", "mascot", "happy"],
     ],
     [
-      mcq("m1e", "easy", "Good manners in Islam are called ____.", ["Adab", "Toys", "Noise"], 0),
-      tf("m1m", "medium", "Saying thank you is part of good manners.", true),
+      mcq("m1e", "easy", "Good manners in Islam are called ____.", ["Adab", "Akhirah", "Adhan"], 0),
+      tf("m1m", "medium", "A soft voice and respectful words are part of Adab.", true, "Good manners can be heard in the way we speak."),
       mcq("m1h", "hard", "A soft voice shows ____.", ["respect", "anger", "laziness"], 0),
     ],
   ),
@@ -293,9 +359,9 @@ export const LESSONS: IKLesson[] = [
       ["🤲", "Make dua: My Lord, have mercy on my parents.", "Dua for parents", "mascot", "happy"],
     ],
     [
-      mcq("r1e", "easy", "Should we speak kindly to parents?", ["Yes", "No", "Only sometimes"], 0),
-      tf("r1m", "medium", "Helping parents is a good deed.", true),
-      mcq("r1h", "hard", "Making dua for parents is ____.", ["beautiful", "useless", "silly"], 0),
+      mcq("r1e", "easy", "Which action shows respect to parents?", ["Listening and answering gently", "Ignoring a request", "Speaking with a harsh voice"], 0),
+      tf("r1m", "medium", "Listening and answering gently are ways to respect parents.", true, "Respect is shown through both actions and words."),
+      mcq("r1h", "hard", "What can we ask Allah for our parents?", ["Mercy", "More chores", "Less kindness"], 0, "The lesson teaches a dua asking Allah for mercy."),
     ],
   ),
   lesson(
@@ -311,9 +377,9 @@ export const LESSONS: IKLesson[] = [
       ["🗑️", "Don’t litter. Keep the masjid and park clean.", "Care for earth", "mascot", "hint"],
     ],
     [
-      mcq("c1e", "easy", "Washing before prayer is called ____.", ["Wudu", "Sleep", "Play"], 0),
-      tf("c1m", "medium", "Keeping your room tidy is part of cleanliness.", true),
-      mcq("c1h", "hard", "Littering is ____.", ["not good", "sunnah", "funny"], 0),
+      mcq("c1e", "easy", "Which choice keeps your shared space clean?", ["Putting rubbish in a bin", "Leaving spills on the floor", "Dropping wrappers outside"], 0),
+      tf("c1m", "medium", "Putting rubbish in a bin helps care for shared places.", true, "Cleanliness includes the spaces used by everyone."),
+      mcq("c1h", "hard", "Why do Muslims keep body, clothes, and prayer place clean?", ["Cleanliness is valued in Islam", "Only to impress people", "Because play is forbidden"], 0),
     ],
   ),
   lesson(
@@ -329,7 +395,7 @@ export const LESSONS: IKLesson[] = [
       ["💬", "Kind words are heavier than gold on the Scale!", "Kind words", "mascot", "happy"],
     ],
     [
-      mcq("ki1e", "easy", "Should we be kind to animals?", ["Yes", "No", "Never"], 0),
+      mcq("ki1e", "easy", "A new child is sitting alone. What is the kind choice?", ["Invite them to join", "Laugh at them", "Hide their things"], 0),
       tf("ki1m", "medium", "Kind words make Allah happy.", true),
       fill("ki1f", "hard", "The Prophet ﷺ was very ____.", "kind"),
     ],
@@ -348,9 +414,9 @@ export const LESSONS: IKLesson[] = [
       ["💝", "Giving for Allah is better than keeping everything.", "For Allah", "mascot", "happy"],
     ],
     [
-      mcq("sh1e", "easy", "Sharing with friends is ____.", ["good", "bad", "weird"], 0),
-      tf("sh1m", "medium", "Giving charity can be as small as a smile or a snack.", true),
-      mcq("sh1h", "hard", "When we share for Allah, we hope for ____.", ["reward", "trouble", "noise"], 0),
+      mcq("sh1e", "easy", "Two children want one toy. What should they do?", ["Take turns", "Grab it", "Break it"], 0),
+      tf("sh1m", "medium", "Taking turns is a fair way to share something.", true, "Sharing can mean giving a portion or giving someone a turn."),
+      mcq("sh1h", "hard", "A sincere Muslim shares mainly to ____.", ["please Allah and help others", "receive praise", "make others feel small"], 0),
     ],
   ),
   lesson(
@@ -366,8 +432,8 @@ export const LESSONS: IKLesson[] = [
       ["📣", "If you make a mistake, say sorry and tell the truth.", "Brave truth", "mascot", "hint"],
     ],
     [
-      mcq("t1e", "easy", "Should Muslims tell the truth?", ["Yes", "No", "Only Mondays"], 0),
-      tf("t1m", "medium", "The Prophet ﷺ was called Al-Ameen (trustworthy).", true),
+      mcq("t1e", "easy", "You broke something by mistake. What is the truthful choice?", ["Admit it and apologise", "Blame someone else", "Hide it and lie"], 0),
+      tf("t1m", "medium", "Al-Ameen means the Trustworthy.", true, "Prophet Muhammad ﷺ was known by this honourable title."),
       fill("t1f", "hard", "Lying is ____ for a Muslim.", "wrong"),
     ],
   ),
@@ -384,9 +450,9 @@ export const LESSONS: IKLesson[] = [
       ["🌟", "Even a small help can have a huge reward.", "Big reward", "mascot", "happy"],
     ],
     [
-      mcq("h1e", "easy", "Helping others is ____.", ["rewarded", "useless", "silly"], 0),
-      tf("h1m", "medium", "Helping parents at home is a good deed.", true),
-      mcq("h1h", "hard", "We help others to please ____.", ["Allah", "nobody", "toys"], 0),
+      mcq("h1e", "easy", "An older person is carrying a heavy bag. What can you do?", ["Offer safe help", "Walk away laughing", "Add more weight"], 0),
+      tf("h1m", "medium", "A small sincere act of help can be valuable.", true, "Helping does not need to be large to matter."),
+      mcq("h1h", "hard", "What makes an act of help sincere?", ["Doing it to please Allah", "Demanding praise", "Reminding everyone about it"], 0),
     ],
   ),
   lesson(
@@ -403,8 +469,8 @@ export const LESSONS: IKLesson[] = [
     ],
     [
       mcq("mq1e", "easy", "In the masjid we should be ____.", ["quiet", "noisy", "running"], 0),
-      tf("mq1m", "medium", "We keep the masjid clean.", true),
-      mcq("mq1h", "hard", "The masjid is the house of ____.", ["Allah", "toys", "games"], 0),
+      tf("mq1m", "medium", "Shoes should be left neatly in the proper area at the masjid.", true, "This protects cleanliness and keeps entrances clear."),
+      mcq("mq1h", "hard", "Where should shoes be left at the masjid?", ["Neatly in the shoe area", "Across the prayer row", "Beside the mihrab"], 0),
     ],
   ),
   lesson(
@@ -421,8 +487,8 @@ export const LESSONS: IKLesson[] = [
     ],
     [
       mcq("rm1e", "easy", "Ramadan is a ____ month.", ["blessed", "scary", "boring"], 0),
-      tf("rm1m", "medium", "In Ramadan we try to read more Quran.", true),
-      mcq("rm1h", "hard", "Sharing food in Ramadan is ____.", ["wonderful", "wrong", "useless"], 0),
+      tf("rm1m", "medium", "Ramadan teaches us to be impatient and unkind.", false, "Fasting teaches patience, worship, and care."),
+      mcq("rm1h", "hard", "Which action reflects the purpose of Ramadan?", ["Improving worship and character", "Only changing meal times", "Competing over food"], 0),
     ],
   ),
   lesson(
@@ -438,9 +504,9 @@ export const LESSONS: IKLesson[] = [
       ["🤲", "Don’t forget: say Alhamdulillah for every blessing!", "Thank Allah", "mascot", "happy"],
     ],
     [
-      mcq("e1e", "easy", "On Eid we say ____.", ["Eid Mubarak", "Go away", "I'm angry"], 0),
-      tf("e1m", "medium", "Eid is a time to thank Allah.", true),
-      mcq("e1h", "hard", "Sharing sweets on Eid is ____.", ["sunnah spirit", "haram", "sad"], 0),
+      mcq("e1e", "easy", "Which greeting shares joy on Eid?", ["Eid Mubarak", "Do not celebrate", "Leave everyone alone"], 0),
+      tf("e1m", "medium", "Eid is only about receiving gifts.", false, "Eid includes worship, gratitude, family, and generosity."),
+      mcq("e1h", "hard", "What should remain important during Eid celebrations?", ["Prayer and gratitude to Allah", "Showing off new things", "Wasting food"], 0),
     ],
   ),
   lesson(
@@ -456,9 +522,9 @@ export const LESSONS: IKLesson[] = [
       ["⭐", "We can’t see angels, but we believe in them with love.", "Believe", "mascot", "hint"],
     ],
     [
-      mcq("an1e", "easy", "Angels were created by ____.", ["Allah", "people", "robots"], 0),
-      tf("an1m", "medium", "Muslims believe in angels.", true),
-      mcq("an1h", "hard", "Angel Jibreel brought the ____.", ["Quran", "toys", "cars"], 0),
+      mcq("an1e", "easy", "What did Angel Jibreel bring to the Prophet ﷺ?", ["Revelation from Allah", "A book he wrote", "A royal crown"], 0),
+      tf("an1m", "medium", "Angels disobey Allah whenever they choose.", false, "Angels obey the commands Allah gives them."),
+      mcq("an1h", "hard", "Why do Muslims believe in angels although we cannot see them?", ["Allah and His Messenger taught us about them", "Every invisible thing is an angel", "They appear in photographs"], 0),
     ],
   ),
   lesson(
@@ -474,8 +540,8 @@ export const LESSONS: IKLesson[] = [
       ["💚", "Prophet Muhammad ﷺ is the last prophet. We follow him!", "Final Messenger", "mascot", "happy"],
     ],
     [
-      mcq("pr1e", "easy", "Who is the last prophet?", ["Muhammad ﷺ", "Nuh", "A king"], 0),
-      tf("pr1m", "medium", "Prophets taught people to worship Allah alone.", true),
+      mcq("pr1e", "easy", "Which prophet refused to worship idols?", ["Prophet Ibrahim", "Prophet Nuh", "Prophet Yusuf"], 0),
+      tf("pr1m", "medium", "Prophets asked people to worship the prophets themselves.", false, "Every prophet called people to worship Allah alone."),
       fill("pr1f", "hard", "Prophet ____ built the ark.", "nuh"),
     ],
   ),
@@ -492,9 +558,9 @@ export const LESSONS: IKLesson[] = [
       ["🤲", "Ask Allah every day: Allahumma inni as’alukal-jannah!", "Make dua", "mascot", "happy"],
     ],
     [
-      mcq("j1e", "easy", "Jannah means ____.", ["Paradise", "A sad place", "A school desk"], 0),
-      tf("j1m", "medium", "Doing good deeds helps us toward Jannah.", true),
-      mcq("j1h", "hard", "In Jannah there is ____.", ["peace forever", "homework forever", "anger forever"], 0),
+      mcq("j1e", "easy", "Jannah is another name for ____.", ["Paradise", "the present world", "a place of punishment"], 0),
+      tf("j1m", "medium", "Jannah is a temporary home that ends.", false, "Jannah is described as an everlasting home."),
+      mcq("j1h", "hard", "Which path should a Muslim follow while hoping for Jannah?", ["Faith, Allah's mercy, and good deeds", "Pride in every action", "Harming other people"], 0),
     ],
   ),
   // Intermediate sample lessons
@@ -506,12 +572,16 @@ export const LESSONS: IKLesson[] = [
     ["Islamic Stories for Children", "Interactive prophet stories for kids — courage, trust, and tawheed."],
     [
       ["📖", "Allah tells the best stories in the Quran!", "Stories", "intro", "happy"],
-      ["🐝", "Even a tiny ant and a bee teach us big lessons.", "Tiny teachers", "card", "cheer"],
-      ["💪", "Prophets were brave because they trusted Allah.", "Trust", "mascot", "think"],
+      ["🚢", "Prophet Nuh kept calling people to Allah and built the ark with patience.", "Nuh and the ark", "card", "think"],
+      ["🐋", "Prophet Yunus called upon Allah from inside the great fish, and Allah rescued him.", "Yunus and the great fish", "tap", "cheer"],
+      ["🔥", "Prophet Ibrahim stood firmly for Tawheed even when people opposed him.", "Ibrahim's courage", "card", "think"],
+      ["💪", "Prophet stories teach us patience, courage, repentance, and trust in Allah.", "Lessons for us", "mascot", "happy"],
     ],
     [
-      mcq("sp1e", "easy", "The best stories are in the ____.", ["Quran", "Comics only", "Nowhere"], 0),
-      tf("sp1m", "medium", "Prophets trusted Allah in hard times.", true),
+      mcq("sp1e", "easy", "Which prophet built an ark by Allah's command?", ["Prophet Nuh", "Prophet Yunus", "Prophet Ibrahim"], 0),
+      tf("sp1m", "medium", "Prophet Yunus stopped making dua when he was in difficulty.", false, "He called upon Allah, and Allah rescued him."),
+      mcq("sp1h", "hard", "What lesson is shared by these prophet stories?", ["Trust Allah and remain steadfast", "Give up when opposed", "Hide every mistake"], 0),
+      matching("sp1x", "hard", "Match each prophet to the lesson scene.", [["Nuh", "The ark"], ["Yunus", "The great fish"], ["Ibrahim", "Standing for Tawheed"]]),
     ],
   ),
   lesson(
@@ -522,12 +592,15 @@ export const LESSONS: IKLesson[] = [
     ["Sahabah for Kids", "Learn about the companions of the Prophet ﷺ in a child-friendly interactive lesson."],
     [
       ["🌟", "Sahabah are the friends of Prophet Muhammad ﷺ.", "Sahabah", "intro", "happy"],
-      ["❤️", "They loved him, helped him, and followed the Quran.", "Loyal friends", "card", "cheer"],
+      ["❤️", "Abu Bakr supported the Prophet ﷺ and was known for truthfulness and loyalty.", "Abu Bakr", "card", "cheer"],
+      ["📣", "Bilal showed strong faith through hardship and became a famous caller to prayer.", "Bilal", "tap", "think"],
       ["🧒", "We can learn from their courage and kindness!", "Be like them", "mascot", "happy"],
     ],
     [
-      mcq("sa1e", "easy", "Sahabah were friends of ____.", ["Prophet Muhammad ﷺ", "nobody", "kings only"], 0),
-      tf("sa1m", "medium", "We can learn good manners from the Sahabah.", true),
+      mcq("sa1e", "easy", "Who were the Sahabah?", ["Companions of Prophet Muhammad ﷺ", "Only rulers after him", "Authors of the Quran"], 0),
+      tf("sa1m", "medium", "The Sahabah ignored the Prophet's ﷺ teachings.", false, "They learned from him and helped carry Islam to others."),
+      mcq("sa1h", "hard", "Which quality is especially linked with Abu Bakr in this lesson?", ["Truthfulness and loyalty", "Love of wealth", "Avoiding responsibility"], 0),
+      matching("sa1x", "hard", "Match each companion to the lesson.", [["Abu Bakr", "Loyal support and truthfulness"], ["Bilal", "Steadfast faith and the call to prayer"]]),
     ],
   ),
   lesson(
@@ -538,12 +611,15 @@ export const LESSONS: IKLesson[] = [
     ["Animals in the Quran for Kids", "Interactive lesson about animals mentioned in the Quran for children."],
     [
       ["🐝", "The Quran talks about bees, ants, birds, and more!", "Animals", "intro", "happy"],
-      ["🐜", "Ants work together — teamwork is beautiful!", "Ants", "card", "cheer"],
-      ["🕊️", "Birds praise Allah in their own way.", "Birds", "mascot", "think"],
+      ["🐝", "Allah describes the bee and the useful honey it produces.", "The bee", "card", "cheer"],
+      ["🐜", "In the story of Prophet Sulayman, an ant warned the other ants to stay safe.", "The careful ant", "tap", "think"],
+      ["🕊️", "Birds are among Allah's signs and glorify Him in ways He knows.", "Birds", "mascot", "happy"],
     ],
     [
-      mcq("aq1e", "easy", "Does the Quran mention animals?", ["Yes", "No", "Never"], 0),
-      tf("aq1m", "medium", "We should be kind to animals.", true),
+      mcq("aq1e", "easy", "Which animal is connected with honey in the Quran?", ["The bee", "The camel", "The horse"], 0),
+      tf("aq1m", "medium", "The ant in Prophet Sulayman's story warned the colony about danger.", true),
+      mcq("aq1h", "hard", "What should animals mentioned in the Quran help us notice?", ["Allah's wisdom and signs", "That animals should be worshipped", "That people know everything"], 0),
+      tapSelect("aq1x", "medium", "Tap the creature that produces honey.", [["🐜", "Ant"], ["🐝", "Bee"], ["🕊️", "Bird"]], 1),
     ],
   ),
   lesson(
@@ -561,6 +637,8 @@ export const LESSONS: IKLesson[] = [
     [
       mcq("ds1e", "easy", "A smile can be a ____.", ["charity", "problem", "punishment"], 0),
       tf("ds1m", "medium", "Eating with the right hand is Sunnah.", true),
+      mcq("ds1h", "hard", "What is the best way to build a daily Sunnah habit?", ["Practise it regularly with sincere intention", "Do it only when praised", "Change it every day"], 0),
+      matching("ds1x", "medium", "Match the Sunnah to the moment.", [["Meeting someone", "Give Salam"], ["Eating", "Use the right hand"], ["Cheering someone", "Offer a kind smile"]]),
     ],
   ),
   lesson(
@@ -575,8 +653,10 @@ export const LESSONS: IKLesson[] = [
       ["🍎", "Ask Mum or Dad if you are unsure. That’s smart!", "Ask", "mascot", "hint"],
     ],
     [
-      mcq("hh1e", "easy", "Halal means ____.", ["allowed", "never", "angry"], 0),
-      tf("hh1m", "medium", "If unsure, ask a parent or teacher.", true),
+      mcq("hh1e", "easy", "Halal means something that is ____.", ["permitted", "always harmful", "unknown"], 0),
+      tf("hh1m", "medium", "A Muslim should guess about halal and haram instead of asking.", false, "Ask a knowledgeable parent, teacher, or scholar when unsure."),
+      mcq("hh1h", "hard", "Why do Muslims avoid what Allah has made haram?", ["To obey Allah and protect themselves", "To look better than others", "Because all choices are the same"], 0),
+      tapSelect("hh1x", "medium", "Tap the safest choice when a food ingredient is unclear.", [["❓", "Ask a trusted adult"], ["🎲", "Guess"], ["🙈", "Ignore the label"]], 0),
     ],
   ),
   lesson(
@@ -587,12 +667,15 @@ export const LESSONS: IKLesson[] = [
     ["Wudu and Prayer for Kids", "Interactive intro to wudu and salah for Muslim children."],
     [
       ["🧼", "Before salah we make wudu — we wash for Allah.", "Wudu", "intro", "happy"],
-      ["🙏", "Salah is standing, bowing, and talking to Allah.", "Salah", "card", "cheer"],
-      ["⏰", "Try to pray on time. Angels love that!", "On time", "mascot", "happy"],
+      ["💧", "Begin with intention and Bismillah, then wash in the taught order without wasting water.", "Prepare carefully", "card", "think"],
+      ["🙏", "In salah we stand, bow, and prostrate with calm focus before Allah.", "Prayer postures", "tap", "cheer"],
+      ["⏰", "Muslims make every effort to perform the five daily prayers on time.", "Pray on time", "mascot", "happy"],
     ],
     [
-      mcq("wp1e", "easy", "Before salah we make ____.", ["wudu", "noise", "mess"], 0),
-      tf("wp1m", "medium", "Salah is talking to Allah.", true),
+      mcq("wp1e", "easy", "What prepares us physically for salah?", ["Wudu", "A meal", "A game"], 0),
+      tf("wp1m", "medium", "Wasting lots of water is part of careful wudu.", false, "Use enough water to wash properly without waste."),
+      mcq("wp1h", "hard", "Which movement comes after standing recitation in a rakah?", ["Bowing (ruku)", "Ending with salam", "Leaving the prayer"], 0),
+      sorting("wp1x", "hard", "Put these wudu actions in their taught order.", ["Wash hands", "Rinse mouth", "Wash face", "Wash arms", "Wipe head", "Wash feet"], "Move each action until the sequence begins with the hands and ends with the feet."),
     ],
   ),
   // Advanced sample lessons
@@ -609,9 +692,10 @@ export const LESSONS: IKLesson[] = [
       ["🌴", "He migrated to Madinah — a city of peace.", "Hijrah", "mascot", "happy"],
     ],
     [
-      mcq("st1e", "easy", "Seerah is the life of ____.", ["Prophet Muhammad ﷺ", "a king", "a pirate"], 0),
-      tf("st1m", "medium", "The Prophet ﷺ migrated to Madinah.", true),
-      mcq("st1h", "hard", "First revelation came in a ____.", ["cave", "castle", "ship"], 0),
+      mcq("st1e", "easy", "What does Seerah study?", ["The life of Prophet Muhammad ﷺ", "Only Arabic grammar", "The lives of all rulers"], 0),
+      tf("st1m", "medium", "The Hijrah was the migration from Madinah to Makkah.", false, "The Prophet ﷺ migrated from Makkah to Madinah."),
+      mcq("st1h", "hard", "Where did the first revelation begin?", ["Cave Hira", "Masjid an-Nabawi", "Mount Uhud"], 0),
+      sorting("st1x", "hard", "Arrange these Seerah events from earliest to latest.", ["Birth in Makkah", "First revelation", "Hijrah to Madinah"], "The first revelation came before the Hijrah."),
     ],
   ),
   lesson(
@@ -623,11 +707,14 @@ export const LESSONS: IKLesson[] = [
     [
       ["🧭", "Akhlaq means good character. It shows our iman!", "Akhlaq", "intro", "happy"],
       ["🪞", "Be the same kind person at home and at school.", "Consistency", "card", "think"],
+      ["⚖️", "Choose justice even when a fair decision does not benefit you.", "Justice", "tap", "hint"],
       ["🦁", "Lead by example — younger kids copy you!", "Lead", "mascot", "cheer"],
     ],
     [
-      mcq("ie1e", "easy", "Good character is called ____.", ["Akhlaq", "Chaos", "Noise"], 0),
-      tf("ie1m", "medium", "Honesty is part of Islamic ethics.", true),
+      mcq("ie1e", "easy", "Good character in Islam is called ____.", ["Akhlaq", "Adhan", "Akhirah"], 0),
+      tf("ie1m", "medium", "Good character only matters when other people are watching.", false, "Sincere character remains consistent in public and private."),
+      mcq("ie1h", "hard", "A fair choice disadvantages your team. What should a principled leader do?", ["Choose what is just", "Hide the facts", "Change the rule secretly"], 0),
+      tapSelect("ie1x", "hard", "Tap the action that shows consistent character.", [["🪞", "Be honest at home and school"], ["🎭", "Act kind only for praise"], ["⚖️", "Change fairness for friends"]], 0),
     ],
   ),
   lesson(
@@ -639,11 +726,14 @@ export const LESSONS: IKLesson[] = [
     [
       ["🌱", "Sabr means patience. Shukr means thankfulness.", "Sabr & Shukr", "intro", "happy"],
       ["⏳", "When waiting is hard, breathe and remember Allah.", "Patience", "card", "think"],
+      ["🧭", "Sabr includes staying obedient, avoiding wrong, and remaining steady during hardship.", "Steady choices", "tap", "hint"],
       ["🙌", "Say Alhamdulillah for food, family, and health!", "Gratitude", "mascot", "cheer"],
     ],
     [
-      mcq("pg1e", "easy", "Shukr means ____.", ["thankfulness", "anger", "rushing"], 0),
-      tf("pg1m", "medium", "Alhamdulillah is a way to show gratitude.", true),
+      mcq("pg1e", "easy", "Shukr means ____.", ["thankfulness", "carelessness", "impatience"], 0),
+      tf("pg1m", "medium", "Sabr means doing nothing about a problem.", false, "Sabr means staying steady while taking a right and useful action."),
+      mcq("pg1h", "hard", "Which response combines sabr and shukr?", ["Stay calm, act rightly, and thank Allah", "Complain and abandon effort", "Ignore every blessing"], 0),
+      matching("pg1x", "hard", "Match the quality to its example.", [["Sabr", "Waiting calmly while doing what is right"], ["Shukr", "Using a blessing in a good way"]]),
     ],
   ),
   lesson(
@@ -655,11 +745,14 @@ export const LESSONS: IKLesson[] = [
     [
       ["🦁", "A real leader is honest and responsible.", "Lead well", "intro", "happy"],
       ["📋", "Keep promises. Finish what you start.", "Responsibility", "card", "think"],
+      ["👂", "A trustworthy leader listens, checks facts, and accepts correction.", "Listen and learn", "tap", "hint"],
       ["🤝", "Help the team. Don’t blame others unfairly.", "Team", "mascot", "cheer"],
     ],
     [
-      mcq("hl1e", "easy", "Leaders should be ____.", ["honest", "mean", "lazy"], 0),
-      tf("hl1m", "medium", "Keeping promises is part of responsibility.", true),
+      mcq("hl1e", "easy", "Which quality should guide a Muslim leader?", ["Honesty", "Pride", "Carelessness"], 0),
+      tf("hl1m", "medium", "A leader should blame others to protect their reputation.", false, "Responsible leaders admit mistakes and help correct them."),
+      mcq("hl1h", "hard", "Two teammates disagree. What should a trustworthy leader do first?", ["Listen to both and check the facts", "Choose the closest friend", "Ignore the problem"], 0),
+      sorting("hl1x", "hard", "Order these responsible leadership steps.", ["Listen carefully", "Check the facts", "Choose a fair action", "Review the result"]),
     ],
   ),
 ];

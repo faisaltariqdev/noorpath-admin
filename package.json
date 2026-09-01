@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start --port 3001",
     "lint": "ESLINT_USE_FLAT_CONFIG=true eslint . --no-inline-config",
-    "test:qaida": "node scripts/qaida-contract-tests.cjs"
+    "test:qaida": "node scripts/qaida-contract-tests.cjs",
+    "test:islamic-knowledge": "node scripts/islamic-knowledge-contract-tests.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.39.3",

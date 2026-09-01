@@ -1,4 +1,4 @@
-import type { LessonStep } from "../types";
+import type { AgeBand, LessonStep } from "../types";
 
 export interface DialogueLine {
   id: string;
@@ -30,20 +30,20 @@ export function splitIntoLines(text: string, maxWords = MAX_WORDS): string[] {
 }
 
 /** Build conversation turns for one curriculum step (does not change curriculum data). */
-export function buildDialogueForStep(step: LessonStep, stepIndex: number): DialogueLine[] {
+export function buildDialogueForStep(step: LessonStep, stepIndex: number, ageBand: AgeBand = "mid"): DialogueLine[] {
   const lines: DialogueLine[] = [];
   const prefix = `${step.id}-d`;
+  const maxWords = ageBand === "young" ? 8 : ageBand === "older" ? 14 : MAX_WORDS;
 
   if (stepIndex === 0) {
-    lines.push({ id: `${prefix}-hi`, text: "Assalamu Alaikum!", emoji: "👋", kind: "talk" });
-    lines.push({ id: `${prefix}-hello`, text: "Hello little explorer!", emoji: "😊", kind: "talk" });
-  } else {
     lines.push({
-      id: `${prefix}-cont`,
-      text: "Ready for the next bit?",
-      emoji: "✨",
+      id: `${prefix}-hi`,
+      text: ageBand === "young" ? "Assalamu Alaikum, little explorer!" : "Assalamu Alaikum! Let’s discover something meaningful.",
+      emoji: "👋",
       kind: "talk",
     });
+  } else if (step.type === "mascot") {
+    lines.push({ id: `${prefix}-noori`, text: "Noori has a practical tip for you.", emoji: "💡", kind: "talk" });
   }
 
   if (step.title) {
@@ -55,7 +55,7 @@ export function buildDialogueForStep(step: LessonStep, stepIndex: number): Dialo
     });
   }
 
-  for (const [i, chunk] of splitIntoLines(step.text).entries()) {
+  for (const [i, chunk] of splitIntoLines(step.text, maxWords).entries()) {
     lines.push({
       id: `${prefix}-t${i}`,
       text: chunk,
@@ -67,14 +67,14 @@ export function buildDialogueForStep(step: LessonStep, stepIndex: number): Dialo
   if (step.type === "tap" || step.type === "fact") {
     lines.push({
       id: `${prefix}-chal`,
-      text: `Tap the ${step.emoji || "⭐"} to reveal!`,
+      text: ageBand === "older" ? "Explore the visual, then explain the key idea in your own words." : `Tap the ${step.emoji || "picture"} to explore it!`,
       emoji: "👆",
       kind: "challenge",
     });
   } else if (step.mascotMood === "cheer") {
     lines.push({
       id: `${prefix}-cheer`,
-      text: "You're doing amazing!",
+      text: ["You connected that idea beautifully!", "MashaAllah, keep building your knowledge!", "Strong learning — let’s keep going!"][stepIndex % 3],
       emoji: "🎉",
       kind: "cheer",
     });

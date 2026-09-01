@@ -1,5 +1,6 @@
 export type Difficulty = "easy" | "medium" | "hard";
 export type TrackLevel = "beginner" | "intermediate" | "advanced";
+export type AgeBand = "young" | "mid" | "older";
 
 export type QuestionKind =
   | "mcq"
@@ -21,6 +22,7 @@ export interface IKQuestion {
   difficulty: Difficulty;
   prompt: string;
   hint?: string;
+  explanation?: string;
   /** Correct option id(s) or fill text / ordered ids */
   answer: string | string[];
   options?: IKOption[];
@@ -103,4 +105,12 @@ export type IKView =
 export interface TopicToggleState {
   disabledTopicIds: string[];
   updatedAt?: string;
+}
+
+export interface IKLessonReward {
+  stars: 1 | 2 | 3;
+  earnedXp: number;
+  earnedCoins: number;
+  levelUp: boolean;
+  newBadges: string[];
 }

@@ -31,7 +31,8 @@ export type ModuleId =
   | "revision"
   | "final-review"
   | "daily-duas"
-  | "namaz";
+  | "namaz"
+  | "kalmas";
 
 export type LessonKind =
   | "letter"
@@ -43,7 +44,8 @@ export type LessonKind =
   | "revision"
   | "assessment"
   | "dua"
-  | "salah";
+  | "salah"
+  | "kalima";
 
 /** Visual posture used for Namaz / Wudu step illustration */
 export type SalahPosture =

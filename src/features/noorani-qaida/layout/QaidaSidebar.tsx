@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
-type ActiveView = "dashboard" | "journey" | "qaida" | "lessons" | "games" | "practice" | "rewards" | "certificates" | "parents" | "teachers" | "settings";
+type ActiveView = "dashboard" | "journey" | "qaida" | "daily-duas" | "namaz" | "kalmas" | "lessons" | "games" | "practice" | "rewards" | "certificates" | "parents" | "teachers" | "settings";
 
 interface QaidaSidebarProps {
   activeView: ActiveView;
@@ -31,6 +31,9 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard",     label: "Dashboard",      icon: "🏠", color: "text-emerald-400" },
   { id: "qaida",         label: "Noorani Qaida",  icon: "📖", color: "text-yellow-400" },
+  { id: "daily-duas",    label: "Daily Duas",     icon: "🤲", color: "text-cyan-400" },
+  { id: "namaz",         label: "Namaz",          icon: "🕌", color: "text-green-300" },
+  { id: "kalmas",        label: "6 Kalmas",       icon: "📿", color: "text-amber-300" },
   { id: "lessons",       label: "Lesson",         icon: "🎓", color: "text-purple-400" },
   { id: "practice",      label: "Practice",       icon: "✏️",  color: "text-orange-400" },
   { id: "journey",       label: "My Progress",    icon: "📊", color: "text-blue-400" },

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 const PARTICLES = [
   { x: -60, y: -40, c: "#c9922a", d: 0 },
@@ -14,7 +14,9 @@ const PARTICLES = [
 ];
 
 export default function SparkBurst({ show }: { show: boolean }) {
+  const reduce = useReducedMotion();
   if (!show) return null;
+  if (reduce) return <div className="ik-spark-burst ik-spark-static" aria-hidden>✦</div>;
   return (
     <div className="ik-spark-burst" aria-hidden>
       {PARTICLES.map((p, i) => (

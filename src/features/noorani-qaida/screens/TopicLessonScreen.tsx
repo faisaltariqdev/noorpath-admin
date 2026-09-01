@@ -61,6 +61,8 @@ export default function TopicLessonScreen({
 
   const isJoining = lesson.kind === "joining";
   const isDua = lesson.kind === "dua";
+  const isKalima = lesson.kind === "kalima";
+  const isRecitation = isDua || isKalima;
   const usesReadingTrack = ["reading", "quranic", "revision", "assessment"].includes(lesson.kind);
 
   return (
@@ -70,7 +72,7 @@ export default function TopicLessonScreen({
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm backdrop-blur">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600">
-              {isDua ? "Daily dua" : "Interactive lesson"}
+              {isDua ? "Daily dua" : isKalima ? "6 Kalmas" : "Interactive lesson"}
             </p>
             <h1 className="truncate text-lg font-black text-slate-900">{lesson.title}</h1>
           </div>
@@ -92,14 +94,14 @@ export default function TopicLessonScreen({
               type="button"
               onClick={() => speak()}
               className={`mt-3 flex w-full flex-col items-center justify-center rounded-3xl px-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
-                isDua ? "min-h-36 gap-2 py-3" : "min-h-28 px-6"
+                isRecitation ? "min-h-36 gap-2 py-3" : "min-h-28 px-6"
               }`}
               animate={isPlaying && !reducedMotion ? { scale: [1, 1.06, 1] } : undefined}
               aria-label={`Hear ${activeExample?.transliteration}`}
             >
               <span
                 className={`qaida-arabic block w-full font-black text-emerald-900 ${
-                  isDua ? "text-center text-2xl leading-[1.85] sm:text-3xl" : "text-6xl leading-[1.4]"
+                  isRecitation ? "text-center text-2xl leading-[1.85] sm:text-3xl" : "text-6xl leading-[1.4]"
                 }`}
                 lang="ar"
                 dir="rtl"
@@ -108,14 +110,14 @@ export default function TopicLessonScreen({
               </span>
               <span
                 className={`mt-2 w-full border-t border-amber-200/80 pt-2 font-black text-slate-700 ${
-                  isDua ? "text-left text-sm leading-relaxed whitespace-normal" : "text-sm leading-tight"
+                  isRecitation ? "text-left text-sm leading-relaxed whitespace-normal" : "text-sm leading-tight"
                 }`}
                 dir="ltr"
               >
                 {activeExample?.transliteration}
               </span>
             </motion.button>
-            {isDua && activeExample?.meaning ? (
+            {isRecitation && activeExample?.meaning ? (
               <p className="mt-3 w-full text-left text-xs font-semibold leading-relaxed text-slate-600 sm:text-sm" dir="ltr">
                 <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-emerald-700">English translation</span>
                 {activeExample.meaning}
@@ -132,7 +134,7 @@ export default function TopicLessonScreen({
 
           <div className="rounded-[1.75rem] border border-white/80 bg-white/90 p-5 shadow-lg backdrop-blur lg:col-span-4">
             <p className="text-xs font-black uppercase tracking-wide text-emerald-600">
-              {isDua ? "When to say it" : "What it means"}
+              {isDua ? "When to say it" : isKalima ? "Meaning and purpose" : "What it means"}
             </p>
             <h2 className="mt-1 text-xl font-black text-slate-900">{lesson.title}</h2>
             {isDua && lesson.whenToSay ? (
@@ -159,7 +161,7 @@ export default function TopicLessonScreen({
         <section className="rounded-[1.5rem] border border-white/80 bg-white/90 p-4 shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-black text-slate-900">
-              {isDua ? "Arabic · transliteration · English" : "Listen and explore"}
+              {isRecitation ? "Arabic · transliteration · English" : "Listen and explore"}
             </h2>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => speak("normal")} className="qaida-premium-button bg-emerald-700 px-4 py-2 text-sm font-black text-white">🔊 Normal</button>
@@ -168,17 +170,17 @@ export default function TopicLessonScreen({
             </div>
           </div>
           <div
-            dir={isDua ? "ltr" : "rtl"}
+            dir={isRecitation ? "ltr" : "rtl"}
             className={`mt-4 grid gap-3 ${
-              isDua ? "grid-cols-1 lg:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              isRecitation ? "grid-cols-1 lg:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             }`}
           >
             {lesson.examples.map((item) => (
               <ExampleTile
                 key={item.id}
                 item={item}
-                fullText={isDua}
-                showSpeaker={isDua}
+                fullText={isRecitation}
+                showSpeaker={isRecitation}
                 selected={activeExample?.id === item.id}
                 reducedMotion={reducedMotion}
                 className={activeExample?.id === item.id ? "" : "!border-slate-200 !bg-white"}

@@ -107,6 +107,8 @@ export default function NooriMascot({
               <circle cx={71.5 + gaze} cy="42.5" r="1.6" fill="#fff" />
             </>
           )}
+          <path d={mood === "think" || mood === "hint" ? "M44 35 Q50 31 56 35" : "M44 35 Q50 33 56 35"} stroke="#6b4630" strokeWidth="1.7" fill="none" strokeLinecap="round" />
+          <path d={mood === "surprise" ? "M64 34 Q70 30 76 34" : "M64 35 Q70 33 76 35"} stroke="#6b4630" strokeWidth="1.7" fill="none" strokeLinecap="round" />
 
           <ellipse cx="42" cy="52" rx="5" ry="3" fill="#ff8a80" opacity={smileBurst ? 0.7 : 0.4} />
           <ellipse cx="78" cy="52" rx="5" ry="3" fill="#ff8a80" opacity={smileBurst ? 0.7 : 0.4} />
@@ -142,6 +144,7 @@ export default function NooriMascot({
           />
           <path d="M48 64 L48 118 M72 64 L72 118" stroke="#c9922a" strokeWidth="2" opacity="0.7" />
           <circle cx="60" cy="88" r="5" fill="#c9922a" />
+          <path d="M60 80l2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z" fill="#fff4c2" />
         </motion.g>
 
         <rect x="42" y="118" width="14" height="28" rx="7" fill="#0a6e4f" />
@@ -159,7 +162,7 @@ export default function NooriMascot({
         </motion.g>
         <motion.g
           style={{ transformOrigin: "82px 82px" }}
-          animate={{ rotate: action === "clap" ? [0, 28, 0, 28, 0] : [0, 10, 0] }}
+          animate={reduce ? undefined : { rotate: action === "clap" ? [0, 28, 0, 28, 0] : [0, 10, 0] }}
           transition={{ duration: 1.15, repeat: Infinity, ease: "easeInOut" }}
         >
           <rect x="84" y="78" width="14" height="32" rx="7" fill="#f5d0b0" />
@@ -171,6 +174,18 @@ export default function NooriMascot({
             <motion.circle cx="18" cy="40" r="3" fill="#c9922a" animate={{ y: [0, -12, 0], opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.2, repeat: Infinity }} />
             <motion.circle cx="102" cy="36" r="2.5" fill="#7dd3a8" animate={{ y: [0, -10, 0], opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }} />
           </>
+        )}
+        {(mood === "think" || mood === "hint") && (
+          <g>
+            <circle cx="103" cy="18" r="13" fill="#fff9e8" stroke="#c9922a" strokeWidth="2" />
+            <text x="103" y="23" textAnchor="middle" fontSize="16" fontWeight="900" fill="#0a6e4f">?</text>
+          </g>
+        )}
+        {mood === "listen" && (
+          <g fill="none" stroke="#2d9cdb" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M92 44q12 7 0 14" />
+            <path d="M98 39q20 12 0 24" opacity=".65" />
+          </g>
         )}
       </motion.svg>
       {caption && <div className="ik-noori-caption">{caption}</div>}

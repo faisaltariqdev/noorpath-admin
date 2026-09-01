@@ -8,22 +8,40 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace("/login");
-        return;
-      }
-      supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .single()
-        .then(({ data }) => {
-          if (data?.role === "admin") router.replace("/admin");
-          else if (data?.role === "tutor") router.replace("/tutor");
-          else router.replace("/parent");
-        });
-    });
+    let cancelled = false;
+    const goLogin = () => {
+      if (!cancelled) router.replace("/login");
+    };
+
+    const timeout = window.setTimeout(goLogin, 8000);
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (cancelled) return;
+        if (!session) {
+          goLogin();
+          return;
+        }
+        return supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data }) => {
+            if (cancelled) return;
+            if (data?.role === "admin") router.replace("/admin");
+            else if (data?.role === "tutor") router.replace("/tutor");
+            else router.replace("/parent");
+          });
+      })
+      .catch(goLogin)
+      .finally(() => window.clearTimeout(timeout));
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
   }, [router]);
 
   return (

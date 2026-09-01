@@ -13,14 +13,17 @@ import {
 } from "../data/curriculum";
 import NooriMascot from "../components/NooriMascot";
 import SkyDecor from "../components/SkyDecor";
+import StepVisual from "../components/StepVisual";
+import { unlockKnowledgeSpeech } from "../audio/speech";
 import "../islamic-knowledge.css";
 import LessonPlayer from "../screens/LessonPlayer";
 import { XP_PER_LEVEL } from "../state/progress";
 import { useIslamicKnowledgeState } from "../state/useIslamicKnowledgeState";
-import type { IKTopic, IKView, TopicToggleState, TrackLevel } from "../types";
+import type { AgeBand, IKTopic, IKView, TopicToggleState, TrackLevel } from "../types";
 import { supabase } from "@/lib/supabase";
 
 const SETTINGS_KEY = "islamic_knowledge_topics";
+const AGE_BAND_KEY = "noorpath-islamic-knowledge-age";
 
 export type IKSurface = "admin" | "tutor" | "parent";
 
@@ -43,7 +46,8 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
   const [disabledIds, setDisabledIds] = useState<string[]>([]);
   const [manageMsg, setManageMsg] = useState("");
   const [saving, setSaving] = useState(false);
-  const [ageBand, setAgeBand] = useState<"young" | "mid" | "older">("mid");
+  const [ageBand, setAgeBand] = useState<AgeBand>("mid");
+  const [heroGreeting, setHeroGreeting] = useState("Tap Noori to say Salam");
   const canManage = surface === "admin";
 
   useEffect(() => {
@@ -62,6 +66,16 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(AGE_BAND_KEY);
+    if (saved === "young" || saved === "mid" || saved === "older") setAgeBand(saved);
+  }, []);
+
+  function selectAgeBand(next: AgeBand) {
+    setAgeBand(next);
+    window.localStorage.setItem(AGE_BAND_KEY, next);
+  }
 
   const enabledTopics = useCallback(
     (topics: IKTopic[]) => topics.filter((t) => !disabledIds.includes(t.id)),
@@ -99,12 +113,13 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
 
   function openTopic(topic: IKTopic) {
     if (disabledIds.includes(topic.id)) return;
+    unlockKnowledgeSpeech();
     setActiveTopicId(topic.id);
     setView("lesson");
   }
 
-  function renderTopicGrid(level: TrackLevel) {
-    const topics = enabledTopics(topicsForLevel(level));
+  function renderTopicGrid(level: TrackLevel, limit?: number) {
+    const topics = enabledTopics(topicsForLevel(level)).slice(0, limit);
     if (topics.length === 0) {
       return <p style={{ color: "var(--ik-muted)" }}>No topics enabled for this track yet.</p>;
     }
@@ -114,6 +129,7 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
           const lesson = getLessonForTopic(topic.id);
           const done = lesson ? progress.completedLessonIds.includes(lesson.id) : false;
           const stars = lesson ? progress.lessonStars[lesson.id] : undefined;
+          const score = lesson ? progress.quizScores[lesson.id] : undefined;
           return (
             <motion.button
               key={topic.id}
@@ -128,9 +144,10 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
               onClick={() => openTopic(topic)}
             >
               {done && <span className="ik-done-pill">{stars ? `${"⭐".repeat(stars)}` : "Done"}</span>}
-              <span className="ik-topic-emoji">{topic.emoji}</span>
+              <StepVisual topicId={topic.id} step={lesson?.steps[0]} compact />
               <h3>{topic.title}</h3>
               <p>{topic.summary}</p>
+              {score && <span className="ik-topic-score">Best quiz: {score.correct}/{score.total}</span>}
               <span className="ik-play-badge">▶ Play</span>
             </motion.button>
           );
@@ -167,6 +184,7 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
               key={item.id}
               type="button"
               className={`ik-nav-btn ${view === item.id ? "active" : ""}`}
+              aria-current={view === item.id ? "page" : undefined}
               onClick={() => {
                 setView(item.id);
                 setActiveTopicId(null);
@@ -201,6 +219,24 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
 
         <main className="ik-main" id="ik-main">
           <SkyDecor />
+          <div className="ik-mobile-hud" aria-label="Learning progress">
+            <strong>Level {progress.level}</strong>
+            <span>{progress.xp} XP</span>
+            <span>{progress.coins} coins</span>
+            <span>{progress.streak} day streak</span>
+          </div>
+          <div className="ik-age-quick" aria-label="Choose learning age mode">
+            <strong>Age mode</strong>
+            {([
+              ["young", "3–6"],
+              ["mid", "7–9"],
+              ["older", "10–12"],
+            ] as const).map(([id, label]) => (
+              <button key={id} type="button" className={ageBand === id ? "active" : ""} aria-pressed={ageBand === id} onClick={() => selectAgeBand(id)}>
+                {label}
+              </button>
+            ))}
+          </div>
 
           {view === "home" && (
             <>
@@ -213,41 +249,22 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
                 <p>
                   Tap cards, reveal surprises, earn stars with Noori — a magical journey separate from Noorani Qaida.
                 </p>
-                <div className="ik-mascot" aria-hidden>
-                  <NooriMascot mood="cheer" action="wave" size={110} lookAt="left" caption="Noori" />
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20, position: "relative", zIndex: 1 }}>
-                <span style={{ fontWeight: 800, color: "var(--ik-muted)" }}>Age mode:</span>
-                {(
-                  [
-                    ["young", "3-6"],
-                    ["mid", "7-9"],
-                    ["older", "10-12"],
-                  ] as const
-                ).map(([id, label]) => (
-                  <motion.button
-                    key={id}
-                    type="button"
-                    className="ik-btn"
-                    style={{
-                      padding: "8px 14px",
-                      fontSize: "0.9rem",
-                      background: ageBand === id ? "var(--ik-emerald)" : "#fff",
-                      color: ageBand === id ? "#fff" : "var(--ik-emerald)",
-                    }}
-                    whileHover={{ scale: 1.06, y: -2 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setAgeBand(id)}
-                  >
-                    {label}
-                  </motion.button>
-                ))}
+                <motion.button
+                  type="button"
+                  className="ik-mascot ik-mascot-button"
+                  aria-label="Greet Noori"
+                  onClick={() => {
+                    setHeroGreeting("Wa Alaikum Assalam! Choose a lesson and let’s learn.");
+                    window.setTimeout(() => setHeroGreeting("Noori is ready for the next adventure"), 2600);
+                  }}
+                  whileTap={{ scale: 0.94 }}
+                >
+                  <NooriMascot mood="cheer" action="wave" size={110} lookAt="left" caption={heroGreeting} />
+                </motion.button>
               </div>
 
               <h2 className="ik-section-title">Start with Beginner</h2>
-              {renderTopicGrid("beginner")}
+              {renderTopicGrid("beginner", 5)}
 
               <div className="ik-actions" style={{ justifyContent: "flex-start", marginTop: 28 }}>
                 <button type="button" className="ik-btn ik-btn-primary" onClick={() => setView("beginner")}>
@@ -279,15 +296,15 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
                 setView(level);
                 setActiveTopicId(null);
               }}
-              onComplete={(correct, total) => {
+              onComplete={(correct, total) =>
                 finishLesson(
                   activeLesson.id,
                   activeLesson.topicId,
                   correct,
                   total,
                   activeLesson.badgeId,
-                );
-              }}
+                )
+              }
             />
           )}
 
@@ -302,12 +319,13 @@ export default function IslamicKnowledgeShell({ surface = "admin" }: { surface?:
                 <span className="ik-chip">{progress.completedLessonIds.length} lessons</span>
               </div>
               {progress.weakTopicIds.length > 0 && (
-                <p style={{ color: "var(--ik-muted)" }}>
-                  Practice again:{" "}
-                  {progress.weakTopicIds
-                    .map((id) => ALL_TOPICS.find((t) => t.id === id)?.shortTitle ?? id)
-                    .join(", ")}
-                </p>
+                <div className="ik-weak-topics">
+                  <strong>Practice again with Noori:</strong>
+                  {progress.weakTopicIds.map((id) => {
+                    const topic = ALL_TOPICS.find((item) => item.id === id);
+                    return topic ? <button key={id} type="button" onClick={() => openTopic(topic)}>{topic.emoji} {topic.shortTitle}</button> : null;
+                  })}
+                </div>
               )}
               <div className="ik-badge-grid" style={{ marginTop: 16 }}>
                 {progress.badges.map((badge) => (

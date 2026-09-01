@@ -6,23 +6,19 @@ import DialogueBubble from "../components/DialogueBubble";
 import MagicalScene from "../components/MagicalScene";
 import NooriMascot, { type NooriAction, type NooriMood } from "../components/NooriMascot";
 import SparkBurst from "../components/SparkBurst";
+import StepVisual from "../components/StepVisual";
 import { buildDialogueForStep } from "../lib/dialogue";
-import type { IKLesson, IKQuestion } from "../types";
+import { pickQuestions } from "../lib/quiz";
+import { cancelKnowledgeSpeech, speakKnowledgeText, unlockKnowledgeSpeech } from "../audio/speech";
+import type { AgeBand, IKLesson, IKLessonReward } from "../types";
+
+const VOICE_STORAGE_KEY = "noorpath-ik-voice";
 
 interface LessonPlayerProps {
   lesson: IKLesson;
-  ageBand: "young" | "mid" | "older";
+  ageBand: AgeBand;
   onBack: () => void;
-  onComplete: (correct: number, total: number) => void;
-}
-
-function pickQuestions(questions: IKQuestion[], ageBand: LessonPlayerProps["ageBand"]): IKQuestion[] {
-  const easy = questions.filter((q) => q.difficulty === "easy");
-  const medium = questions.filter((q) => q.difficulty === "medium");
-  const hard = questions.filter((q) => q.difficulty === "hard");
-  if (ageBand === "young") return [...easy, ...medium].slice(0, 3);
-  if (ageBand === "mid") return [...easy, ...medium, ...hard].slice(0, 4);
-  return [...medium, ...hard, ...easy].slice(0, 5);
+  onComplete: (correct: number, total: number) => IKLessonReward;
 }
 
 export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: LessonPlayerProps) {
@@ -39,6 +35,11 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
   const [selected, setSelected] = useState<string | null>(null);
   const [fillValue, setFillValue] = useState("");
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const [attempts, setAttempts] = useState(0);
+  const [answerSettled, setAnswerSettled] = useState(false);
+  const [matchingAnswers, setMatchingAnswers] = useState<Record<string, string>>({});
+  const [sortOrder, setSortOrder] = useState<string[]>([]);
+  const [reward, setReward] = useState<IKLessonReward | null>(null);
   const [stars, setStars] = useState<1 | 2 | 3>(1);
   const [spark, setSpark] = useState(false);
   const [shake, setShake] = useState(false);
@@ -46,11 +47,17 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
   const [nooriAction, setNooriAction] = useState<NooriAction>("wave");
   const [nooriMood, setNooriMood] = useState<NooriMood>("happy");
   const [sceneKey, setSceneKey] = useState(0);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setVoiceEnabled(window.localStorage.getItem(VOICE_STORAGE_KEY) !== "off");
+  }, []);
 
   const step = lesson.steps[stepIndex];
   const dialogue = useMemo(
-    () => (step ? buildDialogueForStep(step, stepIndex) : []),
-    [step, stepIndex],
+    () => (step ? buildDialogueForStep(step, stepIndex, ageBand) : []),
+    [ageBand, step, stepIndex],
   );
   const line = dialogue[lineIndex];
   const question = quiz[qIndex];
@@ -59,15 +66,50 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
 
   useEffect(() => {
     setTypedReady(false);
-    setNooriMood(line?.kind === "cheer" ? "cheer" : line?.kind === "challenge" ? "listen" : "happy");
-    setNooriAction(line?.kind === "challenge" ? "point" : lineIndex === 0 ? "wave" : "idle");
-  }, [line?.id, line?.kind, lineIndex]);
+    const curriculumMood = step?.mascotMood as NooriMood | undefined;
+    setNooriMood(line?.kind === "cheer" ? "cheer" : line?.kind === "challenge" ? "listen" : curriculumMood ?? "happy");
+    setNooriAction(line?.kind === "challenge" ? "point" : step?.type === "mascot" ? "wave" : lineIndex === 0 ? "listen" : "idle");
+  }, [line?.id, line?.kind, lineIndex, step?.mascotMood, step?.type]);
+
+  useEffect(() => {
+    setSortOrder(question?.kind === "sorting" ? question.options?.map((option) => option.id) ?? [] : []);
+    setMatchingAnswers({});
+  }, [question?.id, question?.kind, question?.options]);
+
+  useEffect(() => () => cancelKnowledgeSpeech(), []);
+
+  useEffect(() => {
+    if (!voiceEnabled || phase !== "learn" || !line?.text) return;
+    void speakKnowledgeText(line.text, ageBand === "young" ? 0.82 : ageBand === "older" ? 0.94 : 0.88);
+  }, [ageBand, line?.id, line?.text, phase, voiceEnabled]);
+
+  useEffect(() => {
+    if (!voiceEnabled || phase !== "quiz" || !question) return;
+    const choices = question.options?.map((option, index) => `Option ${index + 1}: ${option.label}`).join(". ");
+    const matches = question.pairs?.map((pair) => pair.left).join(", ");
+    const matchChoices = question.pairs?.map((pair) => pair.right).join(", ");
+    const speech = [
+      question.prompt,
+      choices,
+      question.kind === "matching" && matches ? `Match these items: ${matches}. Choices: ${matchChoices}.` : "",
+      question.kind === "sorting" ? "Put the choices in the correct order." : "",
+    ].filter(Boolean).join(" ");
+    void speakKnowledgeText(speech, ageBand === "young" ? 0.82 : 0.9);
+  }, [ageBand, phase, question, voiceEnabled]);
+
+  useEffect(() => {
+    if (!voiceEnabled || phase !== "done") return;
+    void speakKnowledgeText(
+      `MashaAllah! You finished ${lesson.title}. You answered ${correct} out of ${quiz.length} questions correctly and earned ${stars} ${stars === 1 ? "star" : "stars"}.`,
+      0.9,
+    );
+  }, [correct, lesson.title, phase, quiz.length, stars, voiceEnabled]);
 
   function celebrateSoft() {
     setSpark(true);
     setShake(true);
     setBalloons(true);
-    setNooriAction("bounce");
+    setNooriAction("clap");
     setNooriMood("cheer");
     window.setTimeout(() => setSpark(false), 800);
     window.setTimeout(() => setShake(false), 450);
@@ -108,46 +150,87 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
     setTypedReady(true);
   }
 
-  function checkAnswer(answer: string) {
-    if (!question || feedback) return;
+  function normalizeAnswer(value: string) {
+    return value.trim().toLowerCase().replace(/[^\w\u0600-\u06FF]/g, "");
+  }
+
+  function isAnswerCorrect(answer: string | string[] | Record<string, string>): boolean {
+    if (!question) return false;
+    if (question.kind === "matching") {
+      return Boolean(question.pairs?.every((pair) => !Array.isArray(answer) && typeof answer === "object" && answer[pair.left] === pair.right));
+    }
+    if (question.kind === "sorting") {
+      return Array.isArray(answer) && Boolean(question.order?.every((id, index) => answer[index] === id));
+    }
     const expected = Array.isArray(question.answer) ? question.answer[0] : question.answer;
-    const ok =
-      question.kind === "fill_blank"
-        ? answer.trim().toLowerCase().replace(/[^\w\u0600-\u06FF]/g, "") ===
-          String(expected).toLowerCase().replace(/[^\w\u0600-\u06FF]/g, "")
-        : answer === expected;
+    return question.kind === "fill_blank"
+      ? normalizeAnswer(String(answer)) === normalizeAnswer(String(expected))
+      : answer === expected;
+  }
+
+  function checkAnswer(answer: string | string[] | Record<string, string>) {
+    if (!question || feedback) return;
+    const ok = isAnswerCorrect(answer);
 
     if (ok) {
       setFeedback("correct");
+      setAnswerSettled(true);
       setCorrect((c) => c + 1);
       celebrateSoft();
+      if (voiceEnabled) void speakKnowledgeText(`Correct. ${question.explanation ?? question.hint ?? "Well done."}`);
     } else {
       setFeedback("wrong");
+      setAnswerSettled(attempts >= 1);
+      setAttempts((count) => count + 1);
       setNooriMood("sad");
       setNooriAction("idle");
-    }
-
-    window.setTimeout(() => {
-      const nextCorrect = ok ? correct + 1 : correct;
-      if (qIndex < quiz.length - 1) {
-        setQIndex((i) => i + 1);
-        setSelected(null);
-        setFillValue("");
-        setFeedback(null);
-        setNooriAction("point");
-        setNooriMood("happy");
-      } else {
-        const total = quiz.length;
-        const ratio = total > 0 ? nextCorrect / total : 1;
-        const s: 1 | 2 | 3 = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : 1;
-        setStars(s);
-        setPhase("done");
-        setNooriAction("bounce");
-        setNooriMood("cheer");
-        celebrateSoft();
-        onComplete(nextCorrect, total);
+      if (voiceEnabled) {
+        const message = attempts === 0
+          ? `Not quite. Here is Noori's hint. ${question.hint ?? "Look carefully and try once more."}`
+          : `The correct answer is now highlighted. ${question.explanation ?? question.hint ?? ""}`;
+        void speakKnowledgeText(message);
       }
-    }, ok ? 1000 : 1200);
+    }
+  }
+
+  function resetQuestionInteraction() {
+    setSelected(null);
+    setFillValue("");
+    setFeedback(null);
+    setAnswerSettled(false);
+    setMatchingAnswers({});
+    setSortOrder([]);
+    setNooriAction("point");
+    setNooriMood("happy");
+  }
+
+  function retryQuestion() {
+    setSelected(null);
+    setFillValue("");
+    setMatchingAnswers({});
+    setFeedback(null);
+    setAnswerSettled(false);
+    setNooriAction("point");
+    setNooriMood("hint");
+  }
+
+  function advanceQuestion() {
+    if (!answerSettled) return;
+    if (qIndex < quiz.length - 1) {
+      setQIndex((i) => i + 1);
+      setAttempts(0);
+      resetQuestionInteraction();
+      return;
+    }
+    const total = quiz.length;
+    const ratio = total > 0 ? correct / total : 1;
+    const nextStars: 1 | 2 | 3 = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : 1;
+    setStars(nextStars);
+    setReward(onComplete(correct, total));
+    setPhase("done");
+    setNooriAction("clap");
+    setNooriMood("cheer");
+    celebrateSoft();
   }
 
   const ctaLabel = (() => {
@@ -165,7 +248,7 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
       animate={shake && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <MagicalScene />
+      <MagicalScene topicId={lesson.topicId} />
       {balloons && !reduce && (
         <div className="ik-balloons" aria-hidden>
           {["🎈", "⭐", "✨", "🌙", "🎈"].map((b, i) => (
@@ -183,9 +266,39 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
         </div>
       )}
 
-      <button type="button" className="ik-back ik-hover-lift" onClick={onBack}>
-        ← Back
-      </button>
+      <div className="ik-lesson-toolbar">
+        <button type="button" className="ik-back ik-hover-lift" onClick={onBack}>← Back</button>
+        <button
+          type="button"
+          className="ik-voice-toggle"
+          aria-pressed={voiceEnabled}
+          onClick={() => {
+            unlockKnowledgeSpeech();
+            setVoiceEnabled((enabled) => {
+              if (enabled) cancelKnowledgeSpeech();
+              window.localStorage.setItem(VOICE_STORAGE_KEY, enabled ? "off" : "on");
+              return !enabled;
+            });
+          }}
+        >
+          {voiceEnabled ? "🔊 Voice on" : "🔇 Voice off"}
+        </button>
+        <button
+          type="button"
+          className="ik-voice-toggle"
+          onClick={() => {
+            unlockKnowledgeSpeech();
+            const text = phase === "learn"
+              ? line?.text
+              : phase === "quiz"
+                ? `${question?.prompt ?? ""}. ${question?.options?.map((option) => option.label).join(". ") ?? ""}`
+                : "MashaAllah. You completed the lesson.";
+            if (text) void speakKnowledgeText(text);
+          }}
+        >
+          ↻ Read again
+        </button>
+      </div>
 
       <div className="ik-dialogue-stage">
         <aside className="ik-dialogue-buddy">
@@ -218,16 +331,17 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                 >
                   <SparkBurst show={spark} />
 
-                  {(isChallenge || step?.emoji) && (
+                  {step && (
                     <motion.button
                       type="button"
-                      className={`ik-tap-object ${isChallenge && !challengeDone ? "ik-tap-pulse" : ""}`}
-                      whileHover={{ scale: 1.1, rotate: [-3, 3, 0] }}
+                      className={`ik-visual-button ${isChallenge && !challengeDone ? "ik-tap-pulse" : ""}`}
+                      whileHover={{ scale: 1.025 }}
                       whileTap={{ scale: 0.92 }}
                       onClick={isChallenge ? onChallengeTap : undefined}
-                      aria-label={isChallenge ? "Tap to reveal" : "Lesson picture"}
+                      aria-label={isChallenge ? `Explore ${step.title ?? "this lesson visual"}` : `${step.title ?? "Lesson"} visual`}
+                      aria-disabled={!isChallenge}
                     >
-                      <span className="ik-tap-object-emoji">{step?.emoji || "⭐"}</span>
+                      <StepVisual topicId={lesson.topicId} step={step} />
                       {isChallenge && !challengeDone && <span className="ik-tap-hint">👆 Tap!</span>}
                       {challengeDone && isChallenge && <span className="ik-tap-hint">🎉 Yay!</span>}
                     </motion.button>
@@ -300,23 +414,27 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                     kind="talk"
                     onTyped={() => setTypedReady(true)}
                   />
-                  {feedback === "wrong" && (
-                    <DialogueBubble text="Let's try together 😊" emoji="💛" kind="cheer" />
+                  {feedback === "wrong" && !answerSettled && (
+                    <DialogueBubble text={question.hint ? `Noori's hint: ${question.hint}` : "Look closely and try once more."} emoji="💡" kind="talk" />
+                  )}
+                  {feedback === "wrong" && answerSettled && (
+                    <DialogueBubble text={question.explanation ?? question.hint ?? "Let's remember the correct answer for next time."} emoji="💛" kind="talk" />
                   )}
                   {feedback === "correct" && (
-                    <DialogueBubble text="Amazing! Great job!!" emoji="🎉" kind="cheer" />
+                    <DialogueBubble text={question.explanation ? `Correct! ${question.explanation}` : "Correct! You thought carefully."} emoji="🎉" kind="cheer" />
                   )}
 
                   {(question.kind === "mcq" || question.kind === "true_false" || question.kind === "tap_select") && (
-                    <div className="ik-options ik-options-play">
+                    <fieldset className="ik-options ik-options-play" aria-describedby={`${question.id}-feedback`}>
+                      <legend className="ik-sr-only">Choose one answer</legend>
                       {question.options?.map((opt, idx) => {
-                        const isAnswer = opt.id === question.answer;
+                        const isAnswer = Array.isArray(question.answer) ? question.answer.includes(opt.id) : opt.id === question.answer;
                         const cls =
                           feedback && selected === opt.id
                             ? feedback === "correct"
                               ? "correct"
                               : "soft-miss"
-                            : feedback === "wrong" && isAnswer
+                            : feedback === "wrong" && answerSettled && isAnswer
                               ? "correct"
                               : "";
                         return (
@@ -338,12 +456,14 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                           </motion.button>
                         );
                       })}
-                    </div>
+                    </fieldset>
                   )}
 
                   {question.kind === "fill_blank" && (
                     <>
+                      <label className="ik-question-label" htmlFor={`${question.id}-answer`}>Type the missing word</label>
                       <input
+                        id={`${question.id}-answer`}
                         className="ik-fill-input"
                         value={fillValue}
                         placeholder="Type here…"
@@ -360,6 +480,84 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
                       </motion.button>
                     </>
                   )}
+
+                  {question.kind === "matching" && (
+                    <div className="ik-match-grid" role="group" aria-label="Match each item">
+                      {question.pairs?.map((pair) => (
+                        <label key={pair.left} className="ik-match-row">
+                          <span>{pair.left}</span>
+                          <select
+                            value={matchingAnswers[pair.left] ?? ""}
+                            disabled={!!feedback}
+                            onChange={(event) => setMatchingAnswers((current) => ({ ...current, [pair.left]: event.target.value }))}
+                          >
+                            <option value="">Choose a match</option>
+                            {[...(question.pairs ?? [])].reverse().map((choice) => (
+                              <option key={choice.right} value={choice.right}>{choice.right}</option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+                      <button
+                        type="button"
+                        className="ik-btn ik-btn-primary"
+                        disabled={!!feedback || Object.keys(matchingAnswers).length !== question.pairs?.length}
+                        onClick={() => checkAnswer(matchingAnswers)}
+                      >
+                        Check matches
+                      </button>
+                    </div>
+                  )}
+
+                  {question.kind === "sorting" && (
+                    <div className="ik-sort-list" role="group" aria-label="Put the items in order">
+                      {sortOrder.map((id, index) => {
+                        const item = question.options?.find((option) => option.id === id);
+                        return (
+                          <div key={id} className="ik-sort-row">
+                            <span className="ik-option-letter">{index + 1}</span>
+                            <strong>{item?.label}</strong>
+                            <span className="ik-sort-actions">
+                              <button
+                                type="button"
+                                aria-label={`Move ${item?.label} up`}
+                                disabled={!!feedback || index === 0}
+                                onClick={() => setSortOrder((current) => {
+                                  const next = [...current];
+                                  [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                                  return next;
+                                })}
+                              >↑</button>
+                              <button
+                                type="button"
+                                aria-label={`Move ${item?.label} down`}
+                                disabled={!!feedback || index === sortOrder.length - 1}
+                                onClick={() => setSortOrder((current) => {
+                                  const next = [...current];
+                                  [next[index + 1], next[index]] = [next[index], next[index + 1]];
+                                  return next;
+                                })}
+                              >↓</button>
+                            </span>
+                          </div>
+                        );
+                      })}
+                      <button type="button" className="ik-btn ik-btn-primary" disabled={!!feedback || sortOrder.length === 0} onClick={() => checkAnswer(sortOrder)}>
+                        Check order
+                      </button>
+                    </div>
+                  )}
+
+                  <div id={`${question.id}-feedback`} className="ik-quiz-actions" aria-live="polite">
+                    {feedback === "wrong" && !answerSettled && (
+                      <button type="button" className="ik-btn ik-btn-primary" onClick={retryQuestion}>Try again with Noori's hint</button>
+                    )}
+                    {answerSettled && (
+                      <button type="button" className="ik-btn ik-btn-primary" onClick={advanceQuestion}>
+                        {qIndex < quiz.length - 1 ? "Next question →" : "See my results →"}
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </>
@@ -375,12 +573,19 @@ export default function LessonPlayer({ lesson, ageBand, onBack, onComplete }: Le
               <DialogueBubble text="MashaAllah! You did it!" emoji="🏆" kind="cheer" />
               <div className="ik-stars">{"⭐".repeat(stars)}</div>
               <div className="ik-reward-row">
-                <span className="ik-chip">+XP</span>
-                <span className="ik-chip">+Coins</span>
+                <span className="ik-chip">+{reward?.earnedXp ?? 0} XP</span>
+                <span className="ik-chip">+{reward?.earnedCoins ?? 0} Coins</span>
                 <span className="ik-chip">
                   {correct}/{quiz.length}
                 </span>
               </div>
+              {reward?.levelUp && <DialogueBubble text="Level up! Your learning journey is growing." emoji="🌟" kind="cheer" />}
+              {reward && reward.newBadges.length > 0 && (
+                <div className="ik-unlocked-badges" aria-live="polite">
+                  <strong>New badge{reward.newBadges.length > 1 ? "s" : ""} unlocked</strong>
+                  <span>{reward.newBadges.map((id) => id.replaceAll("-", " ")).join(" · ")}</span>
+                </div>
+              )}
               <motion.button
                 type="button"
                 className="ik-btn ik-btn-primary ik-btn-pulse"

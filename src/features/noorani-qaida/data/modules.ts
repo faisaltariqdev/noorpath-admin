@@ -7,6 +7,7 @@ import type {
 } from "../types";
 import { LETTERS } from "./curriculum";
 import { DAILY_DUAS_LESSONS } from "./dailyDuas";
+import { KALMA_LESSONS } from "./kalmas";
 import { NAMAZ_LESSONS } from "./namaz";
 import { ALIF_PRONUNCIATION, QAIDA_PRONUNCIATIONS } from "./pronunciation";
 
@@ -385,6 +386,7 @@ export const TOPIC_LESSONS: TopicLesson[] = [
   // Additive modules — existing Qaida lessons above stay unchanged
   ...DAILY_DUAS_LESSONS,
   ...NAMAZ_LESSONS,
+  ...KALMA_LESSONS,
 ];
 
 const screens = (moduleId: ModuleId) =>
@@ -404,7 +406,13 @@ export const CURRICULUM_MODULES: QaidaModule[] = [
   { id: "final-review", order: 11, title: "Final Review", arabicTitle: "المُرَاجَعَةُ النِّهَائِيَّة", description: "Complete the assessment with teacher and parent review.", icon: "🏆", accent: "from-amber-500 to-yellow-600", prerequisite: "revision", screenIds: [...screens("final-review"), "certificate"], reviewStatus: pending },
   { id: "daily-duas", order: 12, title: "Daily Duas", arabicTitle: "الأَدْعِيَةُ اليَوْمِيَّة", description: "Learn everyday duas — eating, home, travel, sleep, and more — with English meaning.", icon: "دُعَا", accent: "from-teal-500 to-cyan-600", prerequisite: "final-review", screenIds: screens("daily-duas"), reviewStatus: pending },
   { id: "namaz", order: 13, title: "Namaz", arabicTitle: "الصَّلَاة", description: "Learn wudu and salah step by step with visual postures and English translation.", icon: "صَلاة", accent: "from-green-600 to-emerald-800", prerequisite: "daily-duas", screenIds: screens("namaz"), reviewStatus: pending },
+  { id: "kalmas", order: 14, title: "6 Kalmas", arabicTitle: "الكَلِمَاتُ السِّتّ", description: "Learn all six Kalmas interactively with Arabic, transliteration, audio practice, and English translation.", icon: "كَلِمَة", accent: "from-amber-500 to-orange-600", screenIds: screens("kalmas"), reviewStatus: pending },
 ];
+
+/** Only the core Qaida chapters shown inside the Noorani Qaida book. */
+export const QAIDA_BOOK_MODULES = CURRICULUM_MODULES.filter(
+  (item) => item.id !== "daily-duas" && item.id !== "namaz" && item.id !== "kalmas",
+);
 
 export const TOPIC_LESSON_BY_ID = Object.fromEntries(
   TOPIC_LESSONS.map((item) => [item.id, item]),

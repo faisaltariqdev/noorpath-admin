@@ -2,7 +2,7 @@
 
 import { Lock, Play, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
-import { CURRICULUM_MODULES, TOPIC_LESSON_BY_ID } from "../data/modules";
+import { QAIDA_BOOK_MODULES, TOPIC_LESSON_BY_ID } from "../data/modules";
 import { qaidaAudio } from "../audio/QaidaAudioService";
 import { getModuleProgress, isCurriculumScreenUnlocked } from "../state/curriculumProgress";
 import type { ModuleId, QaidaProgress, ScreenId, TopicLesson } from "../types";
@@ -109,9 +109,9 @@ export default function CurriculumBook({
   reducedMotion,
   audioEnabled,
 }: CurriculumBookProps) {
-  const activeModule = CURRICULUM_MODULES.find((item) => item.screenIds.includes(currentScreenId));
+  const activeModule = QAIDA_BOOK_MODULES.find((item) => item.screenIds.includes(currentScreenId));
   const [moduleId, setModuleId] = useState<ModuleId>(activeModule?.id ?? "alphabet");
-  const chapter = CURRICULUM_MODULES.find((item) => item.id === moduleId) ?? CURRICULUM_MODULES[0];
+  const chapter = QAIDA_BOOK_MODULES.find((item) => item.id === moduleId) ?? QAIDA_BOOK_MODULES[0];
   const moduleProgress = getModuleProgress(progress, chapter.id);
 
   const pages = useMemo(() => {
@@ -151,7 +151,7 @@ export default function CurriculumBook({
   return (
     <div className="flex flex-col gap-4">
       <nav className="qaida-scroll flex gap-2 overflow-x-auto pb-1" aria-label="Qaida chapters">
-        {CURRICULUM_MODULES.map((item) => {
+        {QAIDA_BOOK_MODULES.map((item) => {
           const state = getModuleProgress(progress, item.id);
           const active = item.id === chapter.id;
           return (
@@ -178,7 +178,7 @@ export default function CurriculumBook({
 
       <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-emerald-900/10 bg-white/90 p-4 shadow-sm">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Module {chapter.order} of {CURRICULUM_MODULES.length}</p>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Module {chapter.order} of {QAIDA_BOOK_MODULES.length}</p>
           <h2 className="text-xl font-black text-slate-900">{chapter.title}</h2>
           <p className="text-sm text-slate-500">{chapter.description}</p>
         </div>
