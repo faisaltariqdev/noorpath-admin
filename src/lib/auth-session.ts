@@ -71,11 +71,11 @@ function decodeJwtPayload(token: string): { exp?: number } | null {
   }
 }
 
-export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+export async function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      promise.then((value) => value, () => null),
+      Promise.resolve(promise).then((value) => value, () => null),
       new Promise<null>((resolve) => {
         timer = setTimeout(() => resolve(null), ms);
       }),
