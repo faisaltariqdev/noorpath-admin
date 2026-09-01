@@ -1,8 +1,11 @@
 import type { SupportedStorage } from "@supabase/supabase-js";
+import {
+  AUTH_COOKIE_CHUNK_SIZE,
+  AUTH_MAX_COOKIE_CHUNKS,
+  compactAuthSession,
+} from "@/lib/auth-session";
 
 export const AUTH_STORAGE_KEY = "noorpath-admin-auth-v1";
-const COOKIE_CHUNK_SIZE = 3000;
-const MAX_COOKIE_CHUNKS = 8;
 
 function legacyStorageKey(): string | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,7 +34,7 @@ function readSessionCookie(name: string): string | null {
   const direct = readCookie(name);
   if (direct) return direct;
   const count = Number(readCookie(`${name}.chunks`));
-  if (!Number.isInteger(count) || count < 1 || count > MAX_COOKIE_CHUNKS) return null;
+  if (!Number.isInteger(count) || count < 1 || count > AUTH_MAX_COOKIE_CHUNKS) return null;
   const chunks = Array.from({ length: count }, (_, index) => readCookie(`${name}.${index}`));
   return chunks.every((chunk): chunk is string => chunk !== null) ? chunks.join("") : null;
 }
@@ -39,35 +42,36 @@ function readSessionCookie(name: string): string | null {
 function clearSessionCookie(name: string): void {
   writeRawCookie(name, "", 0);
   writeRawCookie(`${name}.chunks`, "", 0);
-  for (let index = 0; index < MAX_COOKIE_CHUNKS; index += 1) {
+  for (let index = 0; index < AUTH_MAX_COOKIE_CHUNKS; index += 1) {
     writeRawCookie(`${name}.${index}`, "", 0);
   }
 }
 
 function writeSessionCookie(name: string, value: string): void {
   clearSessionCookie(name);
-  if (value.length <= COOKIE_CHUNK_SIZE) {
-    writeRawCookie(name, value);
+  const compact = compactAuthSession(value);
+  if (compact.length <= AUTH_COOKIE_CHUNK_SIZE) {
+    writeRawCookie(name, compact);
     return;
   }
-  const chunks = value.match(new RegExp(`.{1,${COOKIE_CHUNK_SIZE}}`, "g")) ?? [];
-  if (chunks.length > MAX_COOKIE_CHUNKS) return;
+  const chunks = compact.match(new RegExp(`.{1,${AUTH_COOKIE_CHUNK_SIZE}}`, "g")) ?? [];
+  if (chunks.length > AUTH_MAX_COOKIE_CHUNKS) return;
   writeRawCookie(`${name}.chunks`, String(chunks.length));
   chunks.forEach((chunk, index) => writeRawCookie(`${name}.${index}`, chunk));
 }
 
 /**
- * Supabase's browser client remains the session owner, while mirroring its
- * session into a same-site cookie so Next middleware/server components can
- * enforce authorization. The one-time fallback preserves existing sessions
- * created by the previous localStorage-only client.
+ * Supabase's browser client remains the session owner, while mirroring a
+ * compact same-site cookie so Next middleware/server components can
+ * authorize without waiting on Auth API. Prefer localStorage on the client
+ * so a dropped/oversized cookie cannot hide a valid session.
  */
 export const browserAuthStorage: SupportedStorage = {
   getItem(key) {
-    const cookieValue = readSessionCookie(key);
-    if (cookieValue) return cookieValue;
-
     try {
+      const local = window.localStorage.getItem(key);
+      if (local) return local;
+
       const legacyKey = legacyStorageKey();
       const migrated = legacyKey ? window.localStorage.getItem(legacyKey) : null;
       if (migrated) {
@@ -75,10 +79,10 @@ export const browserAuthStorage: SupportedStorage = {
         writeSessionCookie(key, migrated);
         return migrated;
       }
-      return window.localStorage.getItem(key);
     } catch {
-      return null;
+      // Fall through to the cookie copy.
     }
+    return readSessionCookie(key);
   },
   setItem(key, value) {
     try {

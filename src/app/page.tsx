@@ -1,48 +1,47 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { parseRole, withTimeout } from "@/lib/auth-session";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
-  const router = useRouter();
-
   useEffect(() => {
     let cancelled = false;
-    const goLogin = () => {
-      if (!cancelled) router.replace("/login");
+    const go = (path: string) => {
+      if (!cancelled) window.location.replace(path);
     };
 
-    const timeout = window.setTimeout(goLogin, 8000);
+    const timeout = window.setTimeout(() => go("/login"), 4000);
 
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        if (cancelled) return;
-        if (!session) {
-          goLogin();
-          return;
-        }
-        return supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single()
-          .then(({ data }) => {
-            if (cancelled) return;
-            if (data?.role === "admin") router.replace("/admin");
-            else if (data?.role === "tutor") router.replace("/tutor");
-            else router.replace("/parent");
-          });
-      })
-      .catch(goLogin)
-      .finally(() => window.clearTimeout(timeout));
+    void (async () => {
+      const result = await withTimeout(supabase.auth.getSession(), 2500);
+      if (cancelled) return;
+      const session = result?.data.session;
+      if (!session) {
+        go("/login");
+        return;
+      }
+
+      const metaRole = parseRole(session.user.user_metadata?.role);
+      if (metaRole) {
+        go(`/${metaRole}`);
+        return;
+      }
+
+      const profile = await withTimeout(
+        supabase.from("profiles").select("role").eq("id", session.user.id).single(),
+        2000,
+      );
+      if (cancelled) return;
+      const role = parseRole(profile?.data?.role) || "parent";
+      go(`/${role}`);
+    })().finally(() => window.clearTimeout(timeout));
 
     return () => {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [router]);
+  }, []);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f1f5f9", flexDirection: "column", gap: 16 }}>

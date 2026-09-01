@@ -68,11 +68,32 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
+      try {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       const tomorrowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
+      const results = await Promise.race([
+        Promise.all([
+          supabase.from("students").select("*", { count: "exact", head: true }).eq("is_active", true),
+          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "tutor").eq("is_active", true),
+          supabase.from("class_sessions").select("*", { count: "exact", head: true }).gte("scheduled_at", todayStart).lt("scheduled_at", tomorrowStart),
+          supabase.from("students").select("*", { count: "exact", head: true }).in("trial_status", ["booked", "attended"]),
+          supabase.from("fees").select("amount").eq("status", "paid").gte("paid_date", monthStart),
+          supabase.from("attendance").select("status").gte("session_date", monthStart.slice(0, 10)),
+          supabase.from("students").select("id,full_name,course,trial_status,enrolled_at").order("enrolled_at", { ascending: false }).limit(6),
+          supabase.from("fees").select("id,amount,currency,paid_date,student:students(full_name)").eq("status", "paid").order("paid_date", { ascending: false }).limit(6),
+          supabase.from("class_sessions").select("id,scheduled_at,status,student:students(full_name),tutor:profiles(full_name)").gte("scheduled_at", todayStart).lt("scheduled_at", tomorrowStart).order("scheduled_at").limit(8),
+          supabase.from("announcements").select("id,title,message,created_at").order("created_at", { ascending: false }).limit(4),
+          supabase.from("progress_reports").select("id,overall_rating,created_at,student:students(full_name),tutor:profiles(full_name)").order("created_at", { ascending: false }).limit(5),
+        ]),
+        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 8000)),
+      ]);
+      if (!results) {
+        setLoading(false);
+        return;
+      }
       const [
         { count: activeStudents },
         { count: activeTeachers },
@@ -85,19 +106,7 @@ export default function AdminDashboard() {
         { data: classes },
         { data: announcements },
         { data: reports },
-      ] = await Promise.all([
-        supabase.from("students").select("*", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "tutor").eq("is_active", true),
-        supabase.from("class_sessions").select("*", { count: "exact", head: true }).gte("scheduled_at", todayStart).lt("scheduled_at", tomorrowStart),
-        supabase.from("students").select("*", { count: "exact", head: true }).in("trial_status", ["booked", "attended"]),
-        supabase.from("fees").select("amount").eq("status", "paid").gte("paid_date", monthStart),
-        supabase.from("attendance").select("status").gte("session_date", monthStart.slice(0, 10)),
-        supabase.from("students").select("id,full_name,course,trial_status,enrolled_at").order("enrolled_at", { ascending: false }).limit(6),
-        supabase.from("fees").select("id,amount,currency,paid_date,student:students(full_name)").eq("status", "paid").order("paid_date", { ascending: false }).limit(6),
-        supabase.from("class_sessions").select("id,scheduled_at,status,student:students(full_name),tutor:profiles(full_name)").gte("scheduled_at", todayStart).lt("scheduled_at", tomorrowStart).order("scheduled_at").limit(8),
-        supabase.from("announcements").select("id,title,message,created_at").order("created_at", { ascending: false }).limit(4),
-        supabase.from("progress_reports").select("id,overall_rating,created_at,student:students(full_name),tutor:profiles(full_name)").order("created_at", { ascending: false }).limit(5),
-      ]);
+      ] = results;
 
       const attendanceRows = attendance || [];
       const attended = attendanceRows.filter((row) => row.status === "present" || row.status === "late").length;
@@ -124,7 +133,11 @@ export default function AdminDashboard() {
           rating: row.overall_rating,
         })),
       });
-      setLoading(false);
+      } catch {
+        // Keep empty dashboard rather than an infinite spinner.
+      } finally {
+        setLoading(false);
+      }
     }
 
     load();

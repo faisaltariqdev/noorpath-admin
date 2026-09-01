@@ -2,8 +2,8 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { parseRole, withTimeout } from "@/lib/auth-session";
 import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff, Loader2, Mail, Lock, ShieldCheck, BookOpen, Heart } from "lucide-react";
 
@@ -16,7 +16,6 @@ const ROLES: { id: Role; label: string; subtitle: string; icon: React.ReactNode;
 ];
 
 export default function LoginPage() {
-  const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +30,17 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
+      const signedIn = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password }),
+        12000,
+      );
+      if (!signedIn) {
+        setError("Sign-in is taking too long. Please refresh and try again.");
+        setLoading(false);
+        return;
+      }
+
+      const { data, error: authErr } = signedIn;
       if (authErr) {
         setError(authErr.message === "Invalid login credentials"
           ? "Incorrect email or password. Please try again."
@@ -41,16 +50,17 @@ export default function LoginPage() {
       }
 
       // Role from user_metadata (set at account creation) - no DB query needed
-      const metaRole = data.user?.user_metadata?.role as Role | undefined;
-
-      // Fallback: try profiles table with authenticated session
-      let actualRole: Role = metaRole || selectedRole;
-      if (!metaRole) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
-        if (profile?.role) actualRole = profile.role as Role;
+      let actualRole: Role = parseRole(data.user?.user_metadata?.role) || selectedRole;
+      if (!parseRole(data.user?.user_metadata?.role) && data.user?.id) {
+        const profile = await withTimeout(
+          supabase.from("profiles").select("role").eq("id", data.user.id).single(),
+          3000,
+        );
+        const profileRole = parseRole(profile?.data?.role);
+        if (profileRole) actualRole = profileRole;
       }
 
-      router.replace(`/${actualRole}`);
+      window.location.assign(`/${actualRole}`);
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
