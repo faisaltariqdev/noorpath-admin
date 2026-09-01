@@ -13,12 +13,13 @@ export function currencyForCountry(country?: string | null): string {
   ) {
     return "GBP";
   }
-  if (c.includes("euro") || c.includes("germany") || c.includes("france") || c.includes("netherlands") || c.includes("ireland") || c.includes("spain") || c.includes("italy")) {
+  if (c.includes("euro") || c.includes("finland") || c.includes("helsinki") || c.includes("germany") || c.includes("france") || c.includes("netherlands") || c.includes("ireland") || c.includes("spain") || c.includes("italy")) {
     return "EUR";
   }
+  if (c.includes("nigeria") || c.includes("lagos") || c.includes("abuja") || c === "ng") return "NGN";
   if (c.includes("pakistan") || c === "pk") return "PKR";
   if (c.includes("uae") || c.includes("dubai") || c.includes("emirates")) return "AED";
-  if (c.includes("saudi")) return "SAR";
+  if (c.includes("saudi") || c.includes("saudia") || c === "ksa") return "SAR";
   if (c.includes("qatar")) return "QAR";
   if (c.includes("kuwait")) return "KWD";
   if (c.includes("canada")) return "CAD";

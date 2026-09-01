@@ -281,7 +281,7 @@ export default function UsersPage() {
           </div>
         ))}
         <datalist id={`${kind}-availability-timezones`}>
-          {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+          {TIMEZONE_OPTIONS.map(option => <option key={`${option.country}-${option.timezone}`} value={option.timezone}>{option.label}</option>)}
         </datalist>
       </div>
     );
@@ -371,7 +371,7 @@ export default function UsersPage() {
               {TIMEZONE_OPTIONS.map(option => <option key={option.country} value={option.country}>{option.label}</option>)}
             </datalist>
             <datalist id="checker-timezone-suggestions">
-              {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+              {TIMEZONE_OPTIONS.map(option => <option key={`${option.country}-${option.timezone}`} value={option.timezone}>{option.label}</option>)}
             </datalist>
             {availableTutors.length === 0 ? (
               <div style={{ color: "#64748b", fontSize: "0.82rem", background: "#f8fafc", border: "1px dashed var(--border)", borderRadius: 12, padding: 14 }}>
@@ -515,7 +515,7 @@ export default function UsersPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                   <div className="form-group">
                     <label className="form-label">Country</label>
-                    <input className="form-input" list="country-suggestions" value={form.country} onChange={e => handleCreateCountry(e.target.value)} placeholder="UK, USA, Pakistan..." />
+                    <input className="form-input" list="country-suggestions" value={form.country} onChange={e => handleCreateCountry(e.target.value)} placeholder="Nigeria, UAE, Finland, Saudi..." />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Timezone</label>
@@ -526,7 +526,7 @@ export default function UsersPage() {
                   {TIMEZONE_OPTIONS.map(option => <option key={option.country} value={option.country}>{option.label}</option>)}
                 </datalist>
                 <datalist id="timezone-suggestions">
-                  {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+                  {TIMEZONE_OPTIONS.map(option => <option key={`${option.country}-${option.timezone}`} value={option.timezone}>{option.label}</option>)}
                 </datalist>
                 <div className="form-group" style={{ marginBottom: 24 }}>
                   <label className="form-label">Temporary Password</label>
@@ -585,7 +585,7 @@ export default function UsersPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                   <div className="form-group">
                     <label className="form-label">Country</label>
-                    <input className="form-input" list="edit-country-suggestions" value={editForm.country} onChange={e => handleEditCountry(e.target.value)} placeholder="UK, USA, Pakistan..." />
+                    <input className="form-input" list="edit-country-suggestions" value={editForm.country} onChange={e => handleEditCountry(e.target.value)} placeholder="Nigeria, UAE, Finland, Saudi..." />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Timezone</label>
@@ -596,7 +596,7 @@ export default function UsersPage() {
                   {TIMEZONE_OPTIONS.map(option => <option key={option.country} value={option.country}>{option.label}</option>)}
                 </datalist>
                 <datalist id="edit-timezone-suggestions">
-                  {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+                  {TIMEZONE_OPTIONS.map(option => <option key={`${option.country}-${option.timezone}`} value={option.timezone}>{option.label}</option>)}
                 </datalist>
                 <div className="form-group" style={{ background: "#f8fafc", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 24 }}>
                   <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 7 }}>

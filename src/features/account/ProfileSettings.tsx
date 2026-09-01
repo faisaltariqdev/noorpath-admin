@@ -18,14 +18,14 @@ interface Profile {
 }
 
 const timezones = [
-  "UTC", "Europe/London", "Europe/Paris", "America/New_York", "America/Chicago",
-  "America/Los_Angeles", "Asia/Karachi", "Asia/Dubai", "Asia/Riyadh", "Asia/Kolkata",
+  "UTC", "Europe/London", "Europe/Helsinki", "Europe/Paris", "America/New_York", "America/Chicago",
+  "America/Los_Angeles", "Africa/Lagos", "Asia/Karachi", "Asia/Dubai", "Asia/Riyadh", "Asia/Kolkata",
   "Australia/Sydney",
 ];
 
 const countries = [
-  "Pakistan", "United Kingdom", "United States", "Canada", "Australia", "UAE",
-  "Saudi Arabia", "Qatar", "Germany", "France", "India", "Other",
+  "Nigeria", "Finland", "Pakistan", "United Kingdom", "United States", "Canada", "Australia",
+  "UAE", "Dubai", "Saudi Arabia", "Qatar", "Germany", "France", "India", "Other",
 ];
 
 export default function ProfileSettings() {

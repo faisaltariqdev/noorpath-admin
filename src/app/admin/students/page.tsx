@@ -320,7 +320,7 @@ export default function StudentsPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Country</label>
-                  <input className="form-input" list="student-country-suggestions" value={form.country} onChange={e => handleCountryChange(e.target.value)} placeholder="UK, USA, Pakistan..." />
+                  <input className="form-input" list="student-country-suggestions" value={form.country} onChange={e => handleCountryChange(e.target.value)} placeholder="Nigeria, UAE, Finland, Saudi..." />
                 </div>
                 <datalist id="student-country-suggestions">
                   {TIMEZONE_OPTIONS.map(option => <option key={option.country} value={option.country}>{option.label}</option>)}
@@ -366,7 +366,7 @@ export default function StudentsPage() {
                   <label className="form-label">Timezone</label>
                   <input className="form-input" list="student-timezone-suggestions" value={form.timezone} onChange={e => setForm(p => ({ ...p, timezone: e.target.value }))} placeholder="e.g. Europe/London, America/New_York" />
                   <datalist id="student-timezone-suggestions">
-                    {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+                    {TIMEZONE_OPTIONS.map(option => <option key={`${option.country}-${option.timezone}`} value={option.timezone}>{option.label}</option>)}
                   </datalist>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>

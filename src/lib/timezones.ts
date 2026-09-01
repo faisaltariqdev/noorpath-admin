@@ -1,16 +1,19 @@
 export const PAKISTAN_TIMEZONE = "Asia/Karachi";
 
 export const TIMEZONE_OPTIONS = [
-  { country: "Pakistan", timezone: "Asia/Karachi", label: "Pakistan - PKT (Asia/Karachi)" },
-  { country: "United Kingdom", timezone: "Europe/London", label: "United Kingdom - London" },
-  { country: "United States Eastern", timezone: "America/New_York", label: "USA - Eastern Time" },
+  { country: "Pakistan", timezone: "Asia/Karachi", label: "Pakistan - PKT (Asia/Karachi)", aliases: ["pk"] },
+  { country: "Nigeria", timezone: "Africa/Lagos", label: "Nigeria - WAT (Africa/Lagos)", aliases: ["lagos", "abuja", "port harcourt", "kano", "ng"] },
+  { country: "Finland", timezone: "Europe/Helsinki", label: "Finland - Helsinki", aliases: ["helsinki", "fi"] },
+  { country: "United Kingdom", timezone: "Europe/London", label: "United Kingdom - London", aliases: ["uk", "britain", "england"] },
+  { country: "United States Eastern", timezone: "America/New_York", label: "USA - Eastern Time", aliases: ["usa", "us", "united states"] },
   { country: "United States Central", timezone: "America/Chicago", label: "USA - Central Time" },
   { country: "United States Pacific", timezone: "America/Los_Angeles", label: "USA - Pacific Time" },
   { country: "Canada Eastern", timezone: "America/Toronto", label: "Canada - Toronto" },
   { country: "Canada Pacific", timezone: "America/Vancouver", label: "Canada - Vancouver" },
   { country: "Australia", timezone: "Australia/Sydney", label: "Australia - Sydney" },
-  { country: "UAE", timezone: "Asia/Dubai", label: "UAE - Dubai" },
-  { country: "Saudi Arabia", timezone: "Asia/Riyadh", label: "Saudi Arabia - Riyadh" },
+  { country: "UAE", timezone: "Asia/Dubai", label: "UAE - Dubai", aliases: ["dubai", "emirates", "united arab emirates"] },
+  { country: "Dubai", timezone: "Asia/Dubai", label: "Dubai - Gulf Time (Asia/Dubai)", aliases: ["uae"] },
+  { country: "Saudi Arabia", timezone: "Asia/Riyadh", label: "Saudi Arabia - Riyadh", aliases: ["saudia", "saudi", "ksa", "riyadh"] },
   { country: "Qatar", timezone: "Asia/Qatar", label: "Qatar - Doha" },
   { country: "Kuwait", timezone: "Asia/Kuwait", label: "Kuwait" },
   { country: "Germany", timezone: "Europe/Berlin", label: "Germany - Berlin" },
@@ -23,10 +26,16 @@ export const TIMEZONE_OPTIONS = [
 
 export function timezoneForCountry(country?: string | null) {
   if (!country) return "";
-  const lower = country.toLowerCase();
-  return TIMEZONE_OPTIONS.find(option =>
-    lower.includes(option.country.toLowerCase())
-    || option.country.toLowerCase().includes(lower)
+  const lower = country.toLowerCase().trim();
+  const namesOf = (option: (typeof TIMEZONE_OPTIONS)[number]) =>
+    [option.country, ...(option.aliases || [])].map((name) => name.toLowerCase());
+
+  const exact = TIMEZONE_OPTIONS.find((option) => namesOf(option).includes(lower));
+  if (exact) return exact.timezone;
+  if (lower.length < 3) return "";
+
+  return TIMEZONE_OPTIONS.find((option) =>
+    namesOf(option).some((name) => name.includes(lower) || lower.includes(name))
   )?.timezone || "";
 }
 

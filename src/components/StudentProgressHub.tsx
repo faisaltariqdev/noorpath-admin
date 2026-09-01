@@ -584,7 +584,7 @@ export default function StudentProgressHub({
                 <label className="form-label">Timezone</label>
                 <input className="form-input" list="hub-student-tz" value={editForm.timezone} onChange={e => setEditForm(p => ({ ...p, timezone: e.target.value }))} />
                 <datalist id="hub-student-tz">
-                  {TIMEZONE_OPTIONS.map(option => <option key={option.timezone} value={option.timezone}>{option.label}</option>)}
+                  {TIMEZONE_OPTIONS.map(option => <option key={`${option.country}-${option.timezone}`} value={option.timezone}>{option.label}</option>)}
                 </datalist>
               </div>
               <div className="form-group">
