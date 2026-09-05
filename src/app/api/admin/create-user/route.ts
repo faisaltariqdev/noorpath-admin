@@ -56,6 +56,7 @@ export async function POST(request: Request) {
     if (data.user?.id) {
       let qaidaEnabled = false;
       let islamicKnowledgeEnabled = false;
+      let holyQuranEnabled = false;
       if (role === "parent") {
         const { data: settings } = await admin
           .from("app_settings")
@@ -63,10 +64,15 @@ export async function POST(request: Request) {
           .eq("key", "role_permissions")
           .maybeSingle();
         const parentDefaults = (settings?.value as {
-          parent?: { qaida_default?: boolean; islamic_knowledge_default?: boolean };
+          parent?: {
+            qaida_default?: boolean;
+            islamic_knowledge_default?: boolean;
+            holy_quran_default?: boolean;
+          };
         } | null)?.parent;
         qaidaEnabled = Boolean(parentDefaults?.qaida_default);
         islamicKnowledgeEnabled = Boolean(parentDefaults?.islamic_knowledge_default);
+        holyQuranEnabled = Boolean(parentDefaults?.holy_quran_default);
       }
 
       const { error: profileError } = await admin
@@ -83,6 +89,7 @@ export async function POST(request: Request) {
           is_active: true,
           qaida_enabled: qaidaEnabled,
           islamic_knowledge_enabled: islamicKnowledgeEnabled,
+          holy_quran_enabled: holyQuranEnabled,
           updated_at: new Date().toISOString(),
         }, { onConflict: "id" });
 

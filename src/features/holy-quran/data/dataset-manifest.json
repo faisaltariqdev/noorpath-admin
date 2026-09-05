@@ -1,0 +1,21 @@
+{
+  "source": "Tanzil.net Uthmani via Al Quran Cloud edition quran-uthmani",
+  "sourceUrl": "https://api.alquran.cloud/v1/quran/quran-uthmani",
+  "edition": {
+    "identifier": "quran-uthmani",
+    "language": "ar",
+    "name": "القرآن الكريم برسم العثماني (uthmani)",
+    "englishName": "Uthmani",
+    "format": "text",
+    "type": "quran"
+  },
+  "importedAt": "2026-09-05T19:30:55.042Z",
+  "surahs": 114,
+  "ayahs": 6236,
+  "paras": 30,
+  "verification": {
+    "surahCount": 114,
+    "ayahCount": 6236,
+    "juzCount": 30
+  }
+}

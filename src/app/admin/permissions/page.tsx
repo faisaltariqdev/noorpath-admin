@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookMarked, BookOpen, Search, Shield, Users } from "lucide-react";
+import { Book, BookMarked, BookOpen, Search, Shield, Users } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import { supabase } from "@/lib/supabase";
 
@@ -16,6 +16,7 @@ interface ParentRow {
   country?: string | null;
   qaida_enabled: boolean;
   islamic_knowledge_enabled: boolean;
+  holy_quran_enabled: boolean;
   student_count: number;
 }
 
@@ -28,6 +29,7 @@ const ROLE_FEATURE_LABELS: Record<RoleKey, { key: string; label: string }[]> = {
     { key: "earnings", label: "View earnings / payments" },
     { key: "qaida", label: "Noorani Qaida teaching tools" },
     { key: "islamic_knowledge", label: "Islamic Knowledge teaching tools" },
+    { key: "holy_quran", label: "Holy Quran teaching tools" },
     { key: "messages", label: "Messages" },
   ],
   parent: [
@@ -38,6 +40,7 @@ const ROLE_FEATURE_LABELS: Record<RoleKey, { key: string; label: string }[]> = {
     { key: "messages", label: "Messages" },
     { key: "qaida_default", label: "Noorani Qaida default for new parents" },
     { key: "islamic_knowledge_default", label: "Islamic Knowledge default for new parents" },
+    { key: "holy_quran_default", label: "Holy Quran default for new parents" },
   ],
   admin: [
     { key: "all", label: "Full admin access" },
@@ -51,6 +54,7 @@ const DEFAULT_PERMISSIONS: Record<RoleKey, Record<string, boolean>> = {
     earnings: true,
     qaida: true,
     islamic_knowledge: true,
+    holy_quran: true,
     messages: true,
   },
   parent: {
@@ -61,8 +65,17 @@ const DEFAULT_PERMISSIONS: Record<RoleKey, Record<string, boolean>> = {
     messages: true,
     qaida_default: false,
     islamic_knowledge_default: false,
+    holy_quran_default: true,
   },
   admin: { all: true },
+};
+
+type LearningFlag = "qaida_enabled" | "islamic_knowledge_enabled" | "holy_quran_enabled";
+
+const LEARNING_FLAG_LABELS: Record<LearningFlag, string> = {
+  qaida_enabled: "Noorani Qaida",
+  islamic_knowledge_enabled: "Islamic Knowledge",
+  holy_quran_enabled: "Holy Quran",
 };
 
 export default function PermissionsPage() {
@@ -81,7 +94,7 @@ export default function PermissionsPage() {
     const [{ data: parentRows }, { data: students }, { data: settings }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, email, country, qaida_enabled, islamic_knowledge_enabled")
+        .select("id, full_name, email, country, qaida_enabled, islamic_knowledge_enabled, holy_quran_enabled")
         .eq("role", "parent")
         .order("full_name"),
       supabase.from("students").select("id, parent_id").eq("is_active", true),
@@ -102,6 +115,7 @@ export default function PermissionsPage() {
         country?: string | null;
         qaida_enabled?: boolean;
         islamic_knowledge_enabled?: boolean;
+        holy_quran_enabled?: boolean;
       }) => ({
         id: row.id,
         full_name: row.full_name || "Parent",
@@ -109,6 +123,7 @@ export default function PermissionsPage() {
         country: row.country,
         qaida_enabled: Boolean(row.qaida_enabled),
         islamic_knowledge_enabled: Boolean(row.islamic_knowledge_enabled),
+        holy_quran_enabled: Boolean(row.holy_quran_enabled),
         student_count: countByParent[row.id] || 0,
       })),
     );
@@ -141,7 +156,7 @@ export default function PermissionsPage() {
 
   async function toggleFlag(
     parentId: string,
-    field: "qaida_enabled" | "islamic_knowledge_enabled",
+    field: LearningFlag,
     enabled: boolean,
   ) {
     setSaving(true);
@@ -157,12 +172,12 @@ export default function PermissionsPage() {
       return;
     }
     setParents((prev) => prev.map((p) => (p.id === parentId ? { ...p, [field]: enabled } : p)));
-    const label = field === "qaida_enabled" ? "Noorani Qaida" : "Islamic Knowledge";
+    const label = LEARNING_FLAG_LABELS[field];
     setMessage(enabled ? `${label} enabled for parent.` : `${label} disabled for parent.`);
   }
 
   async function setAllFlag(
-    field: "qaida_enabled" | "islamic_knowledge_enabled",
+    field: LearningFlag,
     enabled: boolean,
   ) {
     setSaving(true);
@@ -184,7 +199,7 @@ export default function PermissionsPage() {
     }
     const idSet = new Set(ids);
     setParents((prev) => prev.map((p) => (idSet.has(p.id) ? { ...p, [field]: enabled } : p)));
-    const label = field === "qaida_enabled" ? "Qaida" : "Islamic Knowledge";
+    const label = LEARNING_FLAG_LABELS[field];
     setMessage(enabled ? `Enabled ${label} for filtered parents.` : `Disabled ${label} for filtered parents.`);
   }
 
@@ -206,14 +221,15 @@ export default function PermissionsPage() {
 
   const qaidaCount = parents.filter((p) => p.qaida_enabled).length;
   const ikCount = parents.filter((p) => p.islamic_knowledge_enabled).length;
+  const hqCount = parents.filter((p) => p.holy_quran_enabled).length;
 
   return (
     <>
-      <TopBar title="Roles & Permissions" subtitle="Control Qaida and Islamic Knowledge visibility" />
+      <TopBar title="Roles & Permissions" subtitle="Control Qaida, Islamic Knowledge, and Holy Quran visibility" />
       <div className="page-header" style={{ paddingTop: 24 }}>
         <h1 className="page-title">Roles & Permissions</h1>
         <p className="page-subtitle">
-          Assign Noorani Qaida and Islamic Knowledge to specific parents, and manage role-level defaults.
+          Assign Noorani Qaida, Islamic Knowledge, and Holy Quran to specific parents, and manage role-level defaults.
         </p>
       </div>
 
@@ -269,7 +285,7 @@ export default function PermissionsPage() {
                 <Users size={15} /> Parents · learning apps
               </h3>
               <div style={{ fontSize: "0.78rem", color: "#64748b" }}>
-                Qaida {qaidaCount}/{parents.length} · Islamic Knowledge {ikCount}/{parents.length}
+                Qaida {qaidaCount}/{parents.length} · Islamic Knowledge {ikCount}/{parents.length} · Holy Quran {hqCount}/{parents.length}
               </div>
               <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <label className="search-field" style={{ minWidth: 220 }}>
@@ -281,6 +297,9 @@ export default function PermissionsPage() {
                 </button>
                 <button type="button" className="btn btn-ghost btn-sm" disabled={saving} onClick={() => setAllFlag("islamic_knowledge_enabled", true)}>
                   Allow all IK
+                </button>
+                <button type="button" className="btn btn-ghost btn-sm" disabled={saving} onClick={() => setAllFlag("holy_quran_enabled", true)}>
+                  Allow all Quran
                 </button>
               </div>
             </div>
@@ -306,6 +325,11 @@ export default function PermissionsPage() {
                         <th>
                           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                             <BookMarked size={13} /> Islamic Knowledge
+                          </span>
+                        </th>
+                        <th>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <Book size={13} /> Holy Quran
                           </span>
                         </th>
                       </tr>
@@ -343,6 +367,19 @@ export default function PermissionsPage() {
                               {parent.islamic_knowledge_enabled ? "Allowed" : "Hidden"}
                             </label>
                           </td>
+                          <td>
+                            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.82rem", fontWeight: 600 }}>
+                              <input
+                                type="checkbox"
+                                checked={parent.holy_quran_enabled}
+                                disabled={saving}
+                                onChange={(e) =>
+                                  toggleFlag(parent.id, "holy_quran_enabled", e.target.checked)
+                                }
+                              />
+                              {parent.holy_quran_enabled ? "Allowed" : "Hidden"}
+                            </label>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -375,8 +412,8 @@ export default function PermissionsPage() {
             </div>
             <div className="card-body">
               <p style={{ fontSize: "0.82rem", color: "#64748b", marginBottom: 16 }}>
-                Parent Qaida / Islamic Knowledge still need an explicit allow per parent above (unless you turn on the
-                matching “default for new parents” when creating accounts). Tutor Islamic Knowledge uses the tutor role toggle.
+                Parent Qaida / Islamic Knowledge / Holy Quran still need an explicit allow per parent above (unless you turn on the
+                matching “default for new parents” when creating accounts). Tutor Holy Quran and Islamic Knowledge use the tutor role toggles.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {ROLE_FEATURE_LABELS[roleTab].map((feature) => (

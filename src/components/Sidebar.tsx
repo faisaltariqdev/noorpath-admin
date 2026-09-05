@@ -6,10 +6,10 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Role } from "@/types/database";
 import {
-  LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
+  LayoutDashboard, Users,   BookOpen, Calendar, ClipboardList,
   DollarSign, Megaphone, Settings, LogOut,
   GraduationCap, Clock, Home, ChevronRight,
-  BarChart2, Sparkles, Map, BookMarked,
+  BarChart2, Sparkles, Map, BookMarked, Book,
 } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +29,7 @@ const ADMIN_LINKS: NavSection[] = [
     { href: "/admin/courses",             label: "Courses",            icon: BookOpen },
     { href: "/admin/noorani-qaida",       label: "Noorani Qaida",      icon: Sparkles },
     { href: "/admin/islamic-knowledge",   label: "Islamic Knowledge",  icon: BookMarked },
+    { href: "/admin/holy-quran",          label: "Holy Quran",         icon: Book },
     { href: "/admin/assignments",         label: "Assignments",        icon: ClipboardList },
   ]},
   { section: "Operations", items: [
@@ -60,6 +61,7 @@ const TUTOR_LINKS: NavSection[] = [
     { href: "/tutor/roadmap",       label: "Roadmap",           icon: Map },
     { href: "/tutor/qaida",               label: "Noorani Qaida",     icon: Sparkles },
     { href: "/tutor/islamic-knowledge",   label: "Islamic Knowledge", icon: BookMarked },
+    { href: "/tutor/holy-quran",          label: "Holy Quran",        icon: Book },
   ]},
   { section: "Account", items: [
     { href: "/tutor/earnings",      label: "Payments",          icon: DollarSign },
@@ -80,6 +82,7 @@ const PARENT_LINKS: NavSection[] = [
     { href: "/parent/roadmap",                      label: "Roadmap",       icon: Map },
     { href: "/parent/qaida",                        label: "Noorani Qaida", icon: Sparkles },
     { href: "/parent/islamic-knowledge",            label: "Islamic Knowledge", icon: BookMarked },
+    { href: "/parent/holy-quran",                   label: "Holy Quran",        icon: Book },
   ]},
   { section: "Account", items: [
     { href: "/parent/fees",         label: "Payments",       icon: DollarSign },
@@ -108,7 +111,9 @@ function SidebarInner({ role, userName }: SidebarProps) {
   const [displayName, setDisplayName] = useState(userName);
   const [qaidaEnabled, setQaidaEnabled] = useState(false);
   const [ikEnabled, setIkEnabled] = useState(false);
+  const [hqEnabled, setHqEnabled] = useState(false);
   const [tutorIkEnabled, setTutorIkEnabled] = useState(true);
+  const [tutorHqEnabled, setTutorHqEnabled] = useState(true);
   const sidebarRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const { label, badgeClass } = ROLE_CONFIG[role];
@@ -118,7 +123,9 @@ function SidebarInner({ role, userName }: SidebarProps) {
       items: section.items.filter((item) => {
         if (role === "parent" && item.href === "/parent/qaida" && !qaidaEnabled) return false;
         if (role === "parent" && item.href === "/parent/islamic-knowledge" && !ikEnabled) return false;
+        if (role === "parent" && item.href === "/parent/holy-quran" && !hqEnabled) return false;
         if (role === "tutor" && item.href === "/tutor/islamic-knowledge" && !tutorIkEnabled) return false;
+        if (role === "tutor" && item.href === "/tutor/holy-quran" && !tutorHqEnabled) return false;
         return true;
       }),
     }))
@@ -153,13 +160,14 @@ function SidebarInner({ role, userName }: SidebarProps) {
       if (!user?.id) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, qaida_enabled, islamic_knowledge_enabled, role")
+        .select("full_name, qaida_enabled, islamic_knowledge_enabled, holy_quran_enabled, role")
         .eq("id", user.id)
         .single();
       if (profile?.full_name) setDisplayName(profile.full_name);
       if (role === "parent") {
         setQaidaEnabled(Boolean(profile?.qaida_enabled));
         setIkEnabled(Boolean(profile?.islamic_knowledge_enabled));
+        setHqEnabled(Boolean(profile?.holy_quran_enabled));
       }
       if (role === "tutor") {
         const { data: settings } = await supabase
@@ -167,8 +175,9 @@ function SidebarInner({ role, userName }: SidebarProps) {
           .select("value")
           .eq("key", "role_permissions")
           .maybeSingle();
-        const tutor = (settings?.value as { tutor?: { islamic_knowledge?: boolean } } | null)?.tutor;
+        const tutor = (settings?.value as { tutor?: { islamic_knowledge?: boolean; holy_quran?: boolean } } | null)?.tutor;
         setTutorIkEnabled(tutor?.islamic_knowledge !== false);
+        setTutorHqEnabled(tutor?.holy_quran !== false);
       }
     }
     loadProfile();
