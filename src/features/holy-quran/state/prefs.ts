@@ -25,7 +25,14 @@ export function loadPrefs(): HolyQuranPrefs {
       if (legacy === "line" || legacy === "page") return { ...fallback, layout: legacy };
       return fallback;
     }
-    const parsed = JSON.parse(raw) as Partial<HolyQuranPrefs> & { ink?: string };
+    const parsed = JSON.parse(raw) as {
+      layout?: string;
+      ink?: string;
+      zoom?: number;
+      muted?: unknown;
+      reciter?: string;
+      practice?: unknown;
+    };
     const layout: ReaderLayout = parsed.layout === "page" ? "page" : "line";
     const ink: InkMode = parsed.ink === "tajweed"
       ? "tajweed"
