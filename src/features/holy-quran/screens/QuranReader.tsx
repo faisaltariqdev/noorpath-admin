@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bookmark, ChevronLeft, ChevronRight, Minus, Pause, Play, Plus, Volume2, VolumeX } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight, Eye, EyeOff, Minus, Pause, Play, Plus, Volume2, VolumeX } from "lucide-react";
 import { loadPara } from "../data/loadPara";
 import { RECITERS, recitationUrlFor } from "../data/reciters";
 import { getPara, paraStartLabel, surahArabic, surahName } from "../data/paras";
@@ -30,11 +30,17 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
   const [tajweed, setTajweed] = useState<Map<string, string>>(new Map());
   const [playingGlobal, setPlayingGlobal] = useState<number | null>(null);
   const [focusIdx, setFocusIdx] = useState(0);
+  const [toolsHidden, setToolsHidden] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const queueRef = useRef<QuranAyah[]>([]);
 
   useEffect(() => {
     setPrefs(loadPrefs());
+    try {
+      setToolsHidden(window.localStorage.getItem("noorpath-hq-tools-hidden") === "1");
+    } catch {
+      /* keep default */
+    }
   }, []);
 
   function updatePrefs(patch: Partial<HolyQuranPrefs>) {
@@ -163,7 +169,30 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
   const tajweedOn = prefs.ink === "tajweed";
 
   return (
-    <div className={`hq-reader hq-ink-${prefs.ink}`} style={{ "--hq-zoom": prefs.zoom / 100 } as React.CSSProperties}>
+    <div className={`hq-reader hq-ink-${prefs.ink}${toolsHidden ? " is-compact" : ""}`} style={{ "--hq-zoom": prefs.zoom / 100 } as React.CSSProperties}>
+      {toolsHidden ? (
+        <aside className="hq-side-dock" aria-label="Reader controls">
+          <button
+            type="button"
+            className="hq-btn hq-btn-ghost"
+            onClick={() => {
+              setToolsHidden(false);
+              window.localStorage.setItem("noorpath-hq-tools-hidden", "0");
+            }}
+          >
+            <Eye size={14} /> Show
+          </button>
+          <button
+            type="button"
+            className="hq-btn hq-btn-gold"
+            onClick={() => (playingGlobal ? stopAudio() : ayahs[0] && playQueue(ayahs[0], true))}
+          >
+            {playingGlobal ? <><Pause size={14} /> Stop</> : <><Play size={14} /> Listen</>}
+          </button>
+        </aside>
+      ) : null}
+      <div className="hq-reader-body">
+      {!toolsHidden && (
       <div className="hq-reader-toolbar">
         <div>
           <p className="hq-kicker">Holy Quran · Para {para.number}</p>
@@ -230,8 +259,19 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
           >
             <Bookmark size={16} />
           </button>
+          <button
+            type="button"
+            className="hq-btn hq-btn-ghost"
+            onClick={() => {
+              setToolsHidden(true);
+              window.localStorage.setItem("noorpath-hq-tools-hidden", "1");
+            }}
+          >
+            <EyeOff size={14} /> Hide
+          </button>
         </div>
       </div>
+      )}
 
       {loading && <p className="hq-muted">Loading verified Uthmani text…</p>}
       {error && <p className="hq-muted">{error}</p>}
@@ -391,6 +431,7 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
         >
           Next Para <ChevronRight size={16} />
         </button>
+      </div>
       </div>
     </div>
   );
