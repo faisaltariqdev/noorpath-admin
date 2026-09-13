@@ -18,13 +18,13 @@ interface Profile {
 }
 
 const timezones = [
-  "UTC", "Europe/London", "Europe/Helsinki", "Europe/Paris", "America/New_York", "America/Chicago",
+  "UTC", "Europe/London", "Europe/Helsinki", "Europe/Copenhagen", "Europe/Paris", "America/New_York", "America/Chicago",
   "America/Los_Angeles", "Africa/Lagos", "Asia/Karachi", "Asia/Dubai", "Asia/Riyadh", "Asia/Kolkata",
   "Australia/Sydney",
 ];
 
 const countries = [
-  "Nigeria", "Finland", "Pakistan", "United Kingdom", "United States", "Canada", "Australia",
+  "Nigeria", "Finland", "Denmark", "Pakistan", "United Kingdom", "United States", "Canada", "Australia",
   "UAE", "Dubai", "Saudi Arabia", "Qatar", "Germany", "France", "India", "Other",
 ];
 

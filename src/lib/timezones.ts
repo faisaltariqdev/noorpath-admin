@@ -3,7 +3,8 @@ export const PAKISTAN_TIMEZONE = "Asia/Karachi";
 export const TIMEZONE_OPTIONS = [
   { country: "Pakistan", timezone: "Asia/Karachi", label: "Pakistan - PKT (Asia/Karachi)", aliases: ["pk"] },
   { country: "Nigeria", timezone: "Africa/Lagos", label: "Nigeria - WAT (Africa/Lagos)", aliases: ["lagos", "abuja", "port harcourt", "kano", "ng"] },
-  { country: "Finland", timezone: "Europe/Helsinki", label: "Finland - Helsinki", aliases: ["helsinki", "fi"] },
+  { country: "Finland", timezone: "Europe/Helsinki", label: "Finland - EET (Europe/Helsinki)", aliases: ["helsinki", "espoo", "fi", "finnish"] },
+  { country: "Denmark", timezone: "Europe/Copenhagen", label: "Denmark - CET (Europe/Copenhagen)", aliases: ["copenhagen", "aarhus", "dk", "danish"] },
   { country: "United Kingdom", timezone: "Europe/London", label: "United Kingdom - London", aliases: ["uk", "britain", "england"] },
   { country: "United States Eastern", timezone: "America/New_York", label: "USA - Eastern Time", aliases: ["usa", "us", "united states"] },
   { country: "United States Central", timezone: "America/Chicago", label: "USA - Central Time" },
