@@ -21,7 +21,7 @@ interface Course {
 }
 
 const LEVELS = ["beginner", "intermediate", "advanced"];
-const CATEGORIES = ["foundation", "quran", "tajweed", "hifz", "tafseer", "arabic", "other"];
+const CATEGORIES = ["foundation", "quran", "tajweed", "hifz", "tafseer", "arabic", "islamic_studies", "duas", "other"];
 const CURRENCIES = ["GBP", "USD", "EUR", "PKR", "AED", "CAD", "AUD"];
 
 const emptyCourseForm = {
