@@ -1,150 +1,42 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Footprints, MessageSquareText, Pause, Play } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { qaidaAudio } from "../audio/QaidaAudioService";
-import type { SalahPosture, SalahStep, TopicLesson } from "../types";
+import type { SalahStep, TopicLesson } from "../types";
 import ScenicLearningBackground from "../animations/ScenicLearningBackground";
+import SalahPostureStage from "../salah/SalahPostureStage";
 import FullscreenButton from "../ui/FullscreenButton";
+
+/** Seconds each step stays on screen in Watch mode (longer when there is Arabic to read). */
+const WATCH_SECONDS_SHORT = 3.5;
+const WATCH_SECONDS_ARABIC = 6;
+
+/**
+ * Teaching mode — "At first, focus only on movements. Once your child is
+ * comfortable, slowly add the words."
+ *  - movements: Arabic / transliteration hidden; child copies the body only.
+ *  - words:     full lesson with Arabic, transliteration and meaning.
+ */
+type TeachingMode = "movements" | "words";
+const MODE_STORAGE_KEY = "qaida-namaz-teaching-mode";
+
+function readStoredMode(): TeachingMode {
+  try {
+    return window.localStorage.getItem(MODE_STORAGE_KEY) === "movements" ? "movements" : "words";
+  } catch {
+    return "words";
+  }
+}
 
 interface SalahLessonScreenProps {
   lesson: TopicLesson;
   reducedMotion: boolean;
   audioEnabled: boolean;
   onComplete: () => void;
-}
-
-const POSTURE_LABEL: Record<SalahPosture, string> = {
-  overview: "Prepare",
-  standing: "Standing (Qiyam)",
-  takbir: "Takbir",
-  bowing: "Bowing (Ruku)",
-  rising: "Rising",
-  prostration: "Prostration (Sujood)",
-  sitting: "Sitting (Jalsa)",
-  salam: "Salam",
-  "wudu-hands": "Wash hands",
-  "wudu-mouth": "Rinse mouth",
-  "wudu-nose": "Clean nose",
-  "wudu-face": "Wash face",
-  "wudu-arms": "Wash arms",
-  "wudu-head": "Wipe head",
-  "wudu-ears": "Wipe ears",
-  "wudu-feet": "Wash feet",
-};
-
-/** Simple silhouette illustrations for prayer / wudu postures */
-function PostureVisual({ posture }: { posture: SalahPosture }) {
-  const common = "fill-emerald-800/90 stroke-emerald-950 stroke-[1.5]";
-  switch (posture) {
-    case "takbir":
-      return (
-        <svg viewBox="0 0 120 160" className="h-40 w-32" aria-hidden="true">
-          <circle cx="60" cy="28" r="14" className={common} />
-          <path d="M60 42 v48" className={`${common} fill-none`} />
-          <path d="M60 55 L28 38 M60 55 L92 38" className={`${common} fill-none`} />
-          <path d="M60 90 L42 140 M60 90 L78 140" className={`${common} fill-none`} />
-        </svg>
-      );
-    case "bowing":
-      return (
-        <svg viewBox="0 0 120 160" className="h-40 w-32" aria-hidden="true">
-          <circle cx="48" cy="42" r="14" className={common} />
-          <path d="M48 56 L78 78" className={`${common} fill-none`} />
-          <path d="M58 68 L38 72 M58 68 L78 58" className={`${common} fill-none`} />
-          <path d="M78 78 L62 140 M78 78 L94 140" className={`${common} fill-none`} />
-        </svg>
-      );
-    case "prostration":
-      return (
-        <svg viewBox="0 0 140 120" className="h-36 w-40" aria-hidden="true">
-          <ellipse cx="70" cy="98" rx="48" ry="8" className="fill-emerald-200/80" />
-          <circle cx="42" cy="72" r="12" className={common} />
-          <path d="M52 78 L90 70 L110 88" className={`${common} fill-none`} />
-          <path d="M70 74 L55 98 M70 74 L88 98" className={`${common} fill-none`} />
-          <path d="M90 70 L100 98" className={`${common} fill-none`} />
-        </svg>
-      );
-    case "sitting":
-      return (
-        <svg viewBox="0 0 120 140" className="h-36 w-32" aria-hidden="true">
-          <circle cx="60" cy="32" r="14" className={common} />
-          <path d="M60 46 v36" className={`${common} fill-none`} />
-          <path d="M60 60 L40 78 M60 60 L80 78" className={`${common} fill-none`} />
-          <path d="M45 82 H75 L82 110 H38 Z" className={`${common} fill-emerald-700/40`} />
-        </svg>
-      );
-    case "salam":
-      return (
-        <svg viewBox="0 0 120 160" className="h-40 w-32" aria-hidden="true">
-          <circle cx="60" cy="28" r="14" className={common} />
-          <path d="M60 42 v48" className={`${common} fill-none`} />
-          <path d="M60 58 L44 78 M60 58 L76 78" className={`${common} fill-none`} />
-          <path d="M60 90 L46 140 M60 90 L74 140" className={`${common} fill-none`} />
-          <path d="M74 22 Q98 28 88 48" className="fill-none stroke-amber-500 stroke-2" />
-        </svg>
-      );
-    case "rising":
-    case "standing":
-      return (
-        <svg viewBox="0 0 120 160" className="h-40 w-32" aria-hidden="true">
-          <circle cx="60" cy="28" r="14" className={common} />
-          <path d="M60 42 v48" className={`${common} fill-none`} />
-          <path d="M60 58 L44 88 M60 58 L76 88" className={`${common} fill-none`} />
-          <path d="M60 90 L46 140 M60 90 L74 140" className={`${common} fill-none`} />
-        </svg>
-      );
-    case "wudu-hands":
-      return (
-        <svg viewBox="0 0 120 120" className="h-36 w-36" aria-hidden="true">
-          <ellipse cx="60" cy="70" rx="36" ry="28" className="fill-sky-100 stroke-sky-400 stroke-2" />
-          <path d="M40 55 Q50 35 60 50 Q70 35 80 55" className={`${common} fill-none`} />
-          <circle cx="48" cy="48" r="3" className="fill-sky-400" />
-          <circle cx="72" cy="48" r="3" className="fill-sky-400" />
-        </svg>
-      );
-    case "wudu-face":
-      return (
-        <svg viewBox="0 0 120 120" className="h-36 w-36" aria-hidden="true">
-          <circle cx="60" cy="55" r="28" className={`${common} fill-emerald-100`} />
-          <circle cx="50" cy="50" r="3" className="fill-emerald-900" />
-          <circle cx="70" cy="50" r="3" className="fill-emerald-900" />
-          <path d="M52 66 Q60 72 68 66" className="fill-none stroke-emerald-900 stroke-2" />
-          <path d="M40 30 Q60 18 80 30" className="fill-none stroke-sky-400 stroke-2" />
-        </svg>
-      );
-    case "wudu-arms":
-      return (
-        <svg viewBox="0 0 140 100" className="h-32 w-40" aria-hidden="true">
-          <path d="M20 50 H120" className={`${common} fill-none stroke-[8] stroke-linecap-round`} />
-          <circle cx="28" cy="50" r="10" className={common} />
-          <path d="M50 35 Q70 20 90 35" className="fill-none stroke-sky-400 stroke-2" />
-        </svg>
-      );
-    case "wudu-feet":
-      return (
-        <svg viewBox="0 0 140 100" className="h-32 w-40" aria-hidden="true">
-          <ellipse cx="50" cy="62" rx="22" ry="12" className={common} />
-          <ellipse cx="95" cy="62" rx="22" ry="12" className={common} />
-          <path d="M40 40 Q70 28 100 40" className="fill-none stroke-sky-400 stroke-2" />
-        </svg>
-      );
-    case "wudu-mouth":
-    case "wudu-nose":
-    case "wudu-head":
-    case "wudu-ears":
-    case "overview":
-    default:
-      return (
-        <svg viewBox="0 0 120 140" className="h-36 w-32" aria-hidden="true">
-          <circle cx="60" cy="36" r="16" className={`${common} fill-emerald-100`} />
-          <path d="M60 52 v40" className={`${common} fill-none`} />
-          <path d="M60 68 L38 92 M60 68 L82 92" className={`${common} fill-none`} />
-          <path d="M60 92 L48 128 M60 92 L72 128" className={`${common} fill-none`} />
-          <circle cx="60" cy="20" r="4" className="fill-amber-400" />
-        </svg>
-      );
-  }
+  /** Optional starting step (0-based). Used by the dev preview harness. */
+  initialStepIndex?: number;
 }
 
 export default function SalahLessonScreen({
@@ -152,18 +44,40 @@ export default function SalahLessonScreen({
   reducedMotion,
   audioEnabled,
   onComplete,
+  initialStepIndex = 0,
 }: SalahLessonScreenProps) {
   const lessonRef = useRef<HTMLElement>(null);
   const steps = useMemo(
     () => [...(lesson.steps ?? [])].sort((a, b) => a.order - b.order),
     [lesson.steps],
   );
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(() =>
+    Math.min(Math.max(0, initialStepIndex), Math.max(0, (lesson.steps?.length ?? 1) - 1)),
+  );
   const [isPlaying, setIsPlaying] = useState(false);
+  const [watching, setWatching] = useState(false);
+  const [practiced, setPracticed] = useState<Record<string, boolean>>({});
+  const [mode, setMode] = useState<TeachingMode>("words");
+  const movementsOnly = mode === "movements";
+
+  // Restore the parent's last choice after mount (avoids SSR/hydration mismatch).
+  useEffect(() => {
+    setMode(readStoredMode());
+  }, []);
+
+  const changeMode = useCallback((next: TeachingMode) => {
+    setMode(next);
+    try {
+      window.localStorage.setItem(MODE_STORAGE_KEY, next);
+    } catch {
+      /* storage unavailable — keep in-memory only */
+    }
+  }, []);
 
   const step: SalahStep | undefined = steps[stepIndex];
   const isLast = stepIndex >= steps.length - 1;
   const progressPct = steps.length ? Math.round(((stepIndex + 1) / steps.length) * 100) : 0;
+  const practicedCount = steps.filter((s) => practiced[s.id]).length;
 
   const speak = useCallback(() => {
     if (!audioEnabled || !step?.arabic) return;
@@ -175,6 +89,39 @@ export default function SalahLessonScreen({
       onEnd: () => setIsPlaying(false),
     });
   }, [audioEnabled, lesson.id, step]);
+
+  // Watch mode: auto-advance through the steps so the child sees the whole
+  // movement flow (stand → bow → rise → prostrate → sit → salam) animated.
+  useEffect(() => {
+    if (!watching || !step) return;
+    const withWords = Boolean(step.arabic) && !movementsOnly;
+    if (audioEnabled && withWords) speak();
+    const seconds = withWords ? WATCH_SECONDS_ARABIC : WATCH_SECONDS_SHORT;
+    const t = window.setTimeout(() => {
+      if (stepIndex >= steps.length - 1) {
+        setWatching(false);
+      } else {
+        setStepIndex((v) => v + 1);
+      }
+    }, seconds * 1000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watching, stepIndex]);
+
+  const goTo = useCallback((index: number) => {
+    setWatching(false);
+    setStepIndex(index);
+  }, []);
+
+  const toggleWatch = useCallback(() => {
+    if (watching) {
+      setWatching(false);
+      return;
+    }
+    // Restart from the beginning when the lesson is already on the last step.
+    if (stepIndex >= steps.length - 1) setStepIndex(0);
+    setWatching(true);
+  }, [watching, stepIndex, steps.length]);
 
   if (!step) {
     return (
@@ -195,14 +142,74 @@ export default function SalahLessonScreen({
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600">
               Namaz · Step {step.order} of {steps.length}
+              {practicedCount > 0 ? (
+                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 normal-case tracking-normal text-amber-800">
+                  ⭐ {practicedCount} practised
+                </span>
+              ) : null}
             </p>
             <h1 className="truncate text-lg font-black text-slate-900">{lesson.title}</h1>
           </div>
-          <FullscreenButton
-            targetRef={lessonRef}
-            label={lesson.title}
-            className="border border-emerald-900/10 bg-white text-emerald-800"
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleWatch}
+              aria-pressed={watching}
+              className={`inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                watching
+                  ? "bg-amber-100 text-amber-900 ring-2 ring-amber-300"
+                  : "bg-emerald-700 text-white shadow-md hover:bg-emerald-800"
+              }`}
+            >
+              {watching ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
+              <span className="hidden sm:inline">{watching ? "Pause" : "Watch the whole movement"}</span>
+              <span className="sm:hidden">{watching ? "Pause" : "Watch"}</span>
+            </button>
+            <FullscreenButton
+              targetRef={lessonRef}
+              label={lesson.title}
+              className="border border-emerald-900/10 bg-white text-emerald-800"
+            />
+          </div>
+        </div>
+
+        {/* Teaching mode: movements first → then the words */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
+          <div
+            role="radiogroup"
+            aria-label="Teaching mode"
+            className="inline-flex rounded-xl border border-emerald-200 bg-emerald-50 p-1"
+          >
+            <button
+              type="button"
+              role="radio"
+              aria-checked={movementsOnly}
+              onClick={() => changeMode("movements")}
+              className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                movementsOnly ? "bg-emerald-700 text-white shadow" : "text-emerald-800 hover:bg-emerald-100"
+              }`}
+            >
+              <Footprints size={14} aria-hidden="true" />
+              1 · Movements first
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!movementsOnly}
+              onClick={() => changeMode("words")}
+              className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                !movementsOnly ? "bg-emerald-700 text-white shadow" : "text-emerald-800 hover:bg-emerald-100"
+              }`}
+            >
+              <MessageSquareText size={14} aria-hidden="true" />
+              2 · Add the words
+            </button>
+          </div>
+          <p className="text-[11px] font-bold leading-snug text-slate-600">
+            {movementsOnly
+              ? "Focus only on the movements. Once your child is comfortable, switch to add the words."
+              : "Words on. If your child is still learning the body shapes, go back to movements first."}
+          </p>
         </div>
 
         <div className="h-2 overflow-hidden rounded-full bg-emerald-100" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100}>
@@ -222,7 +229,7 @@ export default function SalahLessonScreen({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setStepIndex(index)}
+                onClick={() => goTo(index)}
                 className={`flex min-w-[7.5rem] flex-none flex-col rounded-xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
                   active
                     ? "border-emerald-500 bg-emerald-50 shadow-md"
@@ -232,38 +239,56 @@ export default function SalahLessonScreen({
                 }`}
                 aria-current={active ? "step" : undefined}
               >
-                <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
                   Step {item.order}
+                  {item.arabic ? (
+                    <span
+                      className={`ml-auto rounded-full px-1.5 py-px text-[9px] font-black normal-case tracking-normal ${
+                        movementsOnly ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"
+                      }`}
+                      title={movementsOnly ? "Has words — hidden in movements mode" : "Has words"}
+                    >
+                      {movementsOnly ? "words later" : "words"}
+                    </span>
+                  ) : null}
                 </span>
-                <span className="truncate text-xs font-black text-slate-800">{item.title}</span>
+                <span className="truncate text-xs font-black text-slate-800">
+                  {practiced[item.id] ? "⭐ " : ""}
+                  {item.title}
+                </span>
               </button>
             );
           })}
         </nav>
 
-        <AnimatePresence mode="wait">
-          <motion.section
-            key={step.id}
+        <section className="grid gap-4 lg:grid-cols-12">
+          {/*
+           * The posture stage is NOT keyed on step.id so the figure stays mounted and
+           * springs from one posture into the next (the movement is the lesson).
+           */}
+          <div className="flex flex-col rounded-[1.75rem] border border-white/80 bg-gradient-to-b from-white via-emerald-50/80 to-teal-50 p-4 shadow-lg lg:col-span-6">
+            <SalahPostureStage
+              step={step}
+              reducedMotion={reducedMotion}
+              practiced={Boolean(practiced[step.id])}
+              onInteract={() => setWatching(false)}
+              onPracticed={(id) => setPracticed((prev) => ({ ...prev, [id]: true }))}
+            />
+            <p className="mt-3 rounded-2xl border border-emerald-100 bg-white/80 px-3 py-2 text-center text-xs leading-relaxed text-slate-700">
+              <span className="font-black text-emerald-700">Look: </span>
+              {step.visualCue}
+            </p>
+          </div>
+
+          <AnimatePresence mode="wait">
+          <motion.div
+            key={`${step.id}-${mode}`}
             initial={reducedMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reducedMotion ? undefined : { opacity: 0, y: -8 }}
             transition={{ duration: 0.28 }}
-            className="grid gap-4 lg:grid-cols-12"
+            className="flex flex-col gap-4 rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-lg lg:col-span-6"
           >
-            <div className="flex flex-col items-center justify-center gap-3 rounded-[1.75rem] border border-white/80 bg-gradient-to-b from-white via-emerald-50/80 to-teal-50 p-6 shadow-lg lg:col-span-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-600">
-                Visual posture
-              </p>
-              <div className="flex h-48 w-full items-center justify-center rounded-3xl border border-emerald-100 bg-white/70">
-                <PostureVisual posture={step.posture} />
-              </div>
-              <p className="text-center text-sm font-black text-emerald-900">
-                {POSTURE_LABEL[step.posture]}
-              </p>
-              <p className="text-center text-xs leading-relaxed text-slate-600">{step.visualCue}</p>
-            </div>
-
-            <div className="flex flex-col gap-4 rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-lg lg:col-span-7">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-600">
                   {step.arabicTitle ?? "Action"}
@@ -271,7 +296,31 @@ export default function SalahLessonScreen({
                 <h2 className="mt-1 text-2xl font-black text-slate-900">{step.title}</h2>
               </div>
 
-              {step.arabic ? (
+              {movementsOnly ? (
+                <div className="flex flex-1 flex-col justify-center gap-4 rounded-3xl border-2 border-dashed border-emerald-200 bg-emerald-50/60 p-5 text-center">
+                  <Footprints size={34} aria-hidden="true" className="mx-auto text-emerald-600" />
+                  <div>
+                    <p className="text-base font-black text-emerald-900">Movements only — no words yet</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      Watch the picture, then copy the body shape. Say nothing for now.
+                      {step.arabic ? " The words for this step are waiting for when you're ready." : ""}
+                    </p>
+                  </div>
+                  <p className="text-xs font-bold text-slate-600">Teacher: demonstrate slowly, freeze at the posture, let the child mirror you.</p>
+                  {step.arabic ? (
+                    <button
+                      type="button"
+                      onClick={() => changeMode("words")}
+                      className="mx-auto inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-xs font-black text-emerald-800 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
+                    >
+                      <MessageSquareText size={14} aria-hidden="true" />
+                      Comfortable? Add the words →
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {step.arabic && !movementsOnly ? (
                 <button
                   type="button"
                   onClick={speak}
@@ -294,14 +343,17 @@ export default function SalahLessonScreen({
                 </button>
               ) : null}
 
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
-                  English translation
-                </p>
-                <p className="mt-2 whitespace-normal text-sm leading-relaxed text-slate-800" dir="ltr">
-                  {step.translation}
-                </p>
-              </div>
+              {/* In movements mode the meaning of the Arabic is hidden too; pure action steps stay visible. */}
+              {!movementsOnly || !step.arabic ? (
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                    {step.arabic ? "English translation" : "What to do"}
+                  </p>
+                  <p className="mt-2 whitespace-normal text-sm leading-relaxed text-slate-800" dir="ltr">
+                    {step.translation}
+                  </p>
+                </div>
+              ) : null}
 
               {step.teacherNote ? (
                 <div className="rounded-2xl border border-sky-100 bg-sky-50 p-3">
@@ -309,9 +361,9 @@ export default function SalahLessonScreen({
                   <p className="mt-1 text-xs text-sky-950">{step.teacherNote}</p>
                 </div>
               ) : null}
-            </div>
-          </motion.section>
-        </AnimatePresence>
+          </motion.div>
+          </AnimatePresence>
+        </section>
 
         <section className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-4">
@@ -328,7 +380,7 @@ export default function SalahLessonScreen({
           <button
             type="button"
             disabled={stepIndex === 0}
-            onClick={() => setStepIndex((value) => Math.max(0, value - 1))}
+            onClick={() => goTo(Math.max(0, stepIndex - 1))}
             className="qaida-premium-button min-h-11 border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             ← Previous
@@ -337,7 +389,7 @@ export default function SalahLessonScreen({
           {!isLast ? (
             <button
               type="button"
-              onClick={() => setStepIndex((value) => Math.min(steps.length - 1, value + 1))}
+              onClick={() => goTo(Math.min(steps.length - 1, stepIndex + 1))}
               className="qaida-premium-button min-h-11 bg-emerald-700 px-6 py-2.5 text-sm font-black text-white"
             >
               Next step →
