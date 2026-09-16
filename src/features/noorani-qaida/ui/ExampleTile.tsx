@@ -60,10 +60,10 @@ export default function ExampleTile({
         aria-hidden="true"
       >
         <span
-          className={`qaida-arabic block font-black text-emerald-900 ${
+          className={`qaida-arabic block text-emerald-900 ${
             fullText
-              ? "w-full text-center text-2xl leading-[1.85] sm:text-3xl"
-              : "text-4xl leading-[1.45]"
+              ? "qaida-arabic-recitation w-full"
+              : "text-4xl font-black leading-[1.45]"
           }`}
           lang="ar"
           dir="rtl"

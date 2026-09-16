@@ -62,6 +62,34 @@
 .qaida-root [dir="rtl"],
 .qaida-arabic {
   font-family: var(--font-qaida-arabic), "Noto Naskh Arabic", serif;
+  /* Amiri ships only at 700 here. Never let the browser fake a heavier weight —
+     synthetic bold thickens the harakat until they merge into the letters. */
+  font-synthesis: none;
+  font-feature-settings: "kern", "liga", "calt", "mark", "mkmk";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  word-spacing: 0.16em;
+}
+
+/* Long recitation text: duas, kalmas, surah lines. Generous leading so the
+   harakat above and below never collide with the neighbouring line. */
+.qaida-arabic.qaida-arabic-recitation {
+  font-size: clamp(1.7rem, 1.35rem + 1.4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 2.2;
+  word-spacing: 0.32em;
+  letter-spacing: 0;
+  padding-block: 0.2em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Arabic headings (dua / kalima titles) — one or two words, still needs air. */
+.qaida-arabic.qaida-arabic-heading {
+  font-weight: 700;
+  line-height: 1.9;
+  word-spacing: 0.24em;
+  padding-block: 0.12em;
 }
 
 /* Shared Arabic practice tiles: keep English below the glyph zone */

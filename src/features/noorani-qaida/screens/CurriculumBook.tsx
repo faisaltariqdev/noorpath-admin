@@ -38,7 +38,7 @@ function TopicPage({
       <div className="pointer-events-none absolute inset-3 rounded-[1.35rem] border border-amber-300/45" aria-hidden="true" />
       <div className="relative z-10">
         <div className="text-center">
-          <p className="qaida-arabic text-3xl font-black leading-[1.45] text-emerald-900 sm:text-4xl" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
+          <p className="qaida-arabic qaida-arabic-heading text-3xl text-emerald-900 sm:text-4xl" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
           <h3 className="mt-1 text-xl font-black text-slate-900">{lesson.title}</h3>
           {isLongForm && lesson.whenToSay ? (
             <p className="mx-auto mt-2 max-w-2xl rounded-2xl bg-teal-50/90 px-4 py-2 text-sm font-semibold leading-relaxed text-teal-950">

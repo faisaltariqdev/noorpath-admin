@@ -89,7 +89,7 @@ export default function TopicLessonScreen({
 
           <div className="relative flex min-h-56 flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-white to-yellow-100 p-5 shadow-xl lg:col-span-4">
             <SparkleBurst active={isPlaying} />
-            <p className="qaida-arabic text-3xl font-black leading-[1.45] text-emerald-800" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
+            <p className="qaida-arabic qaida-arabic-heading text-3xl text-emerald-800" lang="ar" dir="rtl">{lesson.arabicTitle}</p>
             <motion.button
               type="button"
               onClick={() => speak()}
@@ -100,8 +100,8 @@ export default function TopicLessonScreen({
               aria-label={`Hear ${activeExample?.transliteration}`}
             >
               <span
-                className={`qaida-arabic block w-full font-black text-emerald-900 ${
-                  isRecitation ? "text-center text-2xl leading-[1.85] sm:text-3xl" : "text-6xl leading-[1.4]"
+                className={`qaida-arabic block w-full text-emerald-900 ${
+                  isRecitation ? "qaida-arabic-recitation" : "text-6xl font-black leading-[1.4]"
                 }`}
                 lang="ar"
                 dir="rtl"

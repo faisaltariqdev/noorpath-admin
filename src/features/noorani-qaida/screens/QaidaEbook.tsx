@@ -52,10 +52,10 @@ export default function QaidaEbook({
 
         {/* Ornamental header */}
         <div className="relative z-10 text-center">
-          <p className="qaida-arabic text-base text-amber-800/80 sm:text-lg" lang="ar" dir="rtl">
+          <p className="qaida-arabic qaida-arabic-heading text-base text-amber-800/80 sm:text-lg" lang="ar" dir="rtl">
             بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
           </p>
-          <h2 className="qaida-arabic mt-1 text-3xl font-black text-emerald-900 sm:text-4xl" lang="ar" dir="rtl">
+          <h2 className="qaida-arabic qaida-arabic-heading mt-1 text-3xl text-emerald-900 sm:text-4xl" lang="ar" dir="rtl">
             اَلْقَاعِدَةُ النُّورَانِيَّة
           </h2>
           <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-700/70">

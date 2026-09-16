@@ -30,10 +30,10 @@ export default function CertificateScreen({ progress }: { progress: QaidaProgres
       >
         <div className="absolute left-5 top-5 text-3xl text-amber-500" aria-hidden="true">❁</div>
         <div className="absolute right-5 top-5 text-3xl text-amber-500" aria-hidden="true">❁</div>
-        <p className="qaida-arabic text-2xl font-black text-emerald-900" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+        <p className="qaida-arabic qaida-arabic-heading text-2xl text-emerald-900" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
         <p className="mt-6 text-xs font-black uppercase tracking-[0.28em] text-amber-700">NoorPath Learning</p>
         <h1 className="mt-2 text-4xl font-black text-emerald-900 sm:text-5xl">Certificate of Completion</h1>
-        <p className="qaida-arabic mt-2 text-3xl font-bold text-amber-700" lang="ar" dir="rtl">القَاعِدَةُ النُّورَانِيَّة</p>
+        <p className="qaida-arabic qaida-arabic-heading mt-2 text-3xl text-amber-700" lang="ar" dir="rtl">القَاعِدَةُ النُّورَانِيَّة</p>
         <div className="mx-auto my-7 h-px max-w-xl bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
         <p className="text-lg text-slate-600">This recognises the successful completion of the</p>
         <p className="mt-2 text-2xl font-black text-slate-900">Interactive Noorani Qaida Curriculum</p>

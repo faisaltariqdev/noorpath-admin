@@ -279,7 +279,7 @@ export default function SalahLessonScreen({
                   aria-label={step.transliteration ? `Hear ${step.transliteration}` : "Hear Arabic"}
                 >
                   <motion.p
-                    className="qaida-arabic w-full text-2xl font-black leading-[1.85] text-emerald-900 sm:text-3xl"
+                    className="qaida-arabic qaida-arabic-recitation w-full text-emerald-900"
                     lang="ar"
                     dir="rtl"
                     animate={isPlaying && !reducedMotion ? { scale: [1, 1.03, 1] } : undefined}
