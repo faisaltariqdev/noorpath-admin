@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Destructive one-shot maintenance scripts — keep local only
+scripts/wipe-except-admin.mjs
