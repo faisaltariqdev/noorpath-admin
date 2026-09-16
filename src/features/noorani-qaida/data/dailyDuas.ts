@@ -188,9 +188,9 @@ export const DAILY_DUAS_LESSONS: TopicLesson[] = [
     examples: [
       example(
         "sleep",
-        "بِاسْمِكَ اللّٰهُمَّ أَمُوتُ وَأَحْيَا",
-        "Bismika Allahumma amootu wa ahyaa",
-        "In Your name, O Allah, I die and I live",
+        "اَللّٰهُمَّ بِاسْمِكَ أَمُوْتُ وَأَحْيَا",
+        "Allahumma bismika amootu wa ahyaa",
+        "O Allah, in Your name I die and I live",
       ),
     ],
   }),
