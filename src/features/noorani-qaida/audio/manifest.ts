@@ -17,6 +17,25 @@ export interface QaidaAudioManifest {
   entries: QaidaAudioManifestEntry[];
 }
 
+/**
+ * Real recitation recordings (served from /public). Keyed by lesson id; both the
+ * `lesson-<id>` and `example-<id>` audio keys resolve to the same file.
+ * "slow" is intentionally omitted — QaidaAudioService plays the normal file at a
+ * reduced playbackRate instead of falling back to device speech.
+ */
+const LESSON_RECORDINGS: Record<string, string> = {
+  "kalima-tayyabah": "/audio/kalmas/kalima-tayyabah.mp3",
+  "kalima-shahadat": "/audio/kalmas/kalima-shahadat.mp3",
+  "kalima-tamjeed": "/audio/kalmas/kalima-tamjeed.mp3",
+  "kalima-tawheed": "/audio/kalmas/kalima-tawheed.mp3",
+  "kalima-istighfar": "/audio/kalmas/kalima-istighfar.mp3",
+  "kalima-radd-e-kufr": "/audio/kalmas/kalima-radd-e-kufr.mp3",
+};
+
+function recordingFor(audioKey: string): string | undefined {
+  return LESSON_RECORDINGS[audioKey.replace(/^(lesson|example)-/, "")];
+}
+
 export const QAIDA_AUDIO_MANIFEST: QaidaAudioManifest = {
   version: 1,
   fallback: "device-arabic-voice",
@@ -31,12 +50,14 @@ export const QAIDA_AUDIO_MANIFEST: QaidaAudioManifest = {
       {
         key: lesson.audioKey,
         fallbackText: lesson.examples[0]?.arabic ?? lesson.arabicTitle,
+        normal: recordingFor(lesson.audioKey),
         preload: "lazy" as const,
         reviewStatus: lesson.reviewStatus,
       },
       ...lesson.examples.map((item) => ({
         key: item.audioKey,
         fallbackText: item.arabic,
+        normal: recordingFor(item.audioKey),
         preload: "lazy" as const,
         reviewStatus: lesson.reviewStatus,
       })),

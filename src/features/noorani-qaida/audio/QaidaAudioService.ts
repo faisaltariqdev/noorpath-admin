@@ -75,14 +75,18 @@ class QaidaAudioService {
     this.unlock();
     this.stop();
     const requestId = this.requestId;
-    const source = this.assets.pronunciations?.[key]?.[mode];
+    const files = this.assets.pronunciations?.[key];
+    // Prefer a dedicated slow recording; otherwise slow down the normal recording
+    // rather than dropping back to device speech (keeps the real voice).
+    const source = files?.[mode] ?? (mode === "slow" ? files?.normal : undefined);
+    const playbackRate = mode === "slow" && !files?.slow && files?.normal ? 0.75 : 1;
 
     onStart?.();
     try {
       for (let index = 0; index < Math.max(1, repeat); index += 1) {
         if (!this.enabled || requestId !== this.requestId) return;
         if (source) {
-          const played = await this.playFile(source);
+          const played = await this.playFile(source, playbackRate);
           if (!played) await this.playSpeech(fallbackText, mode === "slow" ? 0.48 : 0.62);
         } else {
           await this.playSpeech(fallbackText, mode === "slow" ? 0.48 : 0.62);
@@ -141,7 +145,7 @@ class QaidaAudioService {
     }
   }
 
-  private playFile(source: string) {
+  private playFile(source: string, playbackRate = 1) {
     return new Promise<boolean>((resolve) => {
       if (typeof Audio === "undefined") {
         resolve(false);
@@ -151,6 +155,11 @@ class QaidaAudioService {
       const audio = new Audio(source);
       this.activeAudio = audio;
       audio.preload = "auto";
+      if (playbackRate !== 1) {
+        audio.playbackRate = playbackRate;
+        // Keep the reciter's pitch natural when slowed down (supported in modern browsers).
+        (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
+      }
       audio.onended = () => {
         if (this.activeAudio === audio) this.activeAudio = null;
         resolve(true);
