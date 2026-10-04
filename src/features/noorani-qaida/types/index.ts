@@ -66,6 +66,19 @@ export type SalahPosture =
   | "wudu-ears"
   | "wudu-feet";
 
+export interface SalahVideoPhase {
+  label: string;
+  url: string;
+}
+
+export interface SalahRecitationPart {
+  title: string;
+  arabic: string;
+  transliteration: string;
+  translation: string;
+  instruction?: string;
+}
+
 export interface SalahStep {
   id: string;
   order: number;
@@ -77,6 +90,9 @@ export interface SalahStep {
   visualCue: string;
   posture: SalahPosture;
   teacherNote?: string;
+  videoUrl?: string;
+  videoPhases?: SalahVideoPhase[];
+  recitationParts?: SalahRecitationPart[];
 }
 
 export interface InteractiveExample {
@@ -105,6 +121,10 @@ export interface TopicLesson {
   examples: InteractiveExample[];
   /** Step-by-step guided flow for Namaz / Wudu lessons */
   steps?: SalahStep[];
+  /** Optional overall lesson cartoon/poem video URL (e.g. YouTube) */
+  videoUrl?: string;
+  videoTitle?: string;
+  videoDescription?: string;
   whenToSay?: string;
   reviewStatus: ReviewStatus;
 }

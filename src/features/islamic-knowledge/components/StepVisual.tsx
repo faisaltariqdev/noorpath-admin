@@ -225,7 +225,17 @@ const SCENES: Record<string, (props: SceneProps) => ReactNode> = {
   ),
   "six-articles": ({ a, reduce }) => (
     <>
-      <motion.circle cx="120" cy="70" r="26" fill={soft(a, "22")} stroke={a} strokeWidth="4" animate={reduce ? undefined : { r: [26, 29, 26] }} transition={{ duration: 3, repeat: Infinity }} />
+      <motion.circle
+        cx="120"
+        cy="70"
+        r="26"
+        fill={soft(a, "22")}
+        stroke={a}
+        strokeWidth="4"
+        style={{ transformBox: "fill-box", transformOrigin: "center" }}
+        animate={reduce ? undefined : { scale: [1, 1.1, 1] }}
+        transition={{ duration: 3, repeat: Infinity }}
+      />
       <Book x={120} y={72} s={0.5} a={a} />
       {[0, 1, 2, 3, 4, 5].map((index) => {
         const angle = (Math.PI / 3) * index - Math.PI / 2;
@@ -599,6 +609,36 @@ function Scene({ topicId, spec, reduce }: { topicId: string; spec: VisualSpec; r
   );
 }
 
+/** Extract YouTube video id from youtu.be/ID or youtube.com/watch?v=ID */
+function extractYouTubeId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1).split("?")[0];
+    if (parsed.hostname.includes("youtube.com")) return parsed.searchParams.get("v");
+  } catch {
+    // not a valid URL
+  }
+  return null;
+}
+
+function YouTubeEmbed({ url, accent }: { url: string; accent: string }) {
+  const videoId = extractYouTubeId(url);
+  if (!videoId) return null;
+  return (
+    <div className="ik-video-wrapper" style={{ "--ik-visual-accent": accent } as CSSProperties}>
+      <div className="ik-video-badge">🎬 Cartoon Video</div>
+      <iframe
+        className="ik-video-frame"
+        src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`}
+        title="Wudu cartoon video for kids"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+      />
+    </div>
+  );
+}
+
 export default function StepVisual({
   topicId,
   step,
@@ -610,17 +650,24 @@ export default function StepVisual({
 }) {
   const reduce = Boolean(useReducedMotion());
   const spec = TOPIC_VISUALS[topicId] ?? TOPIC_VISUALS["who-is-allah"];
+  const showVideo = !compact && step?.videoUrl;
 
   return (
-    <div className={`ik-step-visual ${compact ? "compact" : ""}`} style={{ "--ik-visual-accent": spec.accent } as CSSProperties}>
-      <Scene topicId={topicId} spec={spec} reduce={reduce} />
+    <div className={`ik-step-visual ${compact ? "compact" : ""} ${showVideo ? "ik-step-visual--video" : ""}`} style={{ "--ik-visual-accent": spec.accent } as CSSProperties}>
+      {showVideo ? (
+        <YouTubeEmbed url={step.videoUrl!} accent={spec.accent} />
+      ) : (
+        <Scene topicId={topicId} spec={spec} reduce={reduce} />
+      )}
       {!compact && (
         <>
-          {step?.emoji && <span className="ik-step-visual-emoji" aria-hidden="true">{step.emoji}</span>}
-          <div className="ik-visual-labels" aria-label="Key ideas">
-            {spec.labels.slice(0, step?.type === "intro" ? 3 : spec.labels.length).map((label) => <span key={label}>{label}</span>)}
-          </div>
-          {step && <span className="ik-visual-type">{step.type === "tap" || step.type === "fact" ? "Explore" : step.type === "mascot" ? "Noori's tip" : "Learn"}</span>}
+          {step?.emoji && !showVideo && <span className="ik-step-visual-emoji" aria-hidden="true">{step.emoji}</span>}
+          {!showVideo && (
+            <div className="ik-visual-labels" aria-label="Key ideas">
+              {spec.labels.slice(0, step?.type === "intro" ? 3 : spec.labels.length).map((label) => <span key={label}>{label}</span>)}
+            </div>
+          )}
+          {step && !showVideo && <span className="ik-visual-type">{step.type === "tap" || step.type === "fact" ? "Explore" : step.type === "mascot" ? "Noori's tip" : "Learn"}</span>}
         </>
       )}
     </div>

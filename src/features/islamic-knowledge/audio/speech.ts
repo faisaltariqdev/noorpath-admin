@@ -2,6 +2,30 @@ let cachedVoices: SpeechSynthesisVoice[] = [];
 let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
 let resumeTimer: number | null = null;
 
+/* ---- speaking state (drives the mascot's mouth) ---- */
+type SpeakingListener = (speaking: boolean) => void;
+const speakingListeners = new Set<SpeakingListener>();
+let speakingNow = false;
+
+function setSpeaking(next: boolean) {
+  if (speakingNow === next) return;
+  speakingNow = next;
+  speakingListeners.forEach((listener) => listener(next));
+}
+
+/** Subscribe to speaking on/off; returns an unsubscribe function. */
+export function subscribeKnowledgeSpeaking(listener: SpeakingListener): () => void {
+  speakingListeners.add(listener);
+  listener(speakingNow);
+  return () => {
+    speakingListeners.delete(listener);
+  };
+}
+
+export function isKnowledgeSpeaking(): boolean {
+  return speakingNow;
+}
+
 function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return Promise.resolve([]);
   const current = window.speechSynthesis.getVoices();
@@ -37,6 +61,7 @@ export function cancelKnowledgeSpeech() {
   if (resumeTimer != null) window.clearInterval(resumeTimer);
   resumeTimer = null;
   window.speechSynthesis.cancel();
+  setSpeaking(false);
 }
 
 export function unlockKnowledgeSpeech() {
@@ -66,6 +91,9 @@ export async function speakKnowledgeText(text: string, rate = 0.88): Promise<voi
   utterance.rate = rate;
   utterance.pitch = 1.05;
   utterance.volume = 1;
+  utterance.onstart = () => setSpeaking(true);
+  utterance.onend = () => setSpeaking(false);
+  utterance.onerror = () => setSpeaking(false);
 
   if (resumeTimer != null) window.clearInterval(resumeTimer);
   resumeTimer = window.setInterval(() => {
@@ -73,6 +101,7 @@ export async function speakKnowledgeText(text: string, rate = 0.88): Promise<voi
     if (!synth.speaking && !synth.pending && resumeTimer != null) {
       window.clearInterval(resumeTimer);
       resumeTimer = null;
+      setSpeaking(false);
     }
   }, 250);
 

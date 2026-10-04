@@ -1,9 +1,10 @@
 "use client";
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { useMotionBudget } from "../motion/useMotionBudget";
 
-export default function ScenicLearningBackground({ reducedMotion = false }: { reducedMotion?: boolean }) {
+function ScenicLearningBackgroundComponent({ reducedMotion = false }: { reducedMotion?: boolean }) {
   const budget = useMotionBudget(reducedMotion);
 
   return (
@@ -116,3 +117,7 @@ export default function ScenicLearningBackground({ reducedMotion = false }: { re
     </div>
   );
 }
+
+const ScenicLearningBackground = memo(ScenicLearningBackgroundComponent);
+export default ScenicLearningBackground;
+

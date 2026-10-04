@@ -21,8 +21,15 @@ export interface IKQuestion {
   kind: QuestionKind;
   difficulty: Difficulty;
   prompt: string;
+  /** Shown after a first wrong attempt — nudges without giving the answer away. */
   hint?: string;
+  /** Shown after the answer is settled — the "why", never a copy of the hint. */
   explanation?: string;
+  /**
+   * Concept key (e.g. "allah-creator"). A quiz session never asks two questions
+   * with the same concept, which is what stops "the same fact asked twice".
+   */
+  concept?: string;
   /** Correct option id(s) or fill text / ordered ids */
   answer: string | string[];
   options?: IKOption[];
@@ -40,6 +47,8 @@ export interface LessonStep {
   emoji?: string;
   illustration?: string;
   mascotMood?: "happy" | "think" | "cheer" | "hint";
+  /** Optional YouTube video URL (e.g. https://youtu.be/xxx). When set the step visual shows an embedded video. */
+  videoUrl?: string;
 }
 
 export interface IKLesson {
@@ -78,6 +87,9 @@ export interface IKBadge {
   earnedAt?: string;
 }
 
+/** The learner's animated buddy. Both share one rig; only the art layer differs. */
+export type IKCompanionId = "noori" | "noora";
+
 export interface IKProgress {
   xp: number;
   coins: number;
@@ -91,6 +103,19 @@ export interface IKProgress {
   badges: IKBadge[];
   dailyChallengeDone: boolean;
   dailyChallengeDate: string | null;
+  /** Result of the most recent daily challenge (kept for the home card). */
+  dailyChallengeScore: { correct: number; total: number } | null;
+  /** Question ids served in the previous session per lesson — the engine avoids them next time. */
+  questionHistory: Record<string, string[]>;
+  /** How many times each lesson quiz has been played (drives difficulty ramp). */
+  lessonAttempts: Record<string, number>;
+  /** Last lesson the learner opened — powers "Continue where you left off". */
+  lastLessonId: string | null;
+  companion: IKCompanionId;
+  /** Lifetime quiz stats. */
+  totalAnswered: number;
+  totalCorrect: number;
+  bestCombo: number;
 }
 
 export type IKView =
@@ -99,6 +124,7 @@ export type IKView =
   | "intermediate"
   | "advanced"
   | "lesson"
+  | "challenge"
   | "rewards"
   | "manage";
 
@@ -113,4 +139,15 @@ export interface IKLessonReward {
   earnedCoins: number;
   levelUp: boolean;
   newBadges: string[];
+}
+
+/** What the lesson player reports back when a quiz finishes. */
+export interface IKQuizOutcome {
+  correct: number;
+  total: number;
+  /** Ids of every question served, in order (stored as history). */
+  servedQuestionIds: string[];
+  /** Ids the learner got wrong on first try. */
+  missedQuestionIds: string[];
+  bestCombo: number;
 }

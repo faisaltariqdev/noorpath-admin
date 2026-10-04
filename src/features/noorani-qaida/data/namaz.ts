@@ -1,4 +1,4 @@
-import type { InteractiveExample, SalahStep, TopicLesson } from "../types";
+import type { InteractiveExample, SalahRecitationPart, SalahStep, TopicLesson } from "../types";
 
 const pending = "pending-qari-review" as const;
 
@@ -24,6 +24,350 @@ function salah(
     reviewStatus: pending,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Reusable Recitation Part Breakdowns for Children
+// ---------------------------------------------------------------------------
+export const THANA_RECITATION_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Glory & Praise",
+    arabic: "سُبْحَانَكَ اللّٰهُمَّ وَبِحَمْدِكَ",
+    transliteration: "Subhaanak-Allaahumma wa bihamdika",
+    translation: "Glory be to You, O Allah, and all praise is Yours.",
+    instruction: "Whispered quietly with hands folded upon the chest.",
+  },
+  {
+    title: "2. Blessed Name",
+    arabic: "وَتَبَارَكَ اسْمُكَ",
+    transliteration: "Wa tabaarakasmuka",
+    translation: "And blessed is Your Holy Name.",
+    instruction: "Affirms that blessings flow from the remembrance of Allah.",
+  },
+  {
+    title: "3. Exalted Majesty",
+    arabic: "وَتَعَالَىٰ جَدُّكَ",
+    transliteration: "Wa ta‘aalaa jadduka",
+    translation: "And exalted is Your Supreme Majesty and Greatness.",
+    instruction: "Declares Allah's high station above all creation.",
+  },
+  {
+    title: "4. Exclusive Divinity",
+    arabic: "وَلَا إِلٰهَ غَيْرُكَ",
+    transliteration: "Wa laa ilaaha ghayruk",
+    translation: "And there is no deity worthy of worship other than You.",
+    instruction: "Concludes with the core truth of Tawheed.",
+  },
+];
+
+export const TASHAHHUD_RECITATION_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Sacred Greetings (At-Tahiyyat)",
+    arabic: "التَّحِيَّاتُ لِلّٰهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ",
+    transliteration: "At-tahiyyaatu lillaahi was-salawaatu wat-tayyibaat.",
+    translation: "All blessed greetings, prayers, and pure words belong to Allah alone.",
+    instruction: "Recited while sitting calmly in Qa'dah with hands resting on thighs.",
+  },
+  {
+    title: "2. Salam on Rasulullah ﷺ",
+    arabic: "السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللّٰهِ وَبَرَكَاتُهُ",
+    transliteration: "As-salaamu ‘alayka ayyuhan-Nabiyyu wa rahmatullaahi wa barakaatuh.",
+    translation: "Peace be upon you, O Prophet, and the mercy of Allah and His blessings.",
+    instruction: "Send heartfelt greetings of peace directly upon Prophet Muhammad ﷺ.",
+  },
+  {
+    title: "3. Salam on the Righteous",
+    arabic: "السَّلَامُ عَلَيْنَا وَعَلَىٰ عِبَادِ اللّٰهِ الصَّالِحِينَ",
+    transliteration: "As-salaamu ‘alaynaa wa ‘alaa ‘ibaadillaahis-saaliheen.",
+    translation: "Peace be upon us, and upon all the righteous, faithful servants of Allah.",
+    instruction: "Spread peace upon yourself, fellow believers, and righteous souls.",
+  },
+  {
+    title: "4. Shahadah (Affirmation of Tawheed)",
+    arabic: "أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
+    transliteration: "Ashhadu an laa ilaaha illallaahu wa ashhadu anna Muhammadan ‘abduhu wa rasooluh.",
+    translation: "I bear witness that there is no deity worthy of worship except Allah, and I bear witness that Muhammad is His servant and Messenger.",
+    instruction: "Gently raise the right index finger at 'laa ilaaha illallah' to proclaim Tawheed.",
+  },
+];
+
+export const DUROOD_RECITATION_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Salawat (Blessings upon Prophet Muhammad ﷺ)",
+    arabic: "اللّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ",
+    transliteration: "Allaahumma salli ‘alaa Muhammadin wa ‘alaa aali Muhammad, kamaa sallayta ‘alaa Ibraaheema wa ‘alaa aali Ibraaheem, innaka hameedun majeed.",
+    translation: "O Allah, send prayers upon Muhammad and upon the family of Muhammad, as You sent prayers upon Ibrahim and upon the family of Ibrahim. Indeed You are Praiseworthy, Glorious.",
+    instruction: "Recited while sitting calmly in Qa'dah after completing the Tashahhud.",
+  },
+  {
+    title: "2. Barakah (Abundant Grace & Prosperity)",
+    arabic: "اللّٰهُمَّ بَارِكْ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ",
+    transliteration: "Allaahumma baarik ‘alaa Muhammadin wa ‘alaa aali Muhammad, kamaa baarakta ‘alaa Ibraaheema wa ‘alaa aali Ibraaheem, innaka hameedun majeed.",
+    translation: "O Allah, bless Muhammad and the family of Muhammad, as You blessed Ibrahim and the family of Ibrahim. Indeed You are Praiseworthy, Glorious.",
+    instruction: "Invokes continuous divine barakah upon the Prophet ﷺ and his righteous family.",
+  },
+  {
+    title: "3. Dua Masoora (Supplication Before Salam)",
+    arabic:
+      "رَبِّ اجْعَلْنِيْ مُقِيْمَ الصَّلٰوةِ وَمِنْ ذُرِّيَّتِيْ ۖ رَبَّنَا وَتَقَبَّلْ دُعَاءِ ۝ رَبَّنَا اغْفِرْ لِيْ وَلِوَالِدَيَّ وَلِلْمُؤْمِنِيْنَ يَوْمَ يَقُوْمُ الْحِسَابُ",
+    transliteration:
+      "Rabbi-j‘alnee muqeemas-Salaati wa min dhurriyyatee, Rabbanaa wa taqabbal du‘aa’. Rabbanagh-fir lee wa li-waalidayya wa lil-Mu’mineena Yawma yaqoomul-Hisaab.",
+    translation:
+      "My Lord, make me steadfast in prayer, and also from my descendants. Our Lord, and accept my supplication. Our Lord, forgive me and my parents and the believers on the Day the account will be established.",
+    instruction:
+      "Quranic supplication (Surah Ibrahim 14:40-41) recited in Qa'dah after Durood before concluding prayer with Salam.",
+  },
+];
+
+export const SALAM_RIGHT_PARTS: SalahRecitationPart[] = [
+  {
+    title: "Salam to the Right",
+    arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ",
+    transliteration: "As-salaamu ‘alaykum wa rahmatullaah",
+    translation: "Peace and the mercy of Allah be upon you.",
+    instruction: "Turn your face toward the right shoulder, greeting the recording angel and righteous believers.",
+  },
+];
+
+export const SALAM_LEFT_PARTS: SalahRecitationPart[] = [
+  {
+    title: "Salam to the Left · Complete",
+    arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ",
+    transliteration: "As-salaamu ‘alaykum wa rahmatullaah",
+    translation: "Peace and the mercy of Allah be upon you.",
+    instruction: "Turn your face toward the left shoulder, concluding your prayer with tranquility and peace.",
+  },
+];
+
+export const FAJR_PRAYER_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Rak‘aat Breakdown (4 Total)",
+    arabic: "2 Sunnah + 2 Fard",
+    transliteration: "2 Sunnah Mu'akkadah + 2 Fard Rak‘aat (Jahri / Aloud)",
+    translation: "The 2 Sunnah rak'aat of Fajr are highly emphasized; Rasulullah ﷺ never omitted them.",
+    instruction: "Prayed quietly before the obligatory 2 Fard rak'aat.",
+  },
+  {
+    title: "2. Fard Prayer (2 Rak‘aat Jahri)",
+    arabic: "2 Fard Rak‘aat (Recited Aloud)",
+    transliteration: "2 Fard Rak‘aat (Audible Recitation)",
+    translation: "The obligatory dawn prayer. Surat al-Fatihah and Surahs are recited aloud (Jahri) with tajweed melody.",
+    instruction: "Angels of the night and day gather to witness the morning recitation.",
+  },
+  {
+    title: "3. Time Window (Dawn to Sunrise)",
+    arabic: "Dawn to Sunrise (Fajr Time Window)",
+    transliteration: "Min tuloo‘il-fajr ilaa tuloo‘ish-shams",
+    translation: "From true dawn until just before the sun appears above the horizon.",
+    instruction: "Commence your day in the divine protection and light of Allah.",
+  },
+];
+
+export const DHUHR_PRAYER_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Rak‘aat Breakdown (12 Total)",
+    arabic: "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl",
+    transliteration: "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl",
+    translation: "Dhuhr consists of 4 Sunnah before Fard, 4 Fard, 2 Sunnah after Fard, and 2 voluntary Nafl.",
+    instruction: "The 4 Sunnah before Dhuhr cause the doors of the heavens to be opened.",
+  },
+  {
+    title: "2. Silent Recitation (Sirri)",
+    arabic: "Silent Recitation (Sirri / Quiet Whisper)",
+    transliteration: "Qira'ah Sirriyyah (Quiet Whisper)",
+    translation: "All 4 rak'aat of Dhuhr are recited silently. Move tongue and lips softly without loud voice.",
+    instruction: "Focus inward with deep mindfulness amidst the busy daytime activities.",
+  },
+  {
+    title: "3. Middle Sitting (Qa‘dah Ula)",
+    arabic: "Middle Sitting after Rakah 2 (Tashahhud)",
+    transliteration: "Qa'dah Ula after Rakah 2",
+    translation: "Sit after the 2nd Sujood of Rakah 2 to recite Tashahhud, then rise immediately for Rakah 3.",
+    instruction: "Rise directly saying 'Allahu Akbar' without adding Durood or Salam at this middle sitting.",
+  },
+  {
+    title: "4. Time Window (Midday Meridian)",
+    arabic: "Midday to Afternoon (Dhuhr Time Window)",
+    transliteration: "Min zawaalish-shams ilaa zillil-mithl",
+    translation: "From when the sun passes the meridian zenith until an object's shadow matches its length.",
+    instruction: "Pause school or play to remember your Lord and rejuvenate your energy.",
+  },
+];
+
+export const ASR_PRAYER_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Rak‘aat Breakdown (8 Total)",
+    arabic: "4 Sunnah + 4 Fard",
+    transliteration: "4 Sunnah Ghair Mu'akkadah + 4 Fard",
+    translation: "4 recommended Sunnah followed by 4 obligatory (Fard) rak‘aat.",
+    instruction: "Rasulullah ﷺ said: 'May Allah show mercy to whoever prays four rak'aat before ‘Asr.'",
+  },
+  {
+    title: "2. Silent Recitation (Sirri)",
+    arabic: "Silent Recitation (Sirri / Quiet Whisper)",
+    transliteration: "Qira'ah Sirriyyah (Quiet Whisper)",
+    translation: "Like Dhuhr, all 4 rak'aat of ‘Asr are recited silently with serene focus.",
+    instruction: "Preserve strict khushu‘ as the afternoon draws towards dusk.",
+  },
+  {
+    title: "3. The Blessed Middle Prayer",
+    arabic: "حَافِظُوا عَلَى الصَّلَوَاتِ وَالصَّلَاةِ الْوُسْطَىٰ",
+    transliteration: "Haafizoo ‘alas-salawaati was-salaatil-wustaa",
+    translation: "'Guard strictly the prayers, especially the middle prayer ('Asr), and stand before Allah with devotion.' (2:238)",
+    instruction: "Preserving ‘Asr brings immense rewards and protection from deprivation.",
+  },
+  {
+    title: "4. Time Window (Late Afternoon)",
+    arabic: "Late Afternoon until Sunset",
+    transliteration: "Min ba‘dil-‘Asr ilaa isfiraarish-shams",
+    translation: "From the end of Dhuhr time until the sun turns pale yellow before setting.",
+    instruction: "Must be offered before the sun begins to set below the horizon.",
+  },
+];
+
+export const MAGHRIB_PRAYER_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Rak‘aat Breakdown (7 Total)",
+    arabic: "3 Fard + 2 Sunnah + 2 Nafl",
+    transliteration: "3 Fard + 2 Sunnah Mu'akkadah + 2 Nafl",
+    translation: "Maghrib begins with 3 obligatory (Fard) rak‘aat, followed by 2 Sunnah and 2 Nafl.",
+    instruction: "It is Sunnah to perform Maghrib promptly without delay after the sunset Adhan.",
+  },
+  {
+    title: "2. Audible & Silent Recitation",
+    arabic: "2 Rak‘aat Aloud (Jahri) + 1 Silent (Sirri)",
+    transliteration: "2 Rak‘aat Jahri + 1 Rak‘ah Sirri",
+    translation: "Surat al-Fatihah and Surah are recited aloud in the first 2 rak‘aat; the 3rd rak‘ah is recited silently.",
+    instruction: "Listen attentively to the Imam or recite with melodious tajweed if praying at home.",
+  },
+  {
+    title: "3. Unique 3-Rak‘ah Structure",
+    arabic: "Sit after Rakah 2, then complete 1 final Rakah",
+    transliteration: "Sit after Rakah 2, then complete 1 final Rakah",
+    translation: "Sit for Tashahhud after Rakah 2, rise for only 1 rakah (reciting only Al-Fatihah), then sit for the final Tashahhud, Durood, and Salam.",
+    instruction: "Maghrib acts as the odd-numbered (Witr) prayer of the daytime.",
+  },
+  {
+    title: "4. Time Window (Sunset Twilight)",
+    arabic: "Sunset to Evening Twilight",
+    transliteration: "Min ghuroobish-shams ilaa ghiyaabish-shafaq",
+    translation: "From sunset until the red twilight disappears completely from the western horizon.",
+    instruction: "Gather family members together for a peaceful and blessed evening prayer.",
+  },
+];
+
+export const ISHA_PRAYER_PARTS: SalahRecitationPart[] = [
+  {
+    title: "1. Rak‘aat Breakdown (17 Total)",
+    arabic: "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl + 3 Witr + 2 Nafl",
+    transliteration: "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl + 3 Witr Wajib + 2 Nafl",
+    translation: "The night prayer includes 4 Fard, 2 Sunnah, 3 Witr Wajib, and optional Sunnah & Nafl.",
+    instruction: "Recite aloud (Jahri) in the first 2 rak‘aat of Fard and during the Witr prayer.",
+  },
+  {
+    title: "2. Witr Prayer & Takbir before Qunoot",
+    arabic: "Witr Prayer (3 Rak‘aat with Takbir & Dua Qunoot)",
+    transliteration: "Salat al-Witr with Takbir before Qunoot",
+    translation: "In the 3rd rakah of Witr, after Al-Fatihah and a Surah, raise hands saying 'Allahu Akbar', refold hands on chest, and recite Dua al-Qunoot.",
+    instruction: "Witr is an emphasized wajib prayer that crowns the night's worship.",
+  },
+  {
+    title: "3. Blessed Dua al-Qunoot (Full Words)",
+    arabic: "اللّٰهُمَّ إِنَّا نَسْتَعِينُكَ وَنَسْتَغْفِرُكَ وَنُؤْمِنُ بِكَ وَنَتَوَكَّلُ عَلَيْكَ وَنُثْنِي عَلَيْكَ الْخَيْرَ، وَنَشْكُرُكَ وَلَا نَكْفُرُكَ، وَنَخْلَعُ وَنَتْرُكُ مَنْ يَفْجُرُكَ. اللّٰهُمَّ إِيَّاكَ نَعْبُدُ وَلَكَ نُصَلِّي وَنَسْجُدُ، وَإِلَيْكَ نَسْعَىٰ وَنَحْفِدُ، نَرْجُو رَحْمَتَكَ وَنَخْشَىٰ عَذَابَكَ، إِنَّ عَذَابَكَ بِالْكُفَّارِ مُلْحَقٌ",
+    transliteration: "Allaahumma innaa nasta‘eenuka wa nastaghfiruka wa nu'minu bika wa natawakkalu ‘alayka wa nuthnee ‘alaykal-khayr, wa nashkuruka wa laa nakfuruk, wa nakhla‘u wa natruku may-yafjuruk. Allaahumma iyyaaka na‘budu wa laka nusallee wa nasjud, wa ilayka nas‘aa wa nahfid, narjoo rahmataka wa nakhshaa ‘adhaabak, inna ‘adhaabaka bil-kuffaari mulhaq.",
+    translation: "O Allah, we seek Your help and Your forgiveness, we believe in You, rely upon You, and praise You in the best manner. We thank You and do not deny You, and we turn away from whoever disobeys You. O Allah, You alone we worship, and to You we pray and prostrate. Towards You we hasten and serve. We hope for Your mercy and fear Your punishment; surely Your punishment will reach the disbelievers.",
+    instruction: "Recited with folded hands in the 3rd rakah of Witr before bowing down into Ruku.",
+  },
+  {
+    title: "4. Time Window (Night to Dawn)",
+    arabic: "Twilight to Midnight / Dawn",
+    transliteration: "Min ghiyaabish-shafaq ilaa nisf-il-layl",
+    translation: "From the complete disappearance of evening twilight until the middle of the night (or true dawn).",
+    instruction: "Conclude your waking hours with Witr and rest peacefully under Allah's watchful protection.",
+  },
+];
+
+export const FATIHAH_RECITATION_PARTS: SalahRecitationPart[] = [
+  {
+    title: "Ayah 1 (Basmala)",
+    arabic: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ",
+    transliteration: "Bismillaahir-Rahmaanir-Raheem",
+    translation: "In the name of Allah, the Most Gracious, the Most Merciful.",
+    instruction: "Commence recitation standing composed in Qiyam.",
+  },
+  {
+    title: "Ayah 2 (Praise)",
+    arabic: "الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ",
+    transliteration: "Alhamdu lillaahi Rabbil-‘aalameen",
+    translation: "All praise is for Allah, Lord of all the worlds.",
+    instruction: "Pronounce the letter ‘Ain softly and clearly.",
+  },
+  {
+    title: "Ayah 3 (Mercy)",
+    arabic: "الرَّحْمٰنِ الرَّحِيمِ",
+    transliteration: "Ar-Rahmaanir-Raheem",
+    translation: "The Most Gracious, the Most Merciful.",
+    instruction: "Pause briefly at the end of each verse.",
+  },
+  {
+    title: "Ayah 4 (Sovereignty)",
+    arabic: "مَالِكِ يَوْمِ الدِّينِ",
+    transliteration: "Maaliki Yawmid-Deen",
+    translation: "Master of the Day of Judgment.",
+    instruction: "Stand with deep reverence and humility.",
+  },
+  {
+    title: "Ayah 5 (Worship)",
+    arabic: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+    transliteration: "Iyyaaka na‘budu wa iyyaaka nasta‘een",
+    translation: "You alone we worship, and You alone we ask for help.",
+    instruction: "The central covenant between the worshipper and Allah.",
+  },
+  {
+    title: "Ayah 6 (Guidance)",
+    arabic: "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+    transliteration: "Ihdinas-siraatal-mustaqeem",
+    translation: "Guide us to the straight path.",
+    instruction: "The greatest supplication for steadfast direction.",
+  },
+  {
+    title: "Ayah 7 (The Blessed Path)",
+    arabic: "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ۝ آمِين",
+    transliteration: "Siraatal-ladheena an‘amta ‘alayhim, ghayril-maghdoobi ‘alayhim walad-daalleen. Aameen.",
+    translation: "The path of those whom You have blessed, not of those who earned anger, nor of those who are astray. Aameen.",
+    instruction: "Say 'Aameen' with devotion to conclude.",
+  },
+];
+
+export const IKHLAS_RECITATION_PARTS: SalahRecitationPart[] = [
+  {
+    title: "Ayah 1 (The One)",
+    arabic: "قُلْ هُوَ اللّٰهُ أَحَدٌ",
+    transliteration: "Qul Huwallahu Ahad",
+    translation: "Say: He is Allah, the Absolute One.",
+    instruction: "Clear Qalqalah echo bounce on the Dal.",
+  },
+  {
+    title: "Ayah 2 (The Eternal)",
+    arabic: "اللّٰهُ الصَّمَدُ",
+    transliteration: "Allahus-Samad",
+    translation: "Allah, the Eternal, Independent Refuge.",
+    instruction: "Emphasize the deep letter Saad in As-Samad.",
+  },
+  {
+    title: "Ayah 3 (Unbegotten)",
+    arabic: "لَمْ يَلِدْ وَلَمْ يُولَدْ",
+    transliteration: "Lam yalid wa lam yoolad",
+    translation: "He neither begets nor is He born.",
+    instruction: "Short, clean bounces on Yalid and Yoolad.",
+  },
+  {
+    title: "Ayah 4 (Incomparable)",
+    arabic: "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
+    transliteration: "Wa lam yakul-lahu kufuwan ahad",
+    translation: "And there is none comparable or equal unto Him.",
+    instruction: "Complete the recitation and prepare for Ruku.",
+  },
+];
 
 /**
  * Namaz (Salah) curriculum — separate module with step-by-step visual flow.
@@ -89,11 +433,14 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
     id: "namaz-wudu",
     title: "How to Make Wudu",
     arabicTitle: "كَيْفِيَّةُ الوُضُوء",
-    summary: "Learn each step of wudu with clear English guidance.",
+    summary: "Learn each step of wudu with clear English guidance and a full cartoon poem song.",
     childExplanation:
-      "Wudu is washing before prayer. We wash in order, calmly, without wasting water.",
-    teacherTip: "Demonstrate once fully, then let the child mime each step while you narrate.",
-    parentTip: "Practise at the sink with real water when the child is ready.",
+      "Wudu is washing before prayer. We wash in order, calmly, without wasting water. Watch the fun cartoon poem video to learn every step!",
+    teacherTip: "Demonstrate once fully or play the cartoon poem video together, then let the child mime each step while you narrate.",
+    parentTip: "Watch the cartoon wudu poem together, then practise at the sink with real water when the child is ready.",
+    videoUrl: "https://youtu.be/Td-w2OnRaUc",
+    videoTitle: "Full Wudu Cartoon Poem for Kids",
+    videoDescription: "Complete cartoonic rhyme and song teaching children the step-by-step method of Wudu in a fun, memorable way.",
     examples: [
       example("wudu-niyyah", "نِيَّةُ الوُضُوء", "Niyyat al-wudu", "Intention for wudu in the heart"),
       example("wudu-bismillah", "بِسْمِ اللّٰهِ", "Bismillah", "Begin wudu in the name of Allah"),
@@ -108,6 +455,11 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Intend wudu in your heart and begin in the name of Allah.",
         visualCue: "Stand at the sink, calm and focused.",
         posture: "overview",
+        videoUrl: "https://youtu.be/Td-w2OnRaUc",
+        videoPhases: [
+          { label: "Complete Cartoon Wudu Poem (Full Video)", url: "https://youtu.be/Td-w2OnRaUc" },
+          { label: "Step 1 Action Guide", url: "https://youtu.be/gAcJkcJp57w" },
+        ],
       },
       {
         id: "w-2",
@@ -116,6 +468,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Wash both hands up to the wrists three times.",
         visualCue: "Rub between the fingers carefully.",
         posture: "wudu-hands",
+        videoUrl: "https://youtu.be/JijX162m3pA",
       },
       {
         id: "w-3",
@@ -124,6 +477,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Take water into the mouth and rinse three times.",
         visualCue: "Swish gently, then spit out.",
         posture: "wudu-mouth",
+        videoUrl: "https://youtu.be/4YUUY2maD8s",
       },
       {
         id: "w-4",
@@ -132,6 +486,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Sniff water lightly into the nose and blow it out three times.",
         visualCue: "Be gentle — especially with young children.",
         posture: "wudu-nose",
+        videoUrl: "https://youtu.be/BsLPt8UFjwE",
       },
       {
         id: "w-5",
@@ -140,6 +495,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Wash the whole face from forehead to chin and ear to ear three times.",
         visualCue: "Cover the full face evenly.",
         posture: "wudu-face",
+        videoUrl: "https://youtu.be/2cmcBbOcEAQ",
       },
       {
         id: "w-6",
@@ -148,6 +504,11 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Wash the right arm to the elbow three times, then the left arm.",
         visualCue: "Include the elbows fully.",
         posture: "wudu-arms",
+        videoUrl: "https://youtu.be/EGOCKQe72H4",
+        videoPhases: [
+          { label: "Phase 6a (Right Arm)", url: "https://youtu.be/EGOCKQe72H4" },
+          { label: "Phase 6b (Left Arm)", url: "https://youtu.be/MwDWrRo6Qks" },
+        ],
       },
       {
         id: "w-7",
@@ -156,6 +517,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Wipe the head with wet hands once from front to back.",
         visualCue: "Light wipe — do not scrub hard.",
         posture: "wudu-head",
+        videoUrl: "https://youtu.be/ByJo1A4Cbs8",
       },
       {
         id: "w-8",
@@ -164,6 +526,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Wipe the inside and outside of both ears with wet fingers.",
         visualCue: "Index finger inside, thumb outside.",
         posture: "wudu-ears",
+        videoUrl: "https://youtu.be/PKEEf3rS5-8",
       },
       {
         id: "w-9",
@@ -172,6 +535,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Wash the right foot to the ankle three times, then the left foot. Include between the toes.",
         visualCue: "Ankles must be washed too.",
         posture: "wudu-feet",
+        videoUrl: "https://youtu.be/YgMpxhc-C0U",
       },
       {
         id: "w-10",
@@ -216,14 +580,44 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
       {
         id: "r-2",
         order: 2,
-        title: "Standing Recitation",
+        title: "Standing Recitation (Qiyam)",
         arabicTitle: "القِيَام",
-        arabic: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ · الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ…",
-        transliteration: "Bismillahir-Rahmaanir-Raheem · Alhamdu lillahi Rabbil-‘aalameen… (full Al-Fatihah)",
-        translation: "While standing, recite the complete Surat al-Fatihah, then a short surah such as Al-Ikhlas.",
-        visualCue: "Eyes soft, body still, voice clear and calm.",
+        arabic: "سُبْحَانَكَ اللّٰهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَىٰ جَدُّكَ وَلَا إِلٰهَ غَيْرُكَ · بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ · الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ۝ آمِين",
+        transliteration: "Subhaanak-Allaahumma wa bihamdika wa tabaarakasmuka wa ta‘aalaa jadduka wa laa ilaaha ghayruk · Bismillaahir-Rahmaanir-Raheem · Alhamdu lillaahi Rabbil-‘aalameen. Ar-Rahmaanir-Raheem. Maaliki Yawmid-Deen. Iyyaaka na‘budu wa iyyaaka nasta‘een. Ihdinas-siraatal-mustaqeem. Siraatal-ladheena an‘amta ‘alayhim ghayril-maghdoobi ‘alayhim walad-daalleen. Aameen.",
+        translation: "Glory be to You, O Allah, and all praise is Yours; blessed is Your Name, exalted is Your Majesty, and there is no god besides You. In the name of Allah, the Most Gracious, the Most Merciful. All praise is for Allah, Lord of all the worlds...",
+        visualCue: "Right hand over left hand on the chest, gaze humbly on the prayer rug.",
         posture: "standing",
-        teacherNote: "Open the ‘Al-Fatihah’ and ‘Full Fajr Prayer’ lessons for every line with English translation.",
+        teacherNote: "Teach the child in parts: first Thana, then Ta'awwuz and Tasmiyah, then full Surat al-Fatihah, and finally a short surah like Al-Ikhlas.",
+        recitationParts: [
+          {
+            title: "1. Thana (Opening Praise)",
+            arabic: "سُبْحَانَكَ اللّٰهُمَّ وَبِحَمْدِكَ، وَتَبَارَكَ اسْمُكَ، وَتَعَالَىٰ جَدُّكَ، وَلَا إِلٰهَ غَيْرُكَ",
+            transliteration: "Subhaanak-Allaahumma wa bihamdika, wa tabaarakasmuka, wa ta‘aalaa jadduka, wa laa ilaaha ghayruk.",
+            translation: "Glory be to You, O Allah, and all praise is Yours. Blessed is Your Name, exalted is Your Majesty, and there is no deity worthy of worship besides You.",
+            instruction: "Recited quietly immediately after raising hands and folding them on the chest.",
+          },
+          {
+            title: "2. Ta'awwuz & Tasmiyah",
+            arabic: "أَعُوذُ بِاللّٰهِ مِنَ الشَّيْطَانِ الرَّجِيمِ · بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ",
+            transliteration: "A‘oodhu billaahi minash-shaytaanir-rajeem · Bismillaahir-Rahmaanir-Raheem",
+            translation: "I seek refuge in Allah from Satan the outcast. · In the name of Allah, the Most Gracious, the Most Merciful.",
+            instruction: "Whispered quietly before beginning the recitation of the Holy Quran.",
+          },
+          {
+            title: "3. Surat al-Fatihah (Complete 7 Verses)",
+            arabic: "الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ۝ آمِين",
+            transliteration: "Alhamdu lillaahi Rabbil-‘aalameen ۝ Ar-Rahmaanir-Raheem ۝ Maaliki Yawmid-Deen ۝ Iyyaaka na‘budu wa iyyaaka nasta‘een ۝ Ihdinas-siraatal-mustaqeem ۝ Siraatal-ladheena an‘amta ‘alayhim, ghayril-maghdoobi ‘alayhim walad-daalleen ۝ Aameen.",
+            translation: "All praise is for Allah, Lord of all the worlds. The Most Gracious, the Most Merciful. Master of the Day of Judgment. You alone we worship, and You alone we ask for help. Guide us to the straight path: the path of those whom You have blessed, not of those who earned Your anger, nor of those who are astray. Aameen.",
+            instruction: "An essential pillar of every Rakah — recited standing in Qiyam.",
+          },
+          {
+            title: "4. Short Surah — Surat al-Ikhlas",
+            arabic: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ ۝ قُلْ هُوَ اللّٰهُ أَحَدٌ ۝ اللّٰهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ ۝",
+            transliteration: "Bismillaahir-Rahmaanir-Raheem ۝ Qul Huwallahu Ahad ۝ Allahus-Samad ۝ Lam yalid wa lam yoolad ۝ Wa lam yakul-lahu kufuwan ahad ۝",
+            translation: "In the name of Allah, the Most Gracious, the Most Merciful. Say: He is Allah, the One. Allah, the Eternal Refuge. He neither begets nor is born, and there is none comparable unto Him.",
+            instruction: "Recited after Surat al-Fatihah in the first two Rakahs.",
+          },
+        ],
       },
       {
         id: "r-3",
@@ -283,502 +677,6 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
     ],
   }),
   salah({
-    id: "namaz-sitting-jalsa",
-    title: "Sitting — Jalsa & Tashahhud",
-    arabicTitle: "الجَلْسَةُ وَالقَعْدَة",
-    summary: "Teach them to sit calmly between the two sujood and near the end of salah — movements first, words later.",
-    childExplanation:
-      "In salah we sit two ways. A short calm sit between the two sujood (Jalsa), and a longer sit near the end where we say the Tashahhud (Qa‘dah). First learn how to sit. When you are comfortable, we add the words.",
-    teacherTip:
-      "At first, focus only on the movements: rise from sujood, sit on the heels, hands on the thighs, back straight, eyes down. Use ‘Movements first’ mode. Once the child is comfortable, slowly add the words — one phrase at a time.",
-    parentTip:
-      "Practise the sit-up-from-sujood movement three or four times with no words at all. Praise the calm sitting. Add ‘Rabbighfir lee’ only when the movement is automatic.",
-    examples: [
-      example("jalsa", "الجَلْسَة", "Al-Jalsah", "The short sit between the two sujood"),
-      example("qadah", "القَعْدَة", "Al-Qa‘dah", "The sitting for Tashahhud near the end"),
-      example("rabbighfirli", "رَبِّ اغْفِرْ لِي", "Rabbighfir lee", "My Lord, forgive me"),
-    ],
-    steps: [
-      {
-        id: "js-1",
-        order: 1,
-        title: "Rise from Sujood",
-        arabicTitle: "الرَّفْعُ مِنَ السُّجُود",
-        translation: "Lift the head and chest from the first sujood and come up to sitting. Move slowly — no rush.",
-        visualCue: "Head lifts first, then the back comes up straight.",
-        posture: "prostration",
-        teacherNote: "Movement only. Say nothing yet — let the child copy the shape of the body.",
-      },
-      {
-        id: "js-2",
-        order: 2,
-        title: "Sit Calmly (Jalsa)",
-        arabicTitle: "الجَلْسَة",
-        translation: "Sit on the heels with the back straight. Hands rest flat on the thighs, fingers toward the knees. Eyes look down at the lap.",
-        visualCue: "Still body, calm face — like a short pause to breathe.",
-        posture: "sitting",
-        teacherNote: "Hold for two or three seconds. Praise stillness, not speed.",
-      },
-      {
-        id: "js-3",
-        order: 3,
-        title: "Add the Words — Between Sujood",
-        arabicTitle: "الدُّعَاءُ بَيْنَ السَّجْدَتَيْن",
-        arabic: "رَبِّ اغْفِرْ لِي",
-        transliteration: "Rabbighfir lee",
-        translation: "My Lord, forgive me. Said softly while sitting, before the second sujood.",
-        visualCue: "Same calm sit — now with the words.",
-        posture: "sitting",
-        teacherNote: "Only add this once the sit is comfortable. Some families also teach ‘Rabbighfir lee, Rabbighfir lee’ twice.",
-      },
-      {
-        id: "js-4",
-        order: 4,
-        title: "Second Sujood, then Sit Again",
-        arabicTitle: "السَّجْدَةُ الثَّانِيَة",
-        arabic: "سُبْحَانَ رَبِّيَ الْأَعْلَى",
-        transliteration: "Subhaana Rabbiyal-A‘laa (×3)",
-        translation: "Go down for the second sujood, then rise. After the last rakah, this sit becomes the longer Tashahhud sit.",
-        visualCue: "Down to the mat, then back up to the same calm sit.",
-        posture: "prostration",
-      },
-      {
-        id: "js-5",
-        order: 5,
-        title: "Sit for Tashahhud (Qa‘dah)",
-        arabicTitle: "القَعْدَة",
-        translation: "Near the end of salah we sit longer. Same shape: on the heels, back straight, hands on the thighs, gaze on the lap. This is where the Tashahhud is said.",
-        visualCue: "Longer, settled sit — the body is fully still before the words begin.",
-        posture: "sitting",
-        teacherNote: "Many schools teach raising the index finger of the right hand at ‘laa ilaaha illallah’. Follow your family’s madhhab.",
-      },
-      {
-        id: "js-6",
-        order: 6,
-        title: "Add the Words — Tashahhud",
-        arabicTitle: "التَّشَهُّد",
-        arabic:
-          "التَّحِيَّاتُ لِلّٰهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ، السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللّٰهِ وَبَرَكَاتُهُ، السَّلَامُ عَلَيْنَا وَعَلَىٰ عِبَادِ اللّٰهِ الصَّالِحِينَ، أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
-        transliteration:
-          "At-tahiyyaatu lillahi was-salawaatu wat-tayyibaat. As-salaamu ‘alayka ayyuhan-nabiyyu wa rahmatullahi wa barakaatuh. As-salaamu ‘alaynaa wa ‘alaa ‘ibaadillahis-saaliheen. Ashhadu an laa ilaaha illallah, wa ashhadu anna Muhammadan ‘abduhu wa rasooluh.",
-        translation:
-          "All greetings, prayers, and pure words are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and Messenger.",
-        visualCue: "Seated and still — teach the words in four short pieces.",
-        posture: "sitting",
-        teacherNote: "Add slowly: one line per lesson is plenty. The full Tashahhud & Salam lesson continues from here.",
-      },
-    ],
-  }),
-  salah({
-    id: "namaz-opening-dua",
-    title: "Opening Dua (Thana)",
-    arabicTitle: "دُعَاءُ الِاسْتِفْتَاح",
-    summary: "The opening praise said quietly after the first Takbir.",
-    childExplanation:
-      "After saying Allahu Akbar to start the prayer, many Muslims quietly recite this beautiful opening dua before Al-Fatihah.",
-    teacherTip: "Teach it slowly in two halves if the child is young.",
-    parentTip: "Practise once after Takbir practice so the sequence feels natural.",
-    examples: [
-      example(
-        "thana",
-        "سُبْحَانَكَ اللّٰهُمَّ وَبِحَمْدِكَ، وَتَبَارَكَ اسْمُكَ، وَتَعَالَىٰ جَدُّكَ، وَلَا إِلٰهَ غَيْرُكَ",
-        "Subhaanaka Allahumma wa bihamdika, wa tabaarakasmuka, wa ta‘aalaa jadduka, wa laa ilaaha ghayruk",
-        "Glory be to You, O Allah, and praise. Blessed is Your Name, exalted is Your majesty, and there is no god other than You",
-      ),
-    ],
-    steps: [
-      {
-        id: "th-1",
-        order: 1,
-        title: "After the Opening Takbir",
-        translation: "Stand calmly with hands folded after Takbiratul Ihram.",
-        visualCue: "Quiet heart — ready to praise Allah.",
-        posture: "standing",
-      },
-      {
-        id: "th-2",
-        order: 2,
-        title: "Recite the Opening Dua",
-        arabicTitle: "الثَّنَاء",
-        arabic:
-          "سُبْحَانَكَ اللّٰهُمَّ وَبِحَمْدِكَ، وَتَبَارَكَ اسْمُكَ، وَتَعَالَىٰ جَدُّكَ، وَلَا إِلٰهَ غَيْرُكَ",
-        transliteration:
-          "Subhaanaka Allahumma wa bihamdika, wa tabaarakasmuka, wa ta‘aalaa jadduka, wa laa ilaaha ghayruk",
-        translation:
-          "Glory be to You, O Allah, and praise. Blessed is Your Name, exalted is Your majesty, and there is no god other than You.",
-        visualCue: "Recite softly — this is usually said quietly.",
-        posture: "standing",
-      },
-      {
-        id: "th-3",
-        order: 3,
-        title: "Seek Refuge, then Begin Al-Fatihah",
-        arabic: "أَعُوذُ بِاللّٰهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
-        transliteration: "A‘oodhu billahi minash-shaytaanir-rajeem",
-        translation: "I seek refuge in Allah from the rejected devil — then start Surat al-Fatihah.",
-        visualCue: "Stay standing for Al-Fatihah next.",
-        posture: "standing",
-      },
-    ],
-  }),
-  salah({
-    id: "namaz-fatihah",
-    title: "Surat al-Fatihah (Full)",
-    arabicTitle: "سُورَةُ الفَاتِحَة",
-    summary: "Learn every ayah of Al-Fatihah with transliteration and English meaning.",
-    childExplanation:
-      "Al-Fatihah is the Opening. We recite it in every rakah while standing. Learn each line clearly.",
-    teacherTip: "One ayah per step. Do not rush. Check meaning before moving on.",
-    parentTip: "Recite one ayah at bedtime until the whole surah is smooth.",
-    examples: [
-      example("fatiha-1", "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ", "Bismillahir-Rahmaanir-Raheem", "In the name of Allah, the Most Gracious, the Most Merciful"),
-      example("fatiha-2", "الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ", "Alhamdu lillahi Rabbil-‘aalameen", "All praise is for Allah, Lord of the worlds"),
-      example("fatiha-7", "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ…", "Siraatal-ladheena an‘amta ‘alayhim…", "The path of those You have blessed…"),
-    ],
-    steps: [
-      {
-        id: "f-1",
-        order: 1,
-        title: "Ayah 1 — Basmala",
-        arabic: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ",
-        transliteration: "Bismillahir-Rahmaanir-Raheem",
-        translation: "In the name of Allah, the Most Gracious, the Most Merciful.",
-        visualCue: "Standing — begin with the name of Allah.",
-        posture: "standing",
-      },
-      {
-        id: "f-2",
-        order: 2,
-        title: "Ayah 2",
-        arabic: "الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ",
-        transliteration: "Alhamdu lillahi Rabbil-‘aalameen",
-        translation: "All praise is for Allah, Lord of the worlds.",
-        visualCue: "Clear voice, calm standing posture.",
-        posture: "standing",
-      },
-      {
-        id: "f-3",
-        order: 3,
-        title: "Ayah 3",
-        arabic: "الرَّحْمٰنِ الرَّحِيمِ",
-        transliteration: "Ar-Rahmaanir-Raheem",
-        translation: "The Most Gracious, the Most Merciful.",
-        visualCue: "Keep the same standing posture.",
-        posture: "standing",
-      },
-      {
-        id: "f-4",
-        order: 4,
-        title: "Ayah 4",
-        arabic: "مَالِكِ يَوْمِ الدِّينِ",
-        transliteration: "Maaliki yawmid-deen",
-        translation: "Master of the Day of Judgment.",
-        visualCue: "Recite carefully — no rushing.",
-        posture: "standing",
-      },
-      {
-        id: "f-5",
-        order: 5,
-        title: "Ayah 5",
-        arabic: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
-        transliteration: "Iyyaaka na‘budu wa iyyaaka nasta‘een",
-        translation: "You alone we worship, and You alone we ask for help.",
-        visualCue: "This ayah is the heart of the surah — teach its meaning.",
-        posture: "standing",
-      },
-      {
-        id: "f-6",
-        order: 6,
-        title: "Ayah 6",
-        arabic: "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
-        transliteration: "Ihdinas-siraatal-mustaqeem",
-        translation: "Guide us to the straight path.",
-        visualCue: "Ask Allah for guidance with a soft heart.",
-        posture: "standing",
-      },
-      {
-        id: "f-7",
-        order: 7,
-        title: "Ayah 7",
-        arabic: "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
-        transliteration: "Siraatal-ladheena an‘amta ‘alayhim, ghayril-maghdoobi ‘alayhim wa lad-daalleen",
-        translation:
-          "The path of those You have blessed — not of those who earned anger, nor of those who went astray.",
-        visualCue: "Many say Ameen softly after this ayah.",
-        posture: "standing",
-        teacherNote: "After Al-Fatihah, add a short surah (see Al-Ikhlas lesson).",
-      },
-    ],
-  }),
-  salah({
-    id: "namaz-ikhlas",
-    title: "Surat al-Ikhlas (Full)",
-    arabicTitle: "سُورَةُ الإِخْلَاص",
-    summary: "A short surah often recited after Al-Fatihah in prayer.",
-    childExplanation:
-      "After Al-Fatihah we recite another short surah. Al-Ikhlas is short, beautiful, and perfect for beginners.",
-    teacherTip: "Memorise all four ayahs with meaning before using it in the full Fajr lesson.",
-    parentTip: "Practice as a family — one ayah each turn.",
-    examples: [
-      example("ikhlas-1", "قُلْ هُوَ اللّٰهُ أَحَدٌ", "Qul huwallahu ahad", "Say: He is Allah, the One"),
-      example("ikhlas-4", "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ", "Wa lam yakul-lahu kufuwan ahad", "And there is none comparable to Him"),
-    ],
-    steps: [
-      {
-        id: "i-1",
-        order: 1,
-        title: "Ayah 1",
-        arabic: "قُلْ هُوَ اللّٰهُ أَحَدٌ",
-        transliteration: "Qul huwallahu ahad",
-        translation: "Say: He is Allah, the One.",
-        visualCue: "Still standing after Al-Fatihah.",
-        posture: "standing",
-      },
-      {
-        id: "i-2",
-        order: 2,
-        title: "Ayah 2",
-        arabic: "اللّٰهُ الصَّمَدُ",
-        transliteration: "Allahus-samad",
-        translation: "Allah, the Eternal Refuge.",
-        visualCue: "Clear, steady voice.",
-        posture: "standing",
-      },
-      {
-        id: "i-3",
-        order: 3,
-        title: "Ayah 3",
-        arabic: "لَمْ يَلِدْ وَلَمْ يُولَدْ",
-        transliteration: "Lam yalid wa lam yoolad",
-        translation: "He neither begets nor is born.",
-        visualCue: "Keep the standing posture.",
-        posture: "standing",
-      },
-      {
-        id: "i-4",
-        order: 4,
-        title: "Ayah 4",
-        arabic: "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
-        transliteration: "Wa lam yakul-lahu kufuwan ahad",
-        translation: "And there is none comparable to Him.",
-        visualCue: "Ready to go into Ruku after this.",
-        posture: "standing",
-      },
-    ],
-  }),
-  salah({
-    id: "namaz-full-fajr",
-    title: "Full Fajr Prayer (2 Rak‘aat)",
-    arabicTitle: "صَلَاةُ الفَجْرِ كَامِلَةً",
-    summary: "Pray a complete 2-rakah Fajr from Takbir to Salam — with every action, Arabic, and English.",
-    childExplanation:
-      "This is a full namaz practice. Follow each step in order: stand, recite, bow, prostrate, sit, then finish with salam.",
-    teacherTip:
-      "Walk the child through the whole prayer once without stopping for perfection. Repeat later for fluency.",
-    parentTip: "Use a prayer mat at home and mirror each posture together.",
-    examples: [
-      example("full-fajr-label", "رَكْعَتَانِ", "Two rak‘aat", "Complete Fajr prayer sequence"),
-      example("full-fajr-salam", "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ", "Assalamu alaikum wa rahmatullah", "Peace be upon you and the mercy of Allah"),
-    ],
-    steps: [
-      {
-        id: "ff-1",
-        order: 1,
-        title: "Niyyah & Face Qiblah",
-        translation: "Stand facing the Qiblah and intend Fajr prayer (2 rak‘aat) in your heart.",
-        visualCue: "Feet steady, body calm, heart focused.",
-        posture: "standing",
-      },
-      {
-        id: "ff-2",
-        order: 2,
-        title: "Takbiratul Ihram",
-        arabic: "اللّٰهُ أَكْبَرُ",
-        transliteration: "Allahu Akbar",
-        translation: "Allah is the Greatest. Raise the hands and begin.",
-        visualCue: "Hands near ears/shoulders, then fold.",
-        posture: "takbir",
-      },
-      {
-        id: "ff-3",
-        order: 3,
-        title: "Opening Dua",
-        arabic:
-          "سُبْحَانَكَ اللّٰهُمَّ وَبِحَمْدِكَ، وَتَبَارَكَ اسْمُكَ، وَتَعَالَىٰ جَدُّكَ، وَلَا إِلٰهَ غَيْرُكَ",
-        transliteration:
-          "Subhaanaka Allahumma wa bihamdika, wa tabaarakasmuka, wa ta‘aalaa jadduka, wa laa ilaaha ghayruk",
-        translation:
-          "Glory be to You, O Allah, and praise. Blessed is Your Name, exalted is Your majesty, and there is no god other than You.",
-        visualCue: "Quiet standing praise before Al-Fatihah.",
-        posture: "standing",
-      },
-      {
-        id: "ff-4",
-        order: 4,
-        title: "Al-Fatihah (Rakah 1)",
-        arabic:
-          "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ ۝ الْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
-        transliteration:
-          "Bismillahir-Rahmaanir-Raheem. Alhamdu lillahi Rabbil-‘aalameen. Ar-Rahmaanir-Raheem. Maaliki yawmid-deen. Iyyaaka na‘budu wa iyyaaka nasta‘een. Ihdinas-siraatal-mustaqeem. Siraatal-ladheena an‘amta ‘alayhim ghayril-maghdoobi ‘alayhim wa lad-daalleen.",
-        translation:
-          "In the name of Allah, the Most Gracious, the Most Merciful. All praise is for Allah, Lord of the worlds. The Most Gracious, the Most Merciful. Master of the Day of Judgment. You alone we worship, and You alone we ask for help. Guide us to the straight path — the path of those You have blessed, not of those who earned anger, nor of those who went astray.",
-        visualCue: "Full standing recitation of Al-Fatihah.",
-        posture: "standing",
-        teacherNote: "Use the dedicated Al-Fatihah lesson if the child needs ayah-by-ayah practice.",
-      },
-      {
-        id: "ff-5",
-        order: 5,
-        title: "Short Surah — Al-Ikhlas (Rakah 1)",
-        arabic: "قُلْ هُوَ اللّٰهُ أَحَدٌ ۝ اللّٰهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
-        transliteration:
-          "Qul huwallahu ahad. Allahus-samad. Lam yalid wa lam yoolad. Wa lam yakul-lahu kufuwan ahad.",
-        translation:
-          "Say: He is Allah, the One. Allah, the Eternal Refuge. He neither begets nor is born. And there is none comparable to Him.",
-        visualCue: "Still standing — then prepare for Ruku.",
-        posture: "standing",
-      },
-      {
-        id: "ff-6",
-        order: 6,
-        title: "Ruku",
-        arabic: "سُبْحَانَ رَبِّيَ الْعَظِيمِ",
-        transliteration: "Subhaana Rabbiyal-‘Azeem (×3)",
-        translation: "Glory be to my Lord, the Magnificent.",
-        visualCue: "Bow with a straight back; hands on knees.",
-        posture: "bowing",
-      },
-      {
-        id: "ff-7",
-        order: 7,
-        title: "Rise from Ruku",
-        arabic: "سَمِعَ اللّٰهُ لِمَنْ حَمِدَهُ · رَبَّنَا وَلَكَ الْحَمْدُ",
-        transliteration: "Sami‘allahu liman hamidah · Rabbanaa wa lakal-hamd",
-        translation: "Allah hears the one who praises Him. Our Lord, and to You is all praise.",
-        visualCue: "Stand upright again.",
-        posture: "rising",
-      },
-      {
-        id: "ff-8",
-        order: 8,
-        title: "First Sujood",
-        arabic: "سُبْحَانَ رَبِّيَ الْأَعْلَى",
-        transliteration: "Subhaana Rabbiyal-A‘laa (×3)",
-        translation: "Glory be to my Lord, the Most High.",
-        visualCue: "Seven points on the ground: forehead, nose, palms, knees, toes.",
-        posture: "prostration",
-      },
-      {
-        id: "ff-9",
-        order: 9,
-        title: "Sit Between Sujood",
-        arabic: "رَبِّ اغْفِرْ لِي",
-        transliteration: "Rabbighfir lee",
-        translation: "My Lord, forgive me.",
-        visualCue: "Short calm sitting.",
-        posture: "sitting",
-      },
-      {
-        id: "ff-10",
-        order: 10,
-        title: "Second Sujood",
-        arabic: "سُبْحَانَ رَبِّيَ الْأَعْلَى",
-        transliteration: "Subhaana Rabbiyal-A‘laa (×3)",
-        translation: "Glory be to my Lord, the Most High. First rakah is complete after rising.",
-        visualCue: "Prostrate again, then stand for rakah 2.",
-        posture: "prostration",
-      },
-      {
-        id: "ff-11",
-        order: 11,
-        title: "Stand for Rakah 2",
-        arabic: "اللّٰهُ أَكْبَرُ",
-        transliteration: "Allahu Akbar",
-        translation: "Say Allahu Akbar and stand for the second rakah.",
-        visualCue: "Rise to standing calmly.",
-        posture: "standing",
-      },
-      {
-        id: "ff-12",
-        order: 12,
-        title: "Al-Fatihah (Rakah 2)",
-        arabic: "سُورَةُ الفَاتِحَة (كَامِلَةً)",
-        transliteration: "Recite the complete Surat al-Fatihah again",
-        translation:
-          "Recite Al-Fatihah in full once more while standing — same Arabic and meaning as rakah 1.",
-        visualCue: "Standing recitation.",
-        posture: "standing",
-      },
-      {
-        id: "ff-13",
-        order: 13,
-        title: "Short Surah (Rakah 2)",
-        arabic: "قُلْ هُوَ اللّٰهُ أَحَدٌ…",
-        transliteration: "Recite Al-Ikhlas (or another short surah)",
-        translation: "Recite a short surah after Al-Fatihah, then go to Ruku.",
-        visualCue: "Standing — then bow.",
-        posture: "standing",
-      },
-      {
-        id: "ff-14",
-        order: 14,
-        title: "Ruku → Rise → Two Sujood",
-        arabic: "سُبْحَانَ رَبِّيَ الْعَظِيمِ · سُبْحَانَ رَبِّيَ الْأَعْلَى",
-        transliteration: "Same ruku, rising, and two sujood as rakah 1",
-        translation:
-          "Bow and say Subhaana Rabbiyal-‘Azeem; rise with Sami‘allahu liman hamidah / Rabbanaa wa lakal-hamd; prostrate twice with Subhaana Rabbiyal-A‘laa and Rabbighfir lee between them.",
-        visualCue: "Repeat the body sequence of rakah 1.",
-        posture: "bowing",
-      },
-      {
-        id: "ff-15",
-        order: 15,
-        title: "Tashahhud",
-        arabic:
-          "التَّحِيَّاتُ لِلّٰهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ، السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللّٰهِ وَبَرَكَاتُهُ، السَّلَامُ عَلَيْنَا وَعَلَىٰ عِبَادِ اللّٰهِ الصَّالِحِينَ، أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
-        transliteration:
-          "At-tahiyyaatu lillahi was-salawaatu wat-tayyibaat. As-salaamu ‘alayka ayyuhan-nabiyyu wa rahmatullahi wa barakaatuh. As-salaamu ‘alaynaa wa ‘alaa ‘ibaadillahis-saaliheen. Ashhadu an laa ilaaha illallah, wa ashhadu anna Muhammadan ‘abduhu wa rasooluh.",
-        translation:
-          "All greetings, prayers, and pure words are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and Messenger.",
-        visualCue: "Sit after the second rakah’s final sujood.",
-        posture: "sitting",
-      },
-      {
-        id: "ff-16",
-        order: 16,
-        title: "Salawat Ibrahimiyyah",
-        arabic:
-          "اللّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ. اللّٰهُمَّ بَارِكْ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ",
-        transliteration:
-          "Allahumma salli ‘alaa Muhammadin wa ‘alaa aali Muhammad, kamaa sallayta ‘alaa Ibraaheema wa ‘alaa aali Ibraaheem, innaka hameedun majeed. Allahumma baarik ‘alaa Muhammadin wa ‘alaa aali Muhammad, kamaa baarakta ‘alaa Ibraaheema wa ‘alaa aali Ibraaheem, innaka hameedun majeed.",
-        translation:
-          "O Allah, send prayers upon Muhammad and the family of Muhammad, as You sent prayers upon Ibrahim and the family of Ibrahim. Indeed You are Praiseworthy, Glorious. O Allah, bless Muhammad and the family of Muhammad, as You blessed Ibrahim and the family of Ibrahim. Indeed You are Praiseworthy, Glorious.",
-        visualCue: "Remain seated with a calm heart.",
-        posture: "sitting",
-      },
-      {
-        id: "ff-17",
-        order: 17,
-        title: "Salam — Right",
-        arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ",
-        transliteration: "Assalamu alaikum wa rahmatullah",
-        translation: "Peace be upon you and the mercy of Allah — turn to the right.",
-        visualCue: "Turn the face toward the right shoulder.",
-        posture: "salam",
-      },
-      {
-        id: "ff-18",
-        order: 18,
-        title: "Salam — Left · Prayer Complete",
-        arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللّٰهِ",
-        transliteration: "Assalamu alaikum wa rahmatullah",
-        translation: "Peace be upon you and the mercy of Allah — turn to the left. Your Fajr prayer is complete. MashaAllah!",
-        visualCue: "Turn the face toward the left shoulder.",
-        posture: "salam",
-      },
-    ],
-  }),
-  salah({
     id: "namaz-tashahhud-salam",
     title: "Tashahhud & Ending Salam",
     arabicTitle: "التَّشَهُّدُ وَالتَّسْلِيم",
@@ -805,6 +703,15 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Sit calmly after completing the required rak‘aat.",
         visualCue: "Back upright, hands on thighs, gaze soft.",
         posture: "sitting",
+        recitationParts: [
+          {
+            title: "1. Posture in Qa‘dah (Calm Sitting)",
+            arabic: "اللّٰهُ أَكْبَرُ",
+            transliteration: "Allahu Akbar",
+            translation: "Allah is Greatest — rise from Sujood to sit for Tashahhud.",
+            instruction: "Sit with back straight, hands flat upon thighs near the knees, and eyes softly lowered.",
+          },
+        ],
       },
       {
         id: "t-2",
@@ -819,6 +726,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
           "All greetings, prayers, and pure words are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and Messenger.",
         visualCue: "Raise the index finger gently during the shahadah as taught in your school.",
         posture: "sitting",
+        recitationParts: TASHAHHUD_RECITATION_PARTS,
       },
       {
         id: "t-3",
@@ -831,8 +739,9 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
           "Allahumma salli ‘alaa Muhammadin wa ‘alaa aali Muhammad, kamaa sallayta ‘alaa Ibraaheema wa ‘alaa aali Ibraaheem, innaka hameedun majeed.",
         translation:
           "O Allah, send prayers upon Muhammad and upon the family of Muhammad, as You sent prayers upon Ibrahim and upon the family of Ibrahim. Indeed You are Praiseworthy, Glorious.",
-        visualCue: "Remain seated; recite with love and clarity.",
+        visualCue: "Lower the finger back down; remain seated with hands resting flat on thighs.",
         posture: "sitting",
+        recitationParts: DUROOD_RECITATION_PARTS,
       },
       {
         id: "t-4",
@@ -843,6 +752,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Peace be upon you and the mercy of Allah — turn the head to the right.",
         visualCue: "Turn face to the right shoulder.",
         posture: "salam",
+        recitationParts: SALAM_RIGHT_PARTS,
       },
       {
         id: "t-5",
@@ -853,6 +763,7 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
         translation: "Peace be upon you and the mercy of Allah — turn the head to the left. The prayer is complete.",
         visualCue: "Turn face to the left shoulder.",
         posture: "salam",
+        recitationParts: SALAM_LEFT_PARTS,
       },
     ],
   }),
@@ -866,57 +777,72 @@ export const NAMAZ_LESSONS: TopicLesson[] = [
     teacherTip: "Use a simple daily timeline drawing so children see when each prayer fits.",
     parentTip: "Hang a child-friendly salah timetable near the prayer area.",
     examples: [
-      example("fajr-r", "الفَجْر · رَكْعَتَان", "Fajr · 2 rak‘aat", "Dawn — 2 units"),
-      example("dhuhr-r", "الظُّهْر · أَرْبَعُ رَكَعَات", "Dhuhr · 4 rak‘aat", "Midday — 4 units"),
-      example("asr-r", "العَصْر · أَرْبَعُ رَكَعَات", "‘Asr · 4 rak‘aat", "Afternoon — 4 units"),
-      example("maghrib-r", "المَغْرِب · ثَلَاثُ رَكَعَات", "Maghrib · 3 rak‘aat", "Sunset — 3 units"),
-      example("isha-r", "العِشَاء · أَرْبَعُ رَكَعَات", "‘Ishaa · 4 rak‘aat", "Night — 4 units"),
+      example("fajr-r", "2 Sunnah + 2 Fard", "Fajr · 2 Sunnah + 2 Fard", "Dawn — 4 total rak‘aat"),
+      example("dhuhr-r", "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl", "Dhuhr · 12 rak‘aat", "Midday — 12 total rak‘aat"),
+      example("asr-r", "4 Sunnah + 4 Fard", "‘Asr · 8 rak‘aat", "Afternoon — 8 total rak‘aat"),
+      example("maghrib-r", "3 Fard + 2 Sunnah + 2 Nafl", "Maghrib · 7 rak‘aat", "Sunset — 7 total rak‘aat"),
+      example("isha-r", "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl + 3 Witr + 2 Nafl", "‘Ishaa · 17 rak‘aat", "Night — 17 total rak‘aat"),
     ],
     steps: [
       {
         id: "p-1",
         order: 1,
-        title: "Fajr",
-        arabicTitle: "الفَجْر",
-        translation: "Pray 2 rak‘aat at dawn, before sunrise. Practice the complete sequence in ‘Full Fajr Prayer’.",
-        visualCue: "Quiet morning light — soft start to the day.",
+        title: "Fajr (Dawn Prayer)",
+        arabicTitle: "صَلَاةُ الفَجْر",
+        arabic: "2 Sunnah + 2 Fard",
+        transliteration: "2 Sunnah + 2 Fard Rak‘aat (Jahri / Aloud)",
+        translation: "Pray 2 Sunnah and 2 Fard rak‘aat at dawn before sunrise. The Quran is recited aloud (Jahri).",
+        visualCue: "Quiet morning light — soft start to the day under Allah's divine protection.",
         posture: "standing",
+        recitationParts: FAJR_PRAYER_PARTS,
       },
       {
         id: "p-2",
         order: 2,
-        title: "Dhuhr",
-        arabicTitle: "الظُّهْر",
-        translation: "Pray 4 rak‘aat after the sun passes its highest point. Same actions as Fajr, with more rak‘aat and a middle Tashahhud after rakah 2.",
-        visualCue: "Midday pause — leave play or work briefly for Allah.",
+        title: "Dhuhr (Midday Prayer)",
+        arabicTitle: "صَلَاةُ الظُّهْر",
+        arabic: "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl",
+        transliteration: "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl (Sirri / Silent)",
+        translation: "Pray 4 Fard rak‘aat after the sun passes its highest point, with a middle sitting after rakah 2.",
+        visualCue: "Midday pause — refresh heart and soul away from work or school.",
         posture: "standing",
+        recitationParts: DHUHR_PRAYER_PARTS,
       },
       {
         id: "p-3",
         order: 3,
-        title: "‘Asr",
-        arabicTitle: "العَصْر",
-        translation: "Pray 4 rak‘aat in the late afternoon — same structure as Dhuhr.",
-        visualCue: "Afternoon light — stay mindful before Maghrib.",
+        title: "‘Asr (Late Afternoon Prayer)",
+        arabicTitle: "صَلَاةُ العَصْر",
+        arabic: "4 Sunnah + 4 Fard",
+        transliteration: "4 Sunnah + 4 Fard Rak‘aat (Sirri / Silent)",
+        translation: "Pray 4 Fard rak‘aat in late afternoon — same structure as Dhuhr. Guard the Middle Prayer!",
+        visualCue: "Afternoon light — stay mindful before Maghrib and end of daytime.",
         posture: "standing",
+        recitationParts: ASR_PRAYER_PARTS,
       },
       {
         id: "p-4",
         order: 4,
-        title: "Maghrib",
-        arabicTitle: "المَغْرِب",
-        translation: "Pray 3 rak‘aat just after sunset — Tashahhud after rakah 2, then one more rakah, then final Tashahhud and salam.",
-        visualCue: "Sunset — family often prays close together.",
+        title: "Maghrib (Sunset Prayer)",
+        arabicTitle: "صَلَاةُ المَغْرِب",
+        arabic: "3 Fard + 2 Sunnah + 2 Nafl",
+        transliteration: "3 Fard + 2 Sunnah + 2 Nafl (2 Jahri + 1 Sirri)",
+        translation: "Pray 3 Fard rak‘aat immediately after sunset — Tashahhud after rakah 2, then 1 more rakah and final sitting.",
+        visualCue: "Sunset glow — family gathers together to offer prayer without delay.",
         posture: "standing",
+        recitationParts: MAGHRIB_PRAYER_PARTS,
       },
       {
         id: "p-5",
         order: 5,
-        title: "‘Ishaa",
-        arabicTitle: "العِشَاء",
-        translation: "Pray 4 rak‘aat at night — same structure as Dhuhr and ‘Asr.",
-        visualCue: "Night calm — end the day with prayer.",
+        title: "‘Ishaa & Witr (Night Prayer)",
+        arabicTitle: "صَلَاةُ العِشَاء وَالوِتْر",
+        arabic: "4 Sunnah + 4 Fard + 2 Sunnah + 2 Nafl + 3 Witr + 2 Nafl",
+        transliteration: "4 Fard + 2 Sunnah + 3 Witr Wajib (with Dua al-Qunoot)",
+        translation: "Pray 4 Fard and conclude the night with the sacred 3 Rak‘aat Witr including Dua al-Qunoot.",
+        visualCue: "Night serenity — conclude the waking day in complete devotion to Allah.",
         posture: "standing",
+        recitationParts: ISHA_PRAYER_PARTS,
       },
     ],
   }),
