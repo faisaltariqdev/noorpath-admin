@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
-import { Film, Play, Video, X } from "lucide-react";
+import { ExternalLink, Film, Play, Video, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LETTERS } from "../data/curriculum";
 import { qaidaAudio, type PronunciationMode } from "../audio/QaidaAudioService";
@@ -424,14 +424,29 @@ export default function TopicLessonScreen({
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowVideoModal(false)}
-                  className="rounded-xl bg-slate-800 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer"
-                  aria-label="Close video dialog"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {videoId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${videoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95"
+                      title="Open video directly in YouTube App"
+                    >
+                      <ExternalLink size={13} />
+                      <span className="hidden min-[420px]:inline">Open in YouTube App</span>
+                      <span className="min-[420px]:hidden">YouTube App</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowVideoModal(false)}
+                    className="rounded-xl bg-slate-800 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer"
+                    aria-label="Close video dialog"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               {/* Multiple Video Tabs Selector if videoPhases present */}
@@ -462,7 +477,7 @@ export default function TopicLessonScreen({
                   src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
                   title={lesson.videoTitle ?? `${lesson.title} video lesson`}
                   className="absolute inset-0 h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               </div>
@@ -477,13 +492,26 @@ export default function TopicLessonScreen({
                     {lesson.videoDescription ?? "Follow along with the video recitation and practice."}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowVideoModal(false)}
-                  className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
-                >
-                  Back to Lesson
-                </button>
+                <div className="flex items-center gap-2">
+                  {videoId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${videoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-500 px-3 py-1.5 text-xs font-black text-white shadow-xs transition active:scale-95"
+                    >
+                      <ExternalLink size={13} />
+                      <span>Open in YouTube App</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowVideoModal(false)}
+                    className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
+                  >
+                    Back to Lesson
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

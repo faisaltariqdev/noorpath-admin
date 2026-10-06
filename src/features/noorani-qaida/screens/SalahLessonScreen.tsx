@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronUp, Film, Footprints, Info, MessageSquareText, Pause, Play, Volume2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Film, Footprints, Info, MessageSquareText, Pause, Play, Volume2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { qaidaAudio } from "../audio/QaidaAudioService";
 import type { SalahStep, TopicLesson } from "../types";
@@ -798,14 +798,29 @@ export default function SalahLessonScreen({
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowVideoModal(false)}
-                  className="rounded-xl bg-slate-800 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer"
-                  aria-label="Close video dialog"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {lessonVideoId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${lessonVideoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95"
+                      title="Open video directly in YouTube App"
+                    >
+                      <ExternalLink size={13} />
+                      <span className="hidden min-[420px]:inline">Open in YouTube App</span>
+                      <span className="min-[420px]:hidden">YouTube App</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowVideoModal(false)}
+                    className="rounded-xl bg-slate-800 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer"
+                    aria-label="Close video dialog"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               {/* Multiple Video Tabs Selector if videoPhases present */}
@@ -836,7 +851,7 @@ export default function SalahLessonScreen({
                   src={`https://www.youtube-nocookie.com/embed/${lessonVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
                   title={lesson.videoTitle ?? "Lesson video player"}
                   className="absolute inset-0 h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               </div>
@@ -851,13 +866,26 @@ export default function SalahLessonScreen({
                     {lesson.videoDescription ?? "Teaches students step-by-step through engaging visual guidance"}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowVideoModal(false)}
-                  className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
-                >
-                  Back to Steps
-                </button>
+                <div className="flex items-center gap-2">
+                  {lessonVideoId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${lessonVideoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-500 px-3 py-1.5 text-xs font-black text-white shadow-xs transition active:scale-95"
+                    >
+                      <ExternalLink size={13} />
+                      <span>Open in YouTube App</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowVideoModal(false)}
+                    className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
+                  >
+                    Back to Steps
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

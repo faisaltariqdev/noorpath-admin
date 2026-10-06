@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Image as ImageIcon, RotateCcw, Sparkles, Timer, Video, ZoomIn, X, Compass, Play, Pause } from "lucide-react";
+import { Check, Compass, ExternalLink, Image as ImageIcon, Pause, Play, RotateCcw, Sparkles, Timer, Video, X, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import StarBurst from "../animations/StarBurst";
@@ -616,12 +616,12 @@ export default function SalahPostureStage({
                   src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
                   title={`${step.title} cartoon video`}
                   className="absolute inset-0 h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               </div>
-              <div className="mt-1.5 flex w-full items-center justify-between px-1 text-[11px] font-bold text-white/90">
-                <span className="flex items-center gap-1 truncate">
+              <div className="mt-1.5 flex w-full flex-wrap items-center justify-between gap-1.5 px-1 text-[11px] font-bold text-white/90">
+                <span className="flex items-center gap-1 truncate min-w-0">
                   <Video size={12} className="text-emerald-400 shrink-0" />
                   <span className="truncate">
                     {step.videoPhases && step.videoPhases.length > 1
@@ -629,9 +629,23 @@ export default function SalahPostureStage({
                       : "Cartoon Video Lesson"}
                   </span>
                 </span>
-                <span className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] text-white">
-                  Step {step.order}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {videoId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${videoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-md bg-red-600 hover:bg-red-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs transition active:scale-95"
+                      title="Open video directly in YouTube App"
+                    >
+                      <ExternalLink size={10} />
+                      <span>Open in YouTube App</span>
+                    </a>
+                  )}
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] text-white">
+                    Step {step.order}
+                  </span>
+                </div>
               </div>
             </motion.div>
           ) : mediaMode === "3d" && stepDetail?.image ? (

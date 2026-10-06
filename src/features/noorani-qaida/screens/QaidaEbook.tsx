@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Play, Video, X } from "lucide-react";
+import { ExternalLink, Play, Video, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { Letter, QaidaProgress } from "../types";
 import { LETTERS } from "../data/curriculum";
@@ -100,19 +100,31 @@ export default function QaidaEbook({
               transition={{ duration: 0.25 }}
               className="relative z-10 mx-auto mt-4 w-full max-w-2xl overflow-hidden rounded-2xl border-2 border-amber-300 bg-slate-950 shadow-xl"
             >
-              <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/95 px-3.5 py-2 text-white">
-                <span className="flex items-center gap-2 text-xs font-black text-amber-300">
-                  <Video size={14} className="text-red-500" />
-                  Noorani Qaida — Arabic Letters Video Tutorial
+              <div className="flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/95 px-3.5 py-2 text-white">
+                <span className="flex items-center gap-2 text-xs font-black text-amber-300 truncate">
+                  <Video size={14} className="text-red-500 shrink-0" />
+                  <span className="truncate">Noorani Qaida — Arabic Letters Video Tutorial</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setShowVideo(false)}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
-                  aria-label="Close video"
-                >
-                  <X size={16} />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href="https://www.youtube.com/watch?v=hlJyUtgzgIM"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 hover:bg-red-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs transition active:scale-95"
+                    title="Open directly in YouTube App"
+                  >
+                    <ExternalLink size={12} />
+                    <span>Open in YouTube App</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setShowVideo(false)}
+                    className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                    aria-label="Close video"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
 
               <div className="aspect-video w-full bg-black">
@@ -120,9 +132,25 @@ export default function QaidaEbook({
                   src="https://www.youtube-nocookie.com/embed/hlJyUtgzgIM?rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
                   title="Noorani Qaida Arabic Letters Video Lesson"
                   className="h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
+              </div>
+
+              {/* Bottom bar for tutors / mobile screen share */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 bg-slate-900/95 px-3.5 py-2 text-xs text-slate-300">
+                <span className="text-[11px] text-slate-400">
+                  Screen share issue? Video pause hone par direct YouTube app me open karein.
+                </span>
+                <a
+                  href="https://www.youtube.com/watch?v=hlJyUtgzgIM"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 hover:bg-red-500 px-3 py-1 text-xs font-black text-white shadow-xs transition active:scale-95"
+                >
+                  <ExternalLink size={12} />
+                  <span>Open in YouTube App</span>
+                </a>
               </div>
             </motion.div>
           )}
