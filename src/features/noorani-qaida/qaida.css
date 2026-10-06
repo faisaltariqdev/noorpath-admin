@@ -238,8 +238,8 @@
 
 /* Shell chrome: HUD stays usable on narrow phones */
 .qaida-hud {
-  padding-left: max(0.65rem, var(--qaida-safe-left));
-  padding-right: max(0.65rem, var(--qaida-safe-right));
+  padding-left: max(0.85rem, var(--qaida-safe-left));
+  padding-right: max(0.85rem, var(--qaida-safe-right));
 }
 
 .qaida-hud-stats {

@@ -37,20 +37,20 @@ export default function StandaloneLearningTrack({
   const completed = moduleDefinition.screenIds.filter((id) => progress.completed.includes(id)).length;
 
   return (
-    <div className="qaida-scroll h-full overflow-y-auto bg-gradient-to-br from-emerald-50 via-white to-sky-50">
-      <div className="sticky top-0 z-30 border-b border-emerald-900/10 bg-white/95 px-3 py-3 shadow-sm backdrop-blur sm:px-5">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600">Interactive learning</p>
-              <h2 className="text-lg font-black text-slate-900">{moduleDefinition.title}</h2>
+    <div className="qaida-scroll h-full w-full max-w-full overflow-x-hidden overflow-y-auto bg-gradient-to-br from-emerald-50 via-white to-sky-50">
+      <div className="sticky top-0 z-30 w-full max-w-full border-b border-emerald-900/10 bg-white/95 px-3 py-2.5 shadow-sm backdrop-blur sm:px-5 sm:py-3">
+        <div className="mx-auto max-w-6xl w-full">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600 truncate">Interactive learning</p>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 truncate">{moduleDefinition.title}</h2>
             </div>
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
-              {completed}/{moduleDefinition.screenIds.length} completed
+            <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-black text-emerald-800">
+              {completed}/{moduleDefinition.screenIds.length} done
             </span>
           </div>
 
-          <nav className="qaida-scroll flex gap-2 overflow-x-auto pb-1" aria-label={`${moduleDefinition.title} lessons`}>
+          <nav className="qaida-scroll flex gap-2 overflow-x-auto pb-1 max-w-full" aria-label={`${moduleDefinition.title} lessons`}>
             {moduleDefinition.screenIds.map((id, index) => {
               const item = TOPIC_LESSON_BY_ID[id];
               const active = id === selectedId;
@@ -61,14 +61,26 @@ export default function StandaloneLearningTrack({
                   type="button"
                   onClick={() => onSelectLesson(id)}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 min-w-max items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
+                  className={`flex shrink-0 min-h-10 sm:min-h-11 items-center gap-1.5 sm:gap-2 rounded-xl border px-2.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 ${
                     active
                       ? "border-emerald-500 bg-emerald-600 text-white shadow-sm"
                       : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:text-emerald-800"
                   }`}
                 >
-                  {done ? <CheckCircle2 size={15} aria-hidden="true" /> : <span aria-hidden="true">{index + 1}</span>}
-                  <span>{item?.title ?? `Lesson ${index + 1}`}</span>
+                  {done ? <CheckCircle2 size={14} aria-hidden="true" /> : <span aria-hidden="true">{index + 1}</span>}
+                  <span className="truncate max-w-[9rem] sm:max-w-none">{item?.title ?? `Lesson ${index + 1}`}</span>
+                  {item?.videoUrl && (
+                    <span
+                      className={`inline-flex items-center rounded-md px-1 py-0.5 text-[10px] font-black shrink-0 ${
+                        active
+                          ? "bg-white/25 text-white"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                      title="Video guide available"
+                    >
+                      🎬
+                    </span>
+                  )}
                 </button>
               );
             })}

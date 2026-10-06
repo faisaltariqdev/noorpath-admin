@@ -32,27 +32,28 @@ export default function WuduStepDetailCard({ step, reducedMotion = false }: Wudu
         initial={reducedMotion ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="mt-1 flex flex-col gap-3.5 rounded-2xl border border-emerald-100/90 bg-gradient-to-b from-white via-emerald-50/40 to-teal-50/50 p-3.5 shadow-sm"
+        className="mt-1 flex flex-col gap-3.5 rounded-2xl border border-emerald-100/90 bg-gradient-to-b from-white via-emerald-50/40 to-teal-50/50 p-3 sm:p-3.5 shadow-sm w-full max-w-full min-w-0"
       >
         {/* Header Label */}
-        <div className="flex items-center justify-between gap-2 border-b border-emerald-100/80 pb-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-emerald-100/80 pb-2">
           <div className="flex items-center gap-1.5 min-w-0">
             <Sparkles size={14} className="text-emerald-600 animate-pulse shrink-0" aria-hidden="true" />
             <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 truncate">
-              {isWudu ? "Wudu Visual Guide & Sunnah Detail" : "Sunnah Posture Guide"}
+              <span className="sm:hidden">{isWudu ? "Wudu Guide" : "Posture Guide"}</span>
+              <span className="hidden sm:inline">{isWudu ? "Wudu Visual Guide & Sunnah Detail" : "Sunnah Posture Guide"}</span>
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={() => setShowBanner((prev) => !prev)}
-              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200/90 bg-white/95 hover:bg-emerald-50 active:scale-95 px-2 py-0.5 text-[11px] font-bold text-emerald-800 transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200/90 bg-white/95 hover:bg-emerald-50 active:scale-95 px-2 py-0.5 text-[11px] font-bold text-emerald-800 transition cursor-pointer shadow-2xs shrink-0"
               title={showBanner ? "Hide Image Preview" : "Show Image Preview"}
             >
               <ImageIcon size={12} className="text-emerald-600" />
               <span>{showBanner ? "Hide Image" : "Show Image"}</span>
             </button>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800 shrink-0 truncate max-w-[7.5rem]">
               {detail.postureBadge ?? `Step ${step.order}`}
             </span>
           </div>
@@ -161,7 +162,7 @@ export default function WuduStepDetailCard({ step, reducedMotion = false }: Wudu
               onClick={(e) => e.stopPropagation()}
               className="relative max-h-[92vh] max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl border border-white/20"
             >
-              <div className="relative aspect-video w-screen max-w-3xl">
+              <div className="relative aspect-video w-full max-w-3xl">
                 <Image
                   src={detail.image}
                   alt={`${step.title} high resolution preview`}

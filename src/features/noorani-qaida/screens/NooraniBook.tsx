@@ -114,45 +114,45 @@ export default function NooraniBook({
 
       {/* Book header */}
       <motion.header
-        className="relative isolate flex min-h-[190px] overflow-hidden rounded-[1.75rem] border border-white/15 bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-700 p-5 text-white shadow-[0_24px_60px_-20px_rgba(6,78,59,0.6)] sm:min-h-[220px] sm:p-7"
+        className="relative isolate flex flex-none overflow-hidden rounded-[1.75rem] border border-white/15 bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-700 p-4 text-white shadow-[0_24px_60px_-20px_rgba(6,78,59,0.6)] sm:p-6 lg:p-7"
         initial={reducedMotion ? false : { opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 240, damping: 26 }}
       >
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
-        <div className="relative z-10 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
+        <div className="relative z-10 flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex-none rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
-              <ZaydMascot mood="happy" action={mascotAction} size={84} lookAt="center" />
+              <ZaydMascot mood="happy" action={mascotAction} size={76} lookAt="center" />
             </div>
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-50 backdrop-blur-sm">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-50 backdrop-blur-sm sm:text-[11px]">
                 <span aria-hidden="true">📖</span> The Qaida Book
               </span>
-              <h1 className="mt-2 text-2xl font-black leading-tight sm:text-3xl">All 28 Arabic Letters</h1>
-              <p aria-live="polite" className="mt-1 max-w-sm text-sm text-emerald-50/90">{mascotSpeech}</p>
+              <h1 className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl lg:text-3xl">All 28 Arabic Letters</h1>
+              <p aria-live="polite" className="mt-1 max-w-sm text-xs text-emerald-50/90 sm:text-sm">{mascotSpeech}</p>
             </div>
           </div>
-          <div className="flex flex-col items-center gap-3 sm:items-end">
-            <div className="flex items-center gap-3 rounded-3xl bg-white/10 p-3 backdrop-blur-md">
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-2.5 sm:rounded-3xl sm:p-3 backdrop-blur-md">
               <BookRing pct={pct} reduced={reducedMotion} />
               <div className="pr-1">
-                <p className="text-xs font-bold uppercase tracking-wide text-emerald-100/80">Completed</p>
-                <p className="text-2xl font-black leading-tight">{completedCount}<span className="text-emerald-100/70">/28</span></p>
-                <p className="text-xs text-emerald-100/80">letters mastered</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-100/80 sm:text-xs">Completed</p>
+                <p className="text-xl font-black leading-tight text-white sm:text-2xl">{completedCount}<span className="text-emerald-100/70">/28</span></p>
+                <p className="text-[10px] text-emerald-100/80 sm:text-xs">letters mastered</p>
               </div>
             </div>
             <FullscreenButton
               targetRef={bookRef}
               label="Noorani Qaida Book"
-              className="border border-white/20 bg-white/15 text-white hover:bg-white/25"
+              className="border border-white/20 bg-white/15 px-3 py-1.5 text-xs text-white hover:bg-white/25"
             />
           </div>
         </div>
       </motion.header>
 
       {/* View toggle: eBook page vs interactive cards */}
-      <div className="mx-auto flex items-center gap-1 rounded-full border border-emerald-900/10 bg-white p-1 shadow-sm" role="tablist" aria-label="Book view">
+      <div className="mx-auto flex items-center gap-1 rounded-full border border-emerald-900/10 bg-slate-100 p-1 shadow-inner" role="tablist" aria-label="Book view">
         {([
           { id: "book", icon: "📖", label: "Book Page" },
           { id: "cards", icon: "🃏", label: "Cards" },
@@ -165,17 +165,12 @@ export default function NooraniBook({
               role="tab"
               aria-selected={selected}
               onClick={() => setMode(tab.id)}
-              className={`relative rounded-full px-4 py-2 text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 ${
-                selected ? "text-white" : "text-slate-500 hover:text-emerald-700"
+              className={`relative rounded-full px-4 py-1.5 text-xs font-black transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 cursor-pointer sm:px-5 sm:py-2 sm:text-sm ${
+                selected
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-emerald-800"
               }`}
             >
-              {selected && (
-                <motion.span
-                  layoutId="qaida-book-mode"
-                  className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600"
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                />
-              )}
               <span aria-hidden="true">{tab.icon}</span> {tab.label}
             </button>
           );

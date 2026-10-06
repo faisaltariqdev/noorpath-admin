@@ -73,7 +73,10 @@ export default function QaidaEbook({
           <div className="mt-3 flex justify-center">
             <button
               type="button"
-              onClick={() => setShowVideo((prev) => !prev)}
+              onClick={() => {
+                qaidaAudio.stop();
+                setShowVideo((prev) => !prev);
+              }}
               className="group inline-flex items-center gap-2 rounded-full border border-red-200 bg-white/95 px-4 py-1.5 text-xs font-black text-slate-800 shadow-xs transition hover:border-red-400 hover:bg-red-50/70 hover:shadow-sm cursor-pointer"
               aria-label={showVideo ? "Hide Video Lesson" : "Watch Video Lesson"}
               aria-expanded={showVideo}
@@ -111,12 +114,13 @@ export default function QaidaEbook({
                   <X size={16} />
                 </button>
               </div>
+
               <div className="aspect-video w-full bg-black">
                 <iframe
-                  src="https://www.youtube-nocookie.com/embed/hlJyUtgzgIM?rel=0&modestbranding=1&autoplay=1"
+                  src="https://www.youtube-nocookie.com/embed/hlJyUtgzgIM?rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
                   title="Noorani Qaida Arabic Letters Video Lesson"
                   className="h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               </div>

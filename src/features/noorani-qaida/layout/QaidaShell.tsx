@@ -178,7 +178,7 @@ function WelcomeDashboard({
 
   return (
     <motion.div
-      className="qaida-scroll relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-x-hidden overflow-y-auto p-[var(--qaida-space-page)] sm:gap-5 sm:p-6"
+      className="relative mx-auto flex min-h-full w-full max-w-6xl flex-col gap-4 p-[var(--qaida-space-page)] sm:gap-5 sm:p-6 pb-12"
       variants={DASHBOARD_CONTAINER_VARIANTS}
       initial="initial"
       animate="enter"
@@ -188,7 +188,7 @@ function WelcomeDashboard({
       {/* Hero */}
       <motion.section
         variants={DASHBOARD_ITEM_VARIANTS}
-        className="relative isolate overflow-hidden rounded-[1.75rem] border border-white/15 bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-700 p-6 text-white shadow-[0_24px_60px_-20px_rgba(6,78,59,0.6)] sm:p-8"
+        className="relative isolate flex-none overflow-hidden rounded-[1.75rem] border border-white/15 bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-700 p-5 text-white shadow-[0_24px_60px_-20px_rgba(6,78,59,0.6)] sm:p-6 lg:p-8"
       >
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-teal-300/20 blur-3xl" aria-hidden="true" />
@@ -199,7 +199,7 @@ function WelcomeDashboard({
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-50 backdrop-blur-sm">
               <span aria-hidden="true">📖</span> Noorani Qaida
             </span>
-            <h1 className="mt-3 text-2xl font-black leading-tight sm:text-3xl xl:text-4xl">
+            <h1 className="mt-3 text-2xl font-black leading-tight text-white sm:text-3xl xl:text-4xl">
               {isNew ? "Bismillah! Let’s begin learning." : "Welcome back — keep going!"}
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-emerald-50/90 sm:text-base">
@@ -238,7 +238,7 @@ function WelcomeDashboard({
       </motion.section>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid flex-none grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
           <motion.div
             key={stat.label}
@@ -258,7 +258,7 @@ function WelcomeDashboard({
       </div>
 
       {/* Progress + quick actions */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid flex-none gap-4 lg:grid-cols-3">
         <motion.section
           variants={DASHBOARD_ITEM_VARIANTS}
           className="rounded-[1.5rem] border border-emerald-900/10 bg-white p-5 shadow-[0_14px_38px_-22px_rgba(6,78,59,0.5)] lg:col-span-2"
@@ -314,7 +314,7 @@ function WelcomeDashboard({
       {/* Badges showcase */}
       <motion.section
         variants={DASHBOARD_ITEM_VARIANTS}
-        className="rounded-[1.5rem] border border-emerald-900/10 bg-white p-5 shadow-[0_14px_38px_-22px_rgba(6,78,59,0.5)]"
+        className="flex-none rounded-[1.5rem] border border-emerald-900/10 bg-white p-5 shadow-[0_14px_38px_-22px_rgba(6,78,59,0.5)]"
         aria-labelledby="qaida-badges"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -375,6 +375,28 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
     : LETTERS.find((l) => `letter-${l.id}` === state.currentLesson) ?? LETTERS[0];
   const currentScreenId = activeScreenId ?? state.currentCurriculumScreen;
   const focusWindow = letterWindow(currentLetter?.id ?? 1);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view");
+      const screenParam = params.get("screen");
+      if (
+        viewParam &&
+        (viewParam === "namaz" ||
+          viewParam === "kalmas" ||
+          viewParam === "daily-duas" ||
+          viewParam === "lessons" ||
+          viewParam === "qaida" ||
+          viewParam === "dashboard")
+      ) {
+        setActiveView(viewParam as ActiveView);
+      }
+      if (screenParam) {
+        setActiveScreenId(screenParam);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (preview) {
@@ -609,7 +631,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
     if (activeGame === "letter-train") return "Letter Train 🚂";
     if (activeGame === "puzzle") return "Letter Puzzle 🧩";
     if (activeGame === "sound-match") return "Sound Match 🎵";
-    if (activeView === "qaida") return "Noorani Qaida Book";
+    if (activeView === "qaida") return "Qaida Book";
     if (activeView === "daily-duas") return "Daily Duas";
     if (activeView === "namaz") return "Namaz";
     if (activeView === "kalmas") return "6 Kalmas";
@@ -819,7 +841,7 @@ export default function QaidaShell({ preview = false, enrolUrl = DEFAULT_ENROL_U
             ) : activeView === "dashboard" ? (
               <motion.div
                 key="dashboard"
-                className="qaida-scroll absolute inset-0 overflow-auto"
+                className="qaida-scroll absolute inset-0 overflow-y-auto overflow-x-hidden"
                 variants={pageVariants}
                 initial="initial"
                 animate="enter"

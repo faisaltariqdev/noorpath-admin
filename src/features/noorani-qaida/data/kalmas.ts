@@ -11,6 +11,7 @@ function kalima(
   transliteration: string,
   meaning: string,
   summary: string,
+  videoUrl?: string,
 ): TopicLesson {
   const example: InteractiveExample = {
     id: `${id}-recitation`,
@@ -34,6 +35,9 @@ function kalima(
     audioKey: `lesson-${id}`,
     reviewStatus: pending,
     examples: [example],
+    videoUrl,
+    videoTitle: `${title} — Video Lesson`,
+    videoDescription: `Watch and learn the recitation, pronunciation, and meaning of ${title}.`,
   };
 }
 
@@ -52,6 +56,7 @@ export const KALMA_LESSONS: TopicLesson[] = [
     "Laa ilaaha illa-llaahu, Muhammadur-rasoolu-llaah.",
     "There is none worthy of worship except Allah, and Muhammad ﷺ is the Messenger of Allah.",
     "The Word of Purity — a clear declaration of faith in Allah and His Messenger ﷺ.",
+    "https://youtu.be/Q_WlY7wo8p8",
   ),
   kalima(
     2,
@@ -62,6 +67,7 @@ export const KALMA_LESSONS: TopicLesson[] = [
     "Ash-hadu an laa ilaaha illa-llaahu wahdahu laa shareeka lah, wa ash-hadu anna Muhammadan abduhu wa rasooluh.",
     "I bear witness that there is none worthy of worship except Allah, alone, without any partner, and I bear witness that Muhammad ﷺ is His servant and Messenger.",
     "The Word of Testimony — bearing witness to Allah's oneness and the message of Muhammad ﷺ.",
+    "https://youtu.be/uZV_W51YAns",
   ),
   kalima(
     3,
@@ -72,6 +78,7 @@ export const KALMA_LESSONS: TopicLesson[] = [
     "Subhaana-llaahi wal-hamdu lillaahi wa laa ilaaha illa-llaahu wa-llaahu akbar, wa laa hawla wa laa quwwata illa billaahil-aliyyil-azeem.",
     "Glory be to Allah, and all praise is for Allah, and there is none worthy of worship except Allah, and Allah is the Greatest. There is no might nor power except with Allah, the Most High, the Most Great.",
     "The Word of Glorification — praising Allah with the greatest words of remembrance.",
+    "https://youtu.be/lvJzgrrP8jQ",
   ),
   kalima(
     4,
@@ -82,6 +89,7 @@ export const KALMA_LESSONS: TopicLesson[] = [
     "Laa ilaaha illa-llaahu wahdahu laa shareeka lah, lahul-mulku wa lahul-hamdu yuhyee wa yumeetu wa huwa hayyun laa yamootu abadan abada, dhul-jalaali wal-ikraam, biyadihil-khayr, wa huwa alaa kulli shay-in qadeer.",
     "There is none worthy of worship except Allah, alone, without partner. His is the kingdom and His is all praise. He gives life and causes death. He is Ever-Living and will never die. Owner of Majesty and Honour. In His hand is all good, and He has power over all things.",
     "The Word of Oneness — affirming Allah's complete authority, life, majesty, and power.",
+    "https://youtu.be/NcDQelcKcUg",
   ),
   kalima(
     5,
@@ -92,6 +100,7 @@ export const KALMA_LESSONS: TopicLesson[] = [
     "Astaghfiru-llaaha rabbee min kulli dhambin adhnabtuhu amadan aw khata-an sirran aw alaaniyatan wa atoobu ilayhi minadh-dhambil-ladhee a'lamu wa minadh-dhambil-ladhee laa a'lam, innaka anta allaamul-ghuyoobi wa sattaarul-uyoobi wa ghaffaarudh-dhunoobi wa laa hawla wa laa quwwata illa billaahil-aliyyil-azeem.",
     "I seek forgiveness from Allah, my Lord, for every sin I committed knowingly or unknowingly, secretly or openly, and I turn to Him in repentance from the sin I know and the sin I do not know. Indeed You are the Knower of the unseen, the Concealer of faults, and the Forgiver of sins. There is no might nor power except with Allah, the Most High, the Most Great.",
     "The Word of Seeking Forgiveness — returning to Allah for every known and unknown mistake.",
+    "https://youtu.be/NcDQelcKcUg",
   ),
   kalima(
     6,
@@ -102,5 +111,6 @@ export const KALMA_LESSONS: TopicLesson[] = [
     "Allaahumma innee a'oodhu bika min an ushrika bika shay-an wa ana a'lamu bihi wa astaghfiruka limaa laa a'lamu bihi tubtu anhu wa tabarra'tu minal-kufri wash-shirki wal-kidhbi wal-gheebati wal-bid'ati wan-nameemati wal-fawaahishi wal-buhtaani wal-ma'aasee kulliha wa aslamtu wa aqoolu laa ilaaha illa-llaahu Muhammadur-rasoolu-llaah.",
     "O Allah, I seek refuge in You from knowingly associating any partner with You, and I seek Your forgiveness for what I do not know of it. I repent from it, and I dissociate from disbelief, polytheism, lying, backbiting, innovation, tale-telling, indecency, slander and all acts of disobedience. I submit to You, and I say: there is none worthy of worship except Allah, and Muhammad ﷺ is the Messenger of Allah.",
     "The Word of Rejecting Disbelief — seeking Allah's protection and reaffirming sincere faith.",
+    "https://youtu.be/WGopHeKLqf4",
   ),
 ];

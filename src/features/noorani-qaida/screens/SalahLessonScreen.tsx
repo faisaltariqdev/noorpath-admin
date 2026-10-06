@@ -77,7 +77,19 @@ export default function SalahLessonScreen({
   const [showVideoModal, setShowVideoModal] = useState(false);
   const movementsOnly = mode === "movements";
 
-  const lessonVideoId = useMemo(() => extractYouTubeId(lesson.videoUrl), [lesson.videoUrl]);
+  const [activeLessonVideoUrl, setActiveLessonVideoUrl] = useState<string | undefined>(
+    lesson.videoPhases?.[0]?.url ?? lesson.videoUrl,
+  );
+
+  useEffect(() => {
+    setActiveLessonVideoUrl(lesson.videoPhases?.[0]?.url ?? lesson.videoUrl);
+    setShowVideoModal(false);
+  }, [lesson.id, lesson.videoUrl, lesson.videoPhases]);
+
+  const lessonVideoId = useMemo(
+    () => extractYouTubeId(activeLessonVideoUrl ?? lesson.videoUrl),
+    [activeLessonVideoUrl, lesson.videoUrl],
+  );
   const step: SalahStep | undefined = steps[stepIndex];
 
   // Reset activePartIndex when step changes
@@ -161,43 +173,52 @@ export default function SalahLessonScreen({
   return (
     <main
       ref={lessonRef}
-      className="relative min-h-full overflow-x-hidden bg-emerald-50 fullscreen:h-screen fullscreen:overflow-y-auto"
+      className="relative min-h-full w-full max-w-full overflow-x-hidden bg-emerald-50 fullscreen:h-screen fullscreen:overflow-y-auto"
     >
       <ScenicLearningBackground reducedMotion={reducedMotion} />
-      <div className="relative z-10 mx-auto flex min-h-full w-full max-w-5xl flex-col gap-3.5 p-3 sm:p-5">
+      <div className="relative z-10 mx-auto flex min-h-full w-full max-w-5xl flex-col gap-3.5 p-2.5 sm:p-5">
         {/* Unified Top Command Header */}
-        <div className="rounded-2xl sm:rounded-3xl border border-white/80 bg-white/95 p-3 sm:p-4 shadow-sm backdrop-blur-md flex flex-col gap-2.5">
-          {/* Row 1: Context & Control Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5">
-            {/* Left: Step Tag & Lesson Title */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="shrink-0 inline-flex items-center rounded-lg bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-800">
-                Step {step.order}/{steps.length}
-              </span>
-              <h1 className="text-sm sm:text-base font-black text-slate-900 truncate">
-                {lesson.title}
-              </h1>
-              {practicedCount > 0 && (
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 shrink-0">
-                  ⭐ {practicedCount} done
+        <div className="rounded-2xl sm:rounded-3xl border border-white/80 bg-white/95 p-3 sm:p-4 shadow-sm backdrop-blur-md flex flex-col gap-2.5 w-full max-w-full">
+          {/* Row 1: Context & Control Strip (Fully Responsive for Phones & Tablets) */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {/* Top row on mobile / Left on desktop: Step Tag, Title & Fullscreen button */}
+            <div className="flex items-center justify-between gap-2 min-w-0 w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <span className="shrink-0 inline-flex items-center rounded-lg bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-800">
+                  Step {step.order}/{steps.length}
                 </span>
-              )}
+                <h1 className="text-sm sm:text-base font-black text-slate-900 truncate">
+                  {lesson.title}
+                </h1>
+                {practicedCount > 0 && (
+                  <span className="hidden md:inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 shrink-0">
+                    ⭐ {practicedCount} done
+                  </span>
+                )}
+              </div>
+              <div className="sm:hidden shrink-0">
+                <FullscreenButton
+                  targetRef={lessonRef}
+                  label={lesson.title}
+                  className="border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 min-h-7 px-2 py-1 text-xs"
+                />
+              </div>
             </div>
 
-            {/* Right: Mode Switcher + Auto-Play + Fullscreen */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Controls row: Mode Switcher + Auto-Play + Video + Fullscreen (desktop) */}
+            <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
               {/* Teaching Mode Toggle */}
               <div
                 role="radiogroup"
                 aria-label="Teaching mode"
-                className="inline-flex rounded-xl bg-slate-100/90 p-0.5 border border-slate-200/80 text-xs font-black shadow-inner"
+                className="inline-flex rounded-xl bg-slate-100/90 p-0.5 border border-slate-200/80 text-xs font-black shadow-inner shrink-0"
               >
                 <button
                   type="button"
                   role="radio"
                   aria-checked={movementsOnly}
                   onClick={() => changeMode("movements")}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-black transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1 rounded-lg px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-black transition cursor-pointer ${
                     movementsOnly
                       ? "bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-300"
                       : "text-slate-600 hover:text-slate-900"
@@ -212,7 +233,7 @@ export default function SalahLessonScreen({
                   role="radio"
                   aria-checked={!movementsOnly}
                   onClick={() => changeMode("words")}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-black transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1 rounded-lg px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-black transition cursor-pointer ${
                     !movementsOnly
                       ? "bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-300"
                       : "text-slate-600 hover:text-slate-900"
@@ -224,48 +245,53 @@ export default function SalahLessonScreen({
                 </button>
               </div>
 
-              {/* Watch / Auto-walkthrough */}
-              <button
-                type="button"
-                onClick={toggleWatch}
-                aria-pressed={watching}
-                className={`inline-flex min-h-8 items-center gap-1.5 rounded-xl px-2.5 sm:px-3 py-1 text-xs font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 cursor-pointer ${
-                  watching
-                    ? "bg-amber-100 text-amber-900 ring-2 ring-amber-300"
-                    : "bg-emerald-800 text-white hover:bg-emerald-900 shadow-sm"
-                }`}
-                title={watching ? "Pause auto-walkthrough" : "Play step-by-step walkthrough"}
-              >
-                {watching ? <Pause size={12} aria-hidden="true" /> : <Play size={12} aria-hidden="true" />}
-                <span className="hidden sm:inline">{watching ? "Pause" : "Auto-Walkthrough"}</span>
-                <span className="sm:hidden">{watching ? "Pause" : "Play"}</span>
-              </button>
-
-              {/* Overall Lesson Cartoon / Poem Video */}
-              {lesson.videoUrl && lessonVideoId && (
+              {/* Action Buttons Group */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {/* Watch / Auto-walkthrough */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setWatching(false);
-                    setShowVideoModal(true);
-                  }}
-                  className="inline-flex min-h-8 items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-2.5 sm:px-3 py-1 text-xs font-black text-white shadow-sm hover:from-amber-600 hover:to-orange-600 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 cursor-pointer active:scale-95"
-                  title={lesson.videoTitle ?? "Watch Cartoon Poem Video"}
+                  onClick={toggleWatch}
+                  aria-pressed={watching}
+                  className={`inline-flex min-h-7 sm:min-h-8 items-center gap-1 sm:gap-1.5 rounded-xl px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 cursor-pointer ${
+                    watching
+                      ? "bg-amber-100 text-amber-900 ring-2 ring-amber-300"
+                      : "bg-emerald-800 text-white hover:bg-emerald-900 shadow-sm"
+                  }`}
+                  title={watching ? "Pause auto-walkthrough" : "Play step-by-step walkthrough"}
                 >
-                  <Film size={12} aria-hidden="true" />
-                  <span className="hidden sm:inline">Cartoon Poem Video</span>
-                  <span className="sm:hidden">Poem</span>
-                  <span className="rounded-full bg-white/25 px-1.5 py-0.2 text-[9px] font-black uppercase">
-                    Full
-                  </span>
+                  {watching ? <Pause size={11} aria-hidden="true" /> : <Play size={11} aria-hidden="true" />}
+                  <span className="hidden sm:inline">{watching ? "Pause" : "Auto-Walkthrough"}</span>
+                  <span className="sm:hidden">{watching ? "Pause" : "Play"}</span>
                 </button>
-              )}
 
-              <FullscreenButton
-                targetRef={lessonRef}
-                label={lesson.title}
-                className="border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 min-h-8 px-2 py-1 text-xs"
-              />
+                {/* Overall Lesson Video */}
+                {lesson.videoUrl && lessonVideoId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWatching(false);
+                      setShowVideoModal(true);
+                    }}
+                    className="inline-flex min-h-7 sm:min-h-8 items-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-black text-white shadow-sm hover:from-amber-600 hover:to-orange-600 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 cursor-pointer active:scale-95"
+                    title={lesson.videoTitle ?? "Watch Video Lesson"}
+                  >
+                    <Film size={11} aria-hidden="true" />
+                    <span className="hidden sm:inline">Watch Video</span>
+                    <span className="sm:hidden">Video</span>
+                    <span className="rounded-full bg-white/25 px-1 sm:px-1.5 py-0.2 text-[9px] font-black uppercase">
+                      HD
+                    </span>
+                  </button>
+                )}
+
+                <div className="hidden sm:inline-flex">
+                  <FullscreenButton
+                    targetRef={lessonRef}
+                    label={lesson.title}
+                    className="border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 min-h-8 px-2 py-1 text-xs"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -324,44 +350,72 @@ export default function SalahLessonScreen({
           </nav>
         </div>
 
-        {/* Wudu Cartoon Poem Video Spotlight Card */}
+        {/* Lesson Video Spotlight Card */}
         {lesson.videoUrl && lessonVideoId && (
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl sm:rounded-3xl border border-amber-300/80 bg-gradient-to-r from-amber-50 via-orange-50/60 to-yellow-50/70 p-3 sm:p-4 shadow-sm backdrop-blur-md">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md">
-                <Film size={20} aria-hidden="true" />
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md">
+                <Film size={18} aria-hidden="true" />
               </div>
               <div className="min-w-0 flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-200/90 px-2 py-0.5 text-[10px] font-black text-amber-900 uppercase tracking-wider">
-                    🎵 Cartoon Poem
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-200/90 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-900 uppercase tracking-wider">
+                    🎬 Video Guide
                   </span>
                   <span className="text-xs sm:text-sm font-black text-amber-950 truncate">
-                    {lesson.videoTitle ?? "Complete Wudu Cartoon Poem for Children"}
+                    {lesson.videoTitle ?? "Lesson Video Guide"}
                   </span>
                 </div>
-                <p className="text-xs text-slate-700 leading-snug">
-                  {lesson.videoDescription ?? "Fun animated rhyme teaching children the complete step-by-step method of Wudu!"}
+                <p className="text-[11px] sm:text-xs text-slate-700 leading-snug line-clamp-2 sm:line-clamp-none">
+                  {lesson.videoDescription ?? "Engaging visual guidance and step-by-step video practice for students."}
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setWatching(false);
-                setShowVideoModal(true);
-              }}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2 text-xs font-black text-white hover:from-amber-700 hover:to-orange-700 transition cursor-pointer shadow-sm active:scale-95"
-            >
-              <Play size={13} fill="currentColor" aria-hidden="true" />
-              <span>Watch Full Cartoon Video</span>
-            </button>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2 shrink-0 w-full sm:w-auto">
+              {lesson.videoPhases && lesson.videoPhases.length > 1 ? (
+                lesson.videoPhases.map((phase, idx) => {
+                  const shortLabel = phase.label.includes("(Video A)") || phase.label.includes("Video A")
+                    ? "Video (A)"
+                    : phase.label.includes("(Video B)") || phase.label.includes("Video B")
+                    ? "Video (B)"
+                    : phase.label;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setWatching(false);
+                        setActiveLessonVideoUrl(phase.url);
+                        setShowVideoModal(true);
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-2.5 sm:px-3.5 py-2 text-xs font-black text-white hover:from-amber-700 hover:to-orange-700 transition cursor-pointer shadow-sm active:scale-95"
+                    >
+                      <Play size={11} fill="currentColor" aria-hidden="true" />
+                      <span className="sm:hidden">{shortLabel}</span>
+                      <span className="hidden sm:inline">{phase.label}</span>
+                    </button>
+                  );
+                })
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWatching(false);
+                    setShowVideoModal(true);
+                  }}
+                  className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2 text-xs font-black text-white hover:from-amber-700 hover:to-orange-700 transition cursor-pointer shadow-sm active:scale-95"
+                >
+                  <Play size={13} fill="currentColor" aria-hidden="true" />
+                  <span>Watch Video</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        <section className="grid gap-4 lg:grid-cols-12 items-start">
+        <section className="grid gap-3.5 sm:gap-4 lg:grid-cols-12 items-start w-full max-w-full">
           {/* Posture Stage & Visual Cue */}
-          <div className="flex flex-col gap-3 rounded-2xl sm:rounded-3xl border border-white/80 bg-white/95 p-3.5 sm:p-4 shadow-sm backdrop-blur-md lg:col-span-6">
+          <div className="min-w-0 max-w-full w-full flex flex-col gap-3 rounded-2xl sm:rounded-3xl border border-white/80 bg-white/95 p-3 sm:p-4 shadow-sm backdrop-blur-md lg:col-span-6">
             <SalahPostureStage
               step={step}
               reducedMotion={reducedMotion}
@@ -370,9 +424,9 @@ export default function SalahLessonScreen({
               onPracticed={(id) => setPracticed((prev) => ({ ...prev, [id]: true }))}
             />
             {step.visualCue && (
-              <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-xs leading-relaxed text-slate-800">
+              <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-xs leading-relaxed text-slate-800 break-words">
                 <span className="font-black text-emerald-800 shrink-0">Look:</span>
-                <span>{step.visualCue}</span>
+                <span className="break-words">{step.visualCue}</span>
               </div>
             )}
           </div>
@@ -384,7 +438,7 @@ export default function SalahLessonScreen({
             animate={{ opacity: 1, y: 0 }}
             exit={reducedMotion ? undefined : { opacity: 0 }}
             transition={{ duration: 0.12 }}
-            className="flex flex-col gap-4 rounded-2xl sm:rounded-3xl border border-white/80 bg-white/95 p-4 sm:p-5 shadow-sm backdrop-blur-md lg:col-span-6"
+            className="min-w-0 max-w-full w-full flex flex-col gap-3.5 sm:gap-4 rounded-2xl sm:rounded-3xl border border-white/80 bg-white/95 p-3 sm:p-5 shadow-sm backdrop-blur-md lg:col-span-6"
           >
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
                 <div>
@@ -512,24 +566,24 @@ export default function SalahLessonScreen({
                           <button
                             type="button"
                             onClick={() => speak(arabicText)}
-                            className="w-full rounded-2xl border-2 border-amber-300/80 bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/40 p-4 text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 group shadow-xs transition hover:border-amber-400 cursor-pointer"
+                            className="w-full max-w-full rounded-2xl border-2 border-amber-300/80 bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/40 p-3 sm:p-4 text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 group shadow-xs transition hover:border-amber-400 cursor-pointer"
                             aria-label={`Hear recitation`}
                           >
                             <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-amber-200/60 text-xs">
-                              <span className="font-black uppercase tracking-wider text-emerald-800 text-[11px]">
+                              <span className="font-black uppercase tracking-wider text-emerald-800 text-[10px] sm:text-[11px] truncate mr-2">
                                 {curPart ? curPart.title : isArabic ? (step.arabicTitle ?? "Recitation") : (step.title ?? "Breakdown")}
                               </span>
-                              <span className="font-bold text-amber-800 group-hover:underline inline-flex items-center gap-1">
-                                <Volume2 size={13} className="text-amber-700 animate-pulse" />
-                                <span>{isArabic ? "Tap to pronounce" : "Tap to listen"}</span>
+                              <span className="font-bold text-amber-800 group-hover:underline inline-flex items-center gap-1 shrink-0">
+                                <Volume2 size={13} className="text-amber-700 animate-pulse shrink-0" />
+                                <span>{isArabic ? "Pronounce" : "Listen"}</span>
                               </span>
                             </div>
 
                             <motion.p
                               className={
                                 isArabic
-                                  ? "qaida-arabic qaida-arabic-recitation w-full text-emerald-950 leading-loose my-2 select-all"
-                                  : "w-full text-center text-emerald-950 font-black text-xl sm:text-2xl leading-normal my-2 select-all tracking-wide"
+                                  ? "qaida-arabic qaida-arabic-recitation w-full text-emerald-950 leading-loose my-2 select-all text-xl sm:text-2xl break-words"
+                                  : "w-full text-center text-emerald-950 font-black text-lg sm:text-2xl leading-normal my-2 select-all tracking-wide break-words"
                               }
                               lang={isArabic ? "ar" : "en"}
                               dir={isArabic ? "rtl" : "ltr"}
@@ -539,7 +593,7 @@ export default function SalahLessonScreen({
                             </motion.p>
 
                             {transliterationText && (
-                              <p className="mt-2.5 whitespace-normal border-t border-amber-200/70 pt-2 text-left text-xs sm:text-sm font-black leading-relaxed text-slate-700" dir="ltr">
+                              <p className="mt-2.5 whitespace-normal border-t border-amber-200/70 pt-2 text-left text-xs sm:text-sm font-black leading-relaxed text-slate-700 break-words" dir="ltr">
                                 {transliterationText}
                               </p>
                             )}
@@ -661,12 +715,12 @@ export default function SalahLessonScreen({
           </div>
         </section>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
+        <div className="flex items-center justify-between gap-2.5 pb-4 w-full max-w-full">
           <button
             type="button"
             disabled={stepIndex === 0}
             onClick={() => goTo(Math.max(0, stepIndex - 1))}
-            className="qaida-premium-button min-h-11 border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="qaida-premium-button min-h-10 sm:min-h-11 border border-slate-200 bg-white px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             ← Previous
           </button>
@@ -675,7 +729,7 @@ export default function SalahLessonScreen({
             <button
               type="button"
               onClick={() => goTo(Math.min(steps.length - 1, stepIndex + 1))}
-              className="qaida-premium-button min-h-11 bg-emerald-700 px-6 py-2.5 text-sm font-black text-white"
+              className="qaida-premium-button min-h-10 sm:min-h-11 bg-emerald-700 px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-black text-white"
             >
               Next step →
             </button>
@@ -685,9 +739,9 @@ export default function SalahLessonScreen({
               onClick={onComplete}
               whileHover={reducedMotion ? undefined : { y: -3, scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
-              className="qaida-premium-button min-h-12 bg-gradient-to-r from-emerald-600 to-teal-700 px-8 py-3 text-base font-black text-white shadow-xl"
+              className="qaida-premium-button min-h-11 sm:min-h-12 bg-gradient-to-r from-emerald-600 to-teal-700 px-5 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-black text-white shadow-xl"
             >
-              Complete lesson · Earn 25 XP
+              Complete · 25 XP
             </motion.button>
           )}
         </div>
@@ -718,10 +772,10 @@ export default function SalahLessonScreen({
                   </span>
                   <div className="min-w-0">
                     <h3 className="text-xs sm:text-sm font-black text-white truncate">
-                      {lesson.videoTitle ?? "Complete Wudu Cartoon Poem"}
+                      {lesson.videoTitle ?? "Lesson Video Guide"}
                     </h3>
                     <p className="text-[10px] font-bold text-amber-400 truncate">
-                      Kid-Friendly Animated Rhyme • Complete Step-by-Step Wudu
+                      Interactive Video Practice • {lesson.title}
                     </p>
                   </div>
                 </div>
@@ -735,13 +789,34 @@ export default function SalahLessonScreen({
                 </button>
               </div>
 
+              {/* Multiple Video Tabs Selector if videoPhases present */}
+              {lesson.videoPhases && lesson.videoPhases.length > 1 && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-950/80 border-b border-slate-800 overflow-x-auto">
+                  <span className="text-[11px] font-bold text-slate-400 shrink-0">Select Video:</span>
+                  {lesson.videoPhases.map((phase, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveLessonVideoUrl(phase.url)}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-black transition cursor-pointer shrink-0 ${
+                        activeLessonVideoUrl === phase.url
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm"
+                          : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+                      }`}
+                    >
+                      {phase.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Video Player Frame */}
               <div className="relative aspect-video w-full bg-black">
                 <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${lessonVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
-                  title={lesson.videoTitle ?? "Wudu cartoon poem video"}
+                  src={`https://www.youtube-nocookie.com/embed/${lessonVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                  title={lesson.videoTitle ?? "Lesson video player"}
                   className="absolute inset-0 h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               </div>
@@ -750,10 +825,10 @@ export default function SalahLessonScreen({
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 bg-slate-950/90 px-4 py-2.5 text-xs text-slate-300">
                 <div className="flex items-center gap-2 text-[11px] min-w-0">
                   <span className="shrink-0 rounded-full bg-emerald-900/60 border border-emerald-500/40 px-2 py-0.5 font-bold text-emerald-300">
-                    🎵 Cartoon Rhyme
+                    🎬 Video Guide
                   </span>
                   <span className="hidden sm:inline text-slate-400 truncate">
-                    {lesson.videoDescription ?? "Teaches children the complete wudu method through an engaging poem"}
+                    {lesson.videoDescription ?? "Teaches students step-by-step through engaging visual guidance"}
                   </span>
                 </div>
                 <button

@@ -125,6 +125,8 @@ export interface TopicLesson {
   videoUrl?: string;
   videoTitle?: string;
   videoDescription?: string;
+  /** Optional multiple video phases/versions (e.g. Video A, Video B) */
+  videoPhases?: SalahVideoPhase[];
   whenToSay?: string;
   reviewStatus: ReviewStatus;
 }
