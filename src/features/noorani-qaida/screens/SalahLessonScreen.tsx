@@ -60,6 +60,7 @@ export default function SalahLessonScreen({
   initialStepIndex = 0,
 }: SalahLessonScreenProps) {
   const lessonRef = useRef<HTMLElement>(null);
+  const videoIframeRef = useRef<HTMLIFrameElement>(null);
   const steps = useMemo(
     () => [...(lesson.steps ?? [])].sort((a, b) => a.order - b.order),
     [lesson.steps],
@@ -85,6 +86,24 @@ export default function SalahLessonScreen({
     setActiveLessonVideoUrl(lesson.videoPhases?.[0]?.url ?? lesson.videoUrl);
     setShowVideoModal(false);
   }, [lesson.id, lesson.videoUrl, lesson.videoPhases]);
+
+  // Resume YouTube video after Google Meet / screen-share briefly hides the page.
+  // YouTube's embedded player auto-pauses on visibilitychange → "hidden"; we
+  // send a playVideo command when the page becomes visible again so the video
+  // keeps playing without the tutor having to tap play repeatedly.
+  useEffect(() => {
+    if (!showVideoModal) return;
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible" && videoIframeRef.current) {
+        videoIframeRef.current.contentWindow?.postMessage(
+          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
+          "https://www.youtube-nocookie.com",
+        );
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [showVideoModal]);
 
   const lessonVideoId = useMemo(
     () => extractYouTubeId(activeLessonVideoUrl ?? lesson.videoUrl),
@@ -813,6 +832,7 @@ export default function SalahLessonScreen({
               {/* Video Player Frame */}
               <div className="relative aspect-video w-full bg-black">
                 <iframe
+                  ref={videoIframeRef}
                   src={`https://www.youtube-nocookie.com/embed/${lessonVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
                   title={lesson.videoTitle ?? "Lesson video player"}
                   className="absolute inset-0 h-full w-full border-0"

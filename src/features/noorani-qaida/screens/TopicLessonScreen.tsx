@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { Film, Play, Video, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LETTERS } from "../data/curriculum";
 import { qaidaAudio, type PronunciationMode } from "../audio/QaidaAudioService";
 import type { TopicLesson } from "../types";
@@ -12,7 +12,6 @@ import SparkleBurst from "../animations/SparkleBurst";
 import ZaydMascot, { type ZaydAction } from "../characters/ZaydMascot";
 import ExampleTile from "../ui/ExampleTile";
 import FullscreenButton from "../ui/FullscreenButton";
-import { useRef } from "react";
 
 function extractYouTubeId(url?: string): string | null {
   if (!url) return null;
@@ -46,6 +45,7 @@ export default function TopicLessonScreen({
   onComplete,
 }: TopicLessonScreenProps) {
   const lessonRef = useRef<HTMLElement>(null);
+  const videoIframeRef = useRef<HTMLIFrameElement>(null);
   const [activeExample, setActiveExample] = useState(lesson.examples[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [practiceComplete, setPracticeComplete] = useState(false);
@@ -60,6 +60,24 @@ export default function TopicLessonScreen({
     setActiveVideoUrl(lesson.videoPhases?.[0]?.url ?? lesson.videoUrl);
     setShowVideoModal(false);
   }, [lesson.id, lesson.videoUrl, lesson.videoPhases]);
+
+  // Resume YouTube video after Google Meet / screen-share briefly hides the page.
+  // YouTube's embedded player auto-pauses on visibilitychange → "hidden"; we
+  // send a playVideo command when the page becomes visible again so the video
+  // keeps playing without the tutor having to tap play repeatedly.
+  useEffect(() => {
+    if (!showVideoModal) return;
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible" && videoIframeRef.current) {
+        videoIframeRef.current.contentWindow?.postMessage(
+          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
+          "https://www.youtube-nocookie.com",
+        );
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [showVideoModal]);
 
   const videoId = useMemo(
     () => extractYouTubeId(activeVideoUrl ?? lesson.videoUrl),
@@ -440,6 +458,7 @@ export default function TopicLessonScreen({
               {/* Video Player Frame */}
               <div className="relative aspect-video w-full bg-black">
                 <iframe
+                  ref={videoIframeRef}
                   src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
                   title={lesson.videoTitle ?? `${lesson.title} video lesson`}
                   className="absolute inset-0 h-full w-full border-0"

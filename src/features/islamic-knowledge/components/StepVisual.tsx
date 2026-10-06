@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { LessonStep } from "../types";
 
@@ -623,13 +624,30 @@ function extractYouTubeId(url: string): string | null {
 
 function YouTubeEmbed({ url, accent }: { url: string; accent: string }) {
   const videoId = extractYouTubeId(url);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Resume playback after Google Meet / screen-share briefly hides the page.
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible" && iframeRef.current) {
+        iframeRef.current.contentWindow?.postMessage(
+          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
+          "https://www.youtube-nocookie.com",
+        );
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+
   if (!videoId) return null;
   return (
     <div className="ik-video-wrapper" style={{ "--ik-visual-accent": accent } as CSSProperties}>
       <div className="ik-video-badge">🎬 Cartoon Video</div>
       <iframe
+        ref={iframeRef}
         className="ik-video-frame"
-        src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`}
+        src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
         title="Wudu cartoon video for kids"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
