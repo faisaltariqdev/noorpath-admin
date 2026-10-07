@@ -1,5 +1,5 @@
 import { DEFAULT_RECITER, parseReciterId } from "../data/reciters";
-import type { HolyQuranPrefs, InkMode, ReaderLayout } from "../types";
+import type { HolyQuranPrefs, InkMode, ReaderLayout, TafsirLang } from "../types";
 
 export const HQ_PREFS_KEY = "noorpath-holy-quran-prefs-v1";
 export const ZOOM_MIN = 80;
@@ -7,7 +7,15 @@ export const ZOOM_MAX = 180;
 export const ZOOM_STEP = 10;
 
 export function createDefaultPrefs(): HolyQuranPrefs {
-  return { layout: "line", ink: "normal", zoom: 100, muted: false, reciter: DEFAULT_RECITER, practice: false };
+  return {
+    layout: "line",
+    ink: "normal",
+    zoom: 100,
+    muted: false,
+    reciter: DEFAULT_RECITER,
+    practice: false,
+    tafsirLang: "ur",
+  };
 }
 
 function clampZoom(value: number): number {
@@ -32,6 +40,7 @@ export function loadPrefs(): HolyQuranPrefs {
       muted?: unknown;
       reciter?: string;
       practice?: unknown;
+      tafsirLang?: string;
     };
     const layout: ReaderLayout = parsed.layout === "page" ? "page" : "line";
     const ink: InkMode = parsed.ink === "tajweed"
@@ -39,6 +48,7 @@ export function loadPrefs(): HolyQuranPrefs {
       : parsed.ink === "letters" || parsed.ink === "colorful"
         ? "letters"
         : "normal";
+    const tafsirLang: TafsirLang = parsed.tafsirLang === "en" ? "en" : "ur";
     return {
       layout,
       ink,
@@ -46,6 +56,7 @@ export function loadPrefs(): HolyQuranPrefs {
       muted: parsed.muted === true,
       reciter: parseReciterId(parsed.reciter),
       practice: parsed.practice === true,
+      tafsirLang,
     };
   } catch {
     return fallback;

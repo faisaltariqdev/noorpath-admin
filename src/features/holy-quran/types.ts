@@ -64,6 +64,8 @@ export type ReaderLayout = "line" | "page";
 
 export type InkMode = "normal" | "letters" | "tajweed";
 
+export type TafsirLang = "ur" | "en";
+
 export interface HolyQuranPrefs {
   layout: ReaderLayout;
   ink: InkMode;
@@ -71,6 +73,8 @@ export interface HolyQuranPrefs {
   muted: boolean;
   reciter: "alafasy" | "qariah";
   practice: boolean;
+  /** Preferred tafsir language: Urdu or English (Sunni editions). */
+  tafsirLang: TafsirLang;
 }
 
 export interface QuranSearchHit {

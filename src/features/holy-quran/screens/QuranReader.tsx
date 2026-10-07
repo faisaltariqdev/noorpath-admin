@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bookmark, ChevronLeft, ChevronRight, Eye, EyeOff, Minus, Pause, Play, Plus, Volume2, VolumeX } from "lucide-react";
+import { BookOpen, Bookmark, ChevronLeft, ChevronRight, Eye, EyeOff, Minus, Pause, Play, Plus, Volume2, VolumeX } from "lucide-react";
 import { loadPara } from "../data/loadPara";
 import { RECITERS, recitationUrlFor } from "../data/reciters";
 import { getPara, paraStartLabel, surahArabic, surahName } from "../data/paras";
 import { loadTajweedMap } from "../data/tajweed";
 import { hasBookmark } from "../state/progress";
 import { bumpZoom, loadPrefs, savePrefs, ZOOM_MAX, ZOOM_MIN } from "../state/prefs";
-import type { HolyQuranPrefs, HolyQuranProgress, InkMode, QuranAyah, ReaderLayout, ReaderTarget } from "../types";
+import type { HolyQuranPrefs, HolyQuranProgress, InkMode, QuranAyah, ReaderLayout, ReaderTarget, TafsirLang } from "../types";
 import ColorfulLetters from "./ColorfulLetters";
 import HoverLetters from "./HoverLetters";
+import AyahTafsirPanel from "./AyahTafsirPanel";
 import { wrapTajweedGlyphs } from "../data/colorfulLetters";
 
 interface QuranReaderProps {
@@ -31,6 +32,7 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
   const [playingGlobal, setPlayingGlobal] = useState<number | null>(null);
   const [focusIdx, setFocusIdx] = useState(0);
   const [toolsHidden, setToolsHidden] = useState(false);
+  const [tafsirKey, setTafsirKey] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const queueRef = useRef<QuranAyah[]>([]);
 
@@ -58,6 +60,7 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
     audioRef.current?.pause();
     queueRef.current = [];
     setPlayingGlobal(null);
+    setTafsirKey(null);
     loadPara(target.para)
       .then((file) => {
         if (cancelled) return;
@@ -344,11 +347,13 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
               {rows.map((ayah) => {
                 const current = playingGlobal === ayah.global || (progress.lastPosition?.surah === ayah.surah && progress.lastPosition?.ayah === ayah.ayah);
                 const bookmarked = hasBookmark(progress, "ayah", para.number, ayah.surah, ayah.ayah);
+                const ayahKey = `${ayah.surah}:${ayah.ayah}`;
+                const tafsirOpen = tafsirKey === ayahKey;
                 return (
                   <article
-                    key={`${ayah.surah}-${ayah.ayah}`}
+                    key={ayahKey}
                     id={`hq-ayah-${ayah.surah}-${ayah.ayah}`}
-                    className={`hq-ayah ${current ? "is-current" : ""}`}
+                    className={`hq-ayah ${current ? "is-current" : ""} ${tafsirOpen ? "has-tafsir" : ""}`}
                     onFocus={() => remember(ayah)}
                     onClick={() => remember(ayah)}
                   >
@@ -377,7 +382,30 @@ export default function QuranReader({ target, progress, onRemember, onBookmark, 
                       >
                         {playingGlobal === ayah.global ? <Pause size={15} /> : <Play size={15} />}
                       </button>
+                      <button
+                        type="button"
+                        className={`hq-icon-btn ${tafsirOpen ? "is-on" : ""}`}
+                        aria-expanded={tafsirOpen}
+                        aria-label={tafsirOpen ? "Hide tafsir" : "Show tafsir"}
+                        title="Tafsir (Urdu / English)"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setTafsirKey(tafsirOpen ? null : ayahKey);
+                          remember(ayah);
+                        }}
+                      >
+                        <BookOpen size={15} />
+                      </button>
                     </div>
+                    {tafsirOpen && (
+                      <AyahTafsirPanel
+                        surah={ayah.surah}
+                        ayah={ayah.ayah}
+                        lang={prefs.tafsirLang}
+                        onLangChange={(next: TafsirLang) => updatePrefs({ tafsirLang: next })}
+                        onClose={() => setTafsirKey(null)}
+                      />
+                    )}
                   </article>
                 );
               })}

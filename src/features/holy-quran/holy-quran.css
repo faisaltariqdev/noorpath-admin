@@ -102,7 +102,9 @@
 
 .hq-main {
   overflow: auto;
-  padding: 22px 24px 36px;
+  padding: 18px clamp(12px, 2vw, 28px) 32px;
+  width: 100%;
+  min-width: 0;
 }
 
 .hq-hero {
@@ -593,12 +595,13 @@
 }
 
 .hq-reader {
-  max-width: 860px;
+  width: 100%;
+  max-width: min(1280px, 100%);
   margin: 0 auto;
 }
 
 .hq-reader.is-compact {
-  max-width: 980px;
+  max-width: min(1360px, 100%);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
@@ -819,6 +822,188 @@
   background: #fff7e6;
 }
 
+.hq-ayah.has-tafsir {
+  grid-template-columns: 1fr auto;
+}
+
+.hq-tafsir-panel {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(27, 94, 66, 0.16);
+  background: linear-gradient(180deg, #f7fcf9 0%, #ffffff 100%);
+  box-shadow: 0 8px 24px rgba(15, 40, 30, 0.06);
+}
+
+.hq-tafsir-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hq-tafsir-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.hq-tafsir-title strong {
+  font-size: 0.92rem;
+  color: var(--hq-emerald-deep);
+}
+
+.hq-tafsir-title span {
+  font-size: 0.75rem;
+  color: #5b6b63;
+}
+
+.hq-tafsir-langs {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 94, 66, 0.18);
+  background: #fff;
+  overflow: hidden;
+}
+
+.hq-tafsir-langs button {
+  border: 0;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #3f5148;
+  cursor: pointer;
+}
+
+.hq-tafsir-langs button.is-on {
+  background: var(--hq-emerald-deep);
+  color: #fff;
+}
+
+.hq-tafsir-font {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 94, 66, 0.18);
+  background: #fff;
+  padding: 2px 8px 2px 4px;
+}
+
+.hq-tafsir-font span {
+  min-width: 2.4rem;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #3f5148;
+}
+
+.hq-tafsir-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4px 1fr;
+  gap: 0 12px;
+  max-height: min(48vh, 380px);
+  overflow: auto;
+  padding: 14px 14px 14px 12px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(247, 252, 249, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+  border: 1px solid rgba(27, 94, 66, 0.1);
+  color: #1a2b23;
+}
+
+.hq-tafsir-rail {
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #c9a84c 0%, #1b5e42 55%, rgba(27, 94, 66, 0.25) 100%);
+  align-self: stretch;
+  min-height: 100%;
+}
+
+.hq-tafsir-sections {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hq-tafsir-section {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: calc(0.97rem * var(--hq-tafsir-zoom, 1));
+  line-height: 1.8;
+  color: #24352d;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hq-tafsir-section.is-heading {
+  font-weight: 800;
+  font-size: calc(1.02rem * var(--hq-tafsir-zoom, 1));
+  color: var(--hq-emerald-deep);
+  letter-spacing: 0.01em;
+  padding-top: 4px;
+  padding-bottom: 2px;
+}
+
+.hq-tafsir-section:hover,
+.hq-tafsir-section:focus-visible,
+.hq-tafsir-section.is-focus {
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.2), rgba(201, 168, 76, 0.08));
+  box-shadow: inset 3px 0 0 #c9a84c;
+  color: #12261e;
+  outline: none;
+}
+
+.hq-tafsir-body.is-urdu {
+  text-align: right;
+  grid-template-columns: 1fr 4px;
+}
+
+.hq-tafsir-body.is-urdu .hq-tafsir-rail {
+  order: 2;
+}
+
+.hq-tafsir-body.is-urdu .hq-tafsir-sections {
+  order: 1;
+}
+
+.hq-tafsir-body.is-urdu .hq-tafsir-section {
+  font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", serif;
+  font-size: calc(1.08rem * var(--hq-tafsir-zoom, 1));
+  line-height: 2.05;
+}
+
+.hq-tafsir-body.is-urdu .hq-tafsir-section:hover,
+.hq-tafsir-body.is-urdu .hq-tafsir-section:focus-visible,
+.hq-tafsir-body.is-urdu .hq-tafsir-section.is-focus {
+  box-shadow: inset -3px 0 0 #c9a84c;
+  background: linear-gradient(270deg, rgba(201, 168, 76, 0.2), rgba(201, 168, 76, 0.08));
+}
+
+.hq-tafsir-body.is-english {
+  text-align: left;
+}
+
+.hq-tafsir-error {
+  margin: 0;
+  color: #b45309;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.hq-tafsir-note {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  color: #6b7c74;
+}
+
 .hq-reader-nav {
   display: flex;
   justify-content: space-between;
@@ -826,7 +1011,24 @@
   margin-top: 18px;
 }
 
-@media (max-width: 860px) {
+/* Large tablet / small laptop: keep sidebar, widen reader fully */
+@media (max-width: 1200px) {
+  .hq-shell {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .hq-reader,
+  .hq-reader.is-compact {
+    max-width: 100%;
+  }
+
+  .hq-reader-tools {
+    gap: 8px;
+  }
+}
+
+/* Tablet portrait / compact desktop */
+@media (max-width: 1024px) {
   .hq-shell {
     grid-template-columns: 1fr;
     max-height: none;
@@ -841,8 +1043,11 @@
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    padding: 10px;
+    padding: 10px 12px;
     gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
   }
 
   .hq-brand {
@@ -853,25 +1058,22 @@
   .hq-nav-btn,
   .hq-back {
     padding: 10px 12px;
-    font-size: 0.8rem;
-    min-height: 44px;
+    font-size: 0.82rem;
+    min-height: 42px;
   }
 
   .hq-main {
-    padding: 12px 10px 28px;
+    padding: 14px 14px 28px;
   }
 
-  .hq-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .hq-reader {
+  .hq-reader,
+  .hq-reader.is-compact {
     max-width: 100%;
   }
 
   .hq-reader-toolbar {
-    padding-bottom: 16px;
-    margin-bottom: 16px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
   }
 
   .hq-reader-tools {
@@ -882,7 +1084,6 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    max-width: 100%;
   }
 
   .hq-reader.is-compact .hq-reader-body {
@@ -902,6 +1103,31 @@
     padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
     background: #eefaf4;
     border-top: 1px solid var(--hq-line);
+  }
+
+  .hq-ayah-meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .hq-tafsir-head {
+    gap: 8px;
+  }
+
+  .hq-tafsir-title {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 860px) {
+  .hq-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .hq-main {
+    padding: 12px 10px 28px;
   }
 
   .hq-layout-switch {
@@ -950,6 +1176,27 @@
   .hq-search {
     font-size: 16px;
   }
+
+  .hq-tafsir-panel {
+    padding: 10px;
+  }
+
+  .hq-tafsir-body {
+    max-height: min(55vh, 420px);
+    padding: 12px 10px;
+    gap: 0 8px;
+  }
+
+  .hq-tafsir-langs,
+  .hq-tafsir-font {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .hq-tafsir-langs button {
+    flex: 1;
+    min-height: 40px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -973,9 +1220,22 @@
     height: 44px;
   }
 
-  .hq-zoom .hq-icon-btn {
-    width: 44px;
-    height: 44px;
+  .hq-zoom .hq-icon-btn,
+  .hq-tafsir-font .hq-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .hq-main {
+    padding: 10px 8px 24px;
+  }
+
+  .hq-ayah-text {
+    font-size: calc(clamp(1.2rem, 5.2vw, 1.7rem) * var(--hq-zoom, 1));
+  }
+
+  .hq-tafsir-section {
+    padding: 8px;
   }
 }
 
