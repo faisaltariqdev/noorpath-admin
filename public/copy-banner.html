@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NoorPath Facebook Banner — Copy & Preview</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 900px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: block;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    button, a {
+      background: #10b981;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button:hover, a:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+    .toast {
+      margin-top: 12px;
+      color: #34d399;
+      font-weight: 600;
+      font-size: 14px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 style="margin: 0 0 8px 0; color: #f59e0b;">NoorPath Facebook Official Banner</h2>
+    <p style="margin: 0 0 16px 0; color: #94a3b8; font-size: 13px;">Facebook Feed / Ad Size (1.95:1 landscape) with official NoorPath Admin Logo</p>
+    <img id="bannerImg" src="/fb_noorpath_official.png" alt="NoorPath Facebook Banner">
+    <div class="actions">
+      <button id="copyBtn" onclick="copyImage()">📋 Copy Image to Clipboard</button>
+      <a href="/fb_noorpath_official.jpg" download="NoorPath_Facebook_Banner.jpg">⬇️ Download JPG</a>
+      <a href="/fb_noorpath_official.png" download="NoorPath_Facebook_Banner.png">⬇️ Download PNG</a>
+    </div>
+    <div id="toast" class="toast">✅ Image Copied to Clipboard! Ab aap Facebook par direct Ctrl+V / Cmd+V paste kar sakte hain.</div>
+  </div>
+
+  <script>
+    async function copyImage() {
+      const btn = document.getElementById('copyBtn');
+      const toast = document.getElementById('toast');
+      try {
+        const response = await fetch('/fb_noorpath_official.png');
+        const blob = await response.blob();
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        toast.style.display = 'block';
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => {
+          btn.textContent = '📋 Copy Image to Clipboard';
+          toast.style.display = 'none';
+        }, 4000);
+      } catch (err) {
+        // Fallback: select image for copy
+        alert('Image clipboard me copy karne ke liye image par Right Click karein aur "Copy Image" select karein, ya Mac clipboard me already load ho chuka hai (Cmd+V karein).');
+      }
+    }
+  </script>
+</body>
+</html>

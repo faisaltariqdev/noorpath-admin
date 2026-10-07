@@ -425,19 +425,6 @@ export default function TopicLessonScreen({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {videoId && (
-                    <a
-                      href={`https://www.youtube.com/watch?v=${videoId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95"
-                      title="Open video directly in YouTube App"
-                    >
-                      <ExternalLink size={13} />
-                      <span className="hidden min-[420px]:inline">Open in YouTube App</span>
-                      <span className="min-[420px]:hidden">YouTube App</span>
-                    </a>
-                  )}
                   <button
                     type="button"
                     onClick={() => setShowVideoModal(false)}

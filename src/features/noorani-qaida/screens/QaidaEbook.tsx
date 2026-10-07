@@ -106,16 +106,6 @@ export default function QaidaEbook({
                   <span className="truncate">Noorani Qaida — Arabic Letters Video Tutorial</span>
                 </span>
                 <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href="https://www.youtube.com/watch?v=hlJyUtgzgIM"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 hover:bg-red-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs transition active:scale-95"
-                    title="Open directly in YouTube App"
-                  >
-                    <ExternalLink size={12} />
-                    <span>Open in YouTube App</span>
-                  </a>
                   <button
                     type="button"
                     onClick={() => setShowVideo(false)}
