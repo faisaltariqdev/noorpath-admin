@@ -13,18 +13,8 @@ import ZaydMascot, { type ZaydAction } from "../characters/ZaydMascot";
 import ExampleTile from "../ui/ExampleTile";
 import FullscreenButton from "../ui/FullscreenButton";
 
-function extractYouTubeId(url?: string): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.includes("youtu.be")) return parsed.pathname.replace(/^\//, "");
-    if (parsed.hostname.includes("youtube.com")) return parsed.searchParams.get("v");
-  } catch {
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
-    return match ? match[1] : null;
-  }
-  return null;
-}
+import { extractYouTubeId } from "../../../utils/youtube";
+import YouTubePlayer from "../components/YouTubePlayer";
 
 const TracingCanvas = dynamic(() => import("../ui/TracingCanvas"), {
   ssr: false,
@@ -45,7 +35,6 @@ export default function TopicLessonScreen({
   onComplete,
 }: TopicLessonScreenProps) {
   const lessonRef = useRef<HTMLElement>(null);
-  const videoIframeRef = useRef<HTMLIFrameElement>(null);
   const [activeExample, setActiveExample] = useState(lesson.examples[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [practiceComplete, setPracticeComplete] = useState(false);
@@ -60,25 +49,6 @@ export default function TopicLessonScreen({
     setActiveVideoUrl(lesson.videoPhases?.[0]?.url ?? lesson.videoUrl);
     setShowVideoModal(false);
   }, [lesson.id, lesson.videoUrl, lesson.videoPhases]);
-
-  // Resume YouTube video after Google Meet / screen-share briefly hides the page.
-  // YouTube's embedded player auto-pauses on visibilitychange → "hidden"; we
-  // send a playVideo command when the page becomes visible again so the video
-  // keeps playing without the tutor having to tap play repeatedly.
-  useEffect(() => {
-    if (!showVideoModal) return;
-    function onVisibilityChange() {
-      if (document.visibilityState === "visible" && videoIframeRef.current) {
-        videoIframeRef.current.contentWindow?.postMessage(
-          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-          "https://www.youtube-nocookie.com",
-        );
-      }
-    }
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [showVideoModal]);
-
   const videoId = useMemo(
     () => extractYouTubeId(activeVideoUrl ?? lesson.videoUrl),
     [activeVideoUrl, lesson.videoUrl],
@@ -457,48 +427,28 @@ export default function TopicLessonScreen({
                 </div>
               )}
 
-              {/* Video Player Frame */}
-              <div className="relative aspect-video w-full bg-black">
-                <iframe
-                  ref={videoIframeRef}
-                  src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
-                  title={lesson.videoTitle ?? `${lesson.title} video lesson`}
-                  className="absolute inset-0 h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
+              {/* Anti-Pause YouTube Player Frame */}
+              <div className="p-2 sm:p-3 bg-slate-950">
+                <YouTubePlayer
+                  key={videoId ?? "no-video"}
+                  videoId={videoId}
+                  title={lesson.videoTitle ?? `${lesson.title} Video Guide`}
+                  description={lesson.videoDescription ?? "Follow along with the video recitation and practice."}
                 />
               </div>
 
               {/* Modal Footer */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 bg-slate-950/90 px-4 py-2.5 text-xs text-slate-300">
-                <div className="flex items-center gap-2 text-[11px] min-w-0">
-                  <span className="shrink-0 rounded-full bg-red-950/60 border border-red-500/40 px-2 py-0.5 font-bold text-red-300">
-                    🎬 Video Guide
-                  </span>
-                  <span className="hidden sm:inline text-slate-400 truncate">
-                    {lesson.videoDescription ?? "Follow along with the video recitation and practice."}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {videoId && (
-                    <a
-                      href={`https://www.youtube.com/watch?v=${videoId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-500 px-3 py-1.5 text-xs font-black text-white shadow-xs transition active:scale-95"
-                    >
-                      <ExternalLink size={13} />
-                      <span>Open in YouTube App</span>
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowVideoModal(false)}
-                    className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
-                  >
-                    Back to Lesson
-                  </button>
-                </div>
+              <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950/90 px-4 py-2.5 text-xs text-slate-300">
+                <span className="text-[11px] text-slate-400">
+                  Google Meet screen share: Anti-Pause Shield maintains uninterrupted playback.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowVideoModal(false)}
+                  className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
+                >
+                  Back to Lesson
+                </button>
               </div>
             </motion.div>
           </motion.div>

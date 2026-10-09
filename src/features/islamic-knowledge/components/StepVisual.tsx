@@ -4,6 +4,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { LessonStep } from "../types";
+import { extractYouTubeId } from "../../../utils/youtube";
+import YouTubePlayer from "../../noorani-qaida/components/YouTubePlayer";
 
 interface VisualSpec {
   accent: string;
@@ -610,48 +612,17 @@ function Scene({ topicId, spec, reduce }: { topicId: string; spec: VisualSpec; r
   );
 }
 
-/** Extract YouTube video id from youtu.be/ID or youtube.com/watch?v=ID */
-function extractYouTubeId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1).split("?")[0];
-    if (parsed.hostname.includes("youtube.com")) return parsed.searchParams.get("v");
-  } catch {
-    // not a valid URL
-  }
-  return null;
-}
-
 function YouTubeEmbed({ url, accent }: { url: string; accent: string }) {
   const videoId = extractYouTubeId(url);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Resume playback after Google Meet / screen-share briefly hides the page.
-  useEffect(() => {
-    function onVisibilityChange() {
-      if (document.visibilityState === "visible" && iframeRef.current) {
-        iframeRef.current.contentWindow?.postMessage(
-          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-          "https://www.youtube-nocookie.com",
-        );
-      }
-    }
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, []);
-
   if (!videoId) return null;
+
   return (
-    <div className="ik-video-wrapper" style={{ "--ik-visual-accent": accent } as CSSProperties}>
-      <div className="ik-video-badge">🎬 Cartoon Video</div>
-      <iframe
-        ref={iframeRef}
-        className="ik-video-frame"
-        src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
-        title="Wudu cartoon video for kids"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        loading="lazy"
+    <div className="ik-video-wrapper w-full overflow-hidden rounded-xl" style={{ "--ik-visual-accent": accent } as CSSProperties}>
+      <YouTubePlayer
+        videoId={videoId}
+        title="Islamic Learning Video Lesson"
+        description="Step-by-step visual demonstration"
+        className="w-full border-0 shadow-none"
       />
     </div>
   );

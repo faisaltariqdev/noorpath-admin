@@ -21,19 +21,10 @@ interface SalahPostureStageProps {
   practiced?: boolean;
 }
 
-const HOLD_SECONDS = 5;
+import { extractYouTubeId } from "../../../utils/youtube";
+import YouTubePlayer from "../components/YouTubePlayer";
 
-function extractYouTubeId(url?: string): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1).split("?")[0];
-    if (parsed.hostname.includes("youtube.com")) return parsed.searchParams.get("v");
-  } catch {
-    if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-  }
-  return null;
-}
+const HOLD_SECONDS = 5;
 
 /** 360-Degree Multi-Angle Character Turntable (Rotates character around in 360° via mouse drag or touch) */
 function Interactive360Turntable({
@@ -611,41 +602,17 @@ export default function SalahPostureStage({
                   ))}
                 </div>
               )}
-              <div className="relative w-full flex-1 overflow-hidden rounded-xl bg-black shadow-inner">
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
-                  title={`${step.title} cartoon video`}
-                  className="absolute inset-0 h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
+              <div className="relative w-full flex-1 overflow-hidden rounded-xl bg-slate-950">
+                <YouTubePlayer
+                  key={videoId ?? "no-video"}
+                  videoId={videoId}
+                  title={
+                    step.videoPhases && step.videoPhases.length > 1
+                      ? step.videoPhases[activePhaseIndex]?.label ?? `${step.title} Cartoon Video`
+                      : `${step.title} Cartoon Video`
+                  }
+                  className="border-0 shadow-none"
                 />
-              </div>
-              <div className="mt-1.5 flex w-full flex-wrap items-center justify-between gap-1.5 px-1 text-[11px] font-bold text-white/90">
-                <span className="flex items-center gap-1 truncate min-w-0">
-                  <Video size={12} className="text-emerald-400 shrink-0" />
-                  <span className="truncate">
-                    {step.videoPhases && step.videoPhases.length > 1
-                      ? step.videoPhases[activePhaseIndex]?.label ?? "Cartoon Video Lesson"
-                      : "Cartoon Video Lesson"}
-                  </span>
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {videoId && (
-                    <a
-                      href={`https://www.youtube.com/watch?v=${videoId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md bg-red-600 hover:bg-red-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs transition active:scale-95"
-                      title="Open video directly in YouTube App"
-                    >
-                      <ExternalLink size={10} />
-                      <span>Open in YouTube App</span>
-                    </a>
-                  )}
-                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] text-white">
-                    Step {step.order}
-                  </span>
-                </div>
               </div>
             </motion.div>
           ) : mediaMode === "3d" && stepDetail?.image ? (

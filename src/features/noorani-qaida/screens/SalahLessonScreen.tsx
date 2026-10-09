@@ -10,17 +10,8 @@ import SalahPostureStage from "../salah/SalahPostureStage";
 import WuduStepDetailCard from "../salah/WuduStepDetailCard";
 import FullscreenButton from "../ui/FullscreenButton";
 
-function extractYouTubeId(url?: string): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1).split("?")[0];
-    if (parsed.hostname.includes("youtube.com")) return parsed.searchParams.get("v");
-  } catch {
-    if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-  }
-  return null;
-}
+import { extractYouTubeId } from "../../../utils/youtube";
+import YouTubePlayer from "../components/YouTubePlayer";
 
 /** Seconds each step stays on screen in Watch mode (longer when there is Arabic to read). */
 const WATCH_SECONDS_SHORT = 3.5;
@@ -60,7 +51,6 @@ export default function SalahLessonScreen({
   initialStepIndex = 0,
 }: SalahLessonScreenProps) {
   const lessonRef = useRef<HTMLElement>(null);
-  const videoIframeRef = useRef<HTMLIFrameElement>(null);
   const steps = useMemo(
     () => [...(lesson.steps ?? [])].sort((a, b) => a.order - b.order),
     [lesson.steps],
@@ -87,23 +77,7 @@ export default function SalahLessonScreen({
     setShowVideoModal(false);
   }, [lesson.id, lesson.videoUrl, lesson.videoPhases]);
 
-  // Resume YouTube video after Google Meet / screen-share briefly hides the page.
-  // YouTube's embedded player auto-pauses on visibilitychange → "hidden"; we
-  // send a playVideo command when the page becomes visible again so the video
-  // keeps playing without the tutor having to tap play repeatedly.
-  useEffect(() => {
-    if (!showVideoModal) return;
-    function onVisibilityChange() {
-      if (document.visibilityState === "visible" && videoIframeRef.current) {
-        videoIframeRef.current.contentWindow?.postMessage(
-          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-          "https://www.youtube-nocookie.com",
-        );
-      }
-    }
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [showVideoModal]);
+
 
   const lessonVideoId = useMemo(
     () => extractYouTubeId(activeLessonVideoUrl ?? lesson.videoUrl),
@@ -831,48 +805,28 @@ export default function SalahLessonScreen({
                 </div>
               )}
 
-              {/* Video Player Frame */}
-              <div className="relative aspect-video w-full bg-black">
-                <iframe
-                  ref={videoIframeRef}
-                  src={`https://www.youtube-nocookie.com/embed/${lessonVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
-                  title={lesson.videoTitle ?? "Lesson video player"}
-                  className="absolute inset-0 h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
+              {/* Anti-Pause YouTube Player Frame */}
+              <div className="p-2 sm:p-3 bg-slate-950">
+                <YouTubePlayer
+                  key={lessonVideoId ?? "no-video"}
+                  videoId={lessonVideoId}
+                  title={lesson.videoTitle ?? "Salah Step Guide Video"}
+                  description={lesson.videoDescription ?? "Teaches students step-by-step through engaging visual guidance"}
                 />
               </div>
 
               {/* Modal Footer */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 bg-slate-950/90 px-4 py-2.5 text-xs text-slate-300">
-                <div className="flex items-center gap-2 text-[11px] min-w-0">
-                  <span className="shrink-0 rounded-full bg-emerald-900/60 border border-emerald-500/40 px-2 py-0.5 font-bold text-emerald-300">
-                    🎬 Video Guide
-                  </span>
-                  <span className="hidden sm:inline text-slate-400 truncate">
-                    {lesson.videoDescription ?? "Teaches students step-by-step through engaging visual guidance"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {lessonVideoId && (
-                    <a
-                      href={`https://www.youtube.com/watch?v=${lessonVideoId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-500 px-3 py-1.5 text-xs font-black text-white shadow-xs transition active:scale-95"
-                    >
-                      <ExternalLink size={13} />
-                      <span>Open in YouTube App</span>
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowVideoModal(false)}
-                    className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
-                  >
-                    Back to Steps
-                  </button>
-                </div>
+              <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950/90 px-4 py-2.5 text-xs text-slate-300">
+                <span className="text-[11px] text-slate-400">
+                  Google Meet screen share: Anti-Pause Shield maintains uninterrupted playback.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowVideoModal(false)}
+                  className="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-black text-white hover:bg-emerald-600 transition cursor-pointer"
+                >
+                  Back to Steps
+                </button>
               </div>
             </motion.div>
           </motion.div>

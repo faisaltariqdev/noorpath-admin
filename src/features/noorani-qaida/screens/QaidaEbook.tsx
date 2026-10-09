@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import type { Letter, QaidaProgress } from "../types";
 import { LETTERS } from "../data/curriculum";
 import { qaidaAudio } from "../audio/QaidaAudioService";
+import YouTubePlayer from "../components/YouTubePlayer";
 
 interface QaidaEbookProps {
   progress: QaidaProgress;
@@ -117,30 +118,12 @@ export default function QaidaEbook({
                 </div>
               </div>
 
-              <div className="aspect-video w-full bg-black">
-                <iframe
-                  src="https://www.youtube-nocookie.com/embed/hlJyUtgzgIM?rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+              <div className="p-2 sm:p-3 bg-slate-950">
+                <YouTubePlayer
+                  videoId="hlJyUtgzgIM"
                   title="Noorani Qaida Arabic Letters Video Lesson"
-                  className="h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
+                  description="Interactive tutorial with anti-pause shield for Google Meet screen sharing"
                 />
-              </div>
-
-              {/* Bottom bar for tutors / mobile screen share */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 bg-slate-900/95 px-3.5 py-2 text-xs text-slate-300">
-                <span className="text-[11px] text-slate-400">
-                  Screen share issue? Video pause hone par direct YouTube app me open karein.
-                </span>
-                <a
-                  href="https://www.youtube.com/watch?v=hlJyUtgzgIM"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 hover:bg-red-500 px-3 py-1 text-xs font-black text-white shadow-xs transition active:scale-95"
-                >
-                  <ExternalLink size={12} />
-                  <span>Open in YouTube App</span>
-                </a>
               </div>
             </motion.div>
           )}
